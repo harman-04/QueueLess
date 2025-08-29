@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>QueueLess OTP Verification</title>
+    <style>
+        .container {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 600px;
+            margin: auto;
+            padding: 20px;
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e0e0e0;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+        .logo {
+            font-size: 28px;
+            color: #0d6efd;
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+        .otp-box {
+            background-color: #f0f8ff;
+            border: 2px dashed #0d6efd;
+            border-radius: 10px;
+            font-size: 24px;
+            text-align: center;
+            padding: 18px;
+            color: #0d6efd;
+            font-weight: bold;
+            letter-spacing: 5px;
+            margin: 20px 0;
+        }
+        .footer {
+            font-size: 0.85rem;
+            text-align: center;
+            color: #555;
+            margin-top: 30px;
+        }
+        .footer a {
+            color: #0d6efd;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <div class="logo">Queue<span style="color: #000;">Less</span></div>
+    </div>
+    <p>Hello,</p>
+    <p>You recently requested a password reset. Please use the OTP below to proceed:</p>
+
+    <div class="otp-box">{{OTP}}</div>
+
+    <p>This OTP is valid for <strong>5 minutes</strong>. Please do not share it with anyone.</p>
+    <p>If you didn’t request this, just ignore this message.</p>
+
+    <div class="footer">
+        &copy; 2025 QueueLess. All rights reserved. <br/>
+        Need help? <a href="mailto:support@queueless.in">Contact Support</a>
+    </div>
+</div>
+</body>
+</html>

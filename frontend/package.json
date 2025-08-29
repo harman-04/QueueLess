@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "react-bootstrap": "^2.10.9",
+    "sweetalert2": "^11.19.1"
+  }
+}
