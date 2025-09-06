@@ -1,3 +1,4 @@
+//src/components/OtpInput.jsx
 import { useEffect, useRef } from 'react';
 
 const OtpInput = ({ otp, setOtp, autoSubmit }) => {

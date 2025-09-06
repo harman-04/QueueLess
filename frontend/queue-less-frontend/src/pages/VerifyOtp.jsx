@@ -1,3 +1,4 @@
+//src/pages/VerifyOtp.jsx
 import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import AuthFormWrapper from '../components/AuthFormWrapper';

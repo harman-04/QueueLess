@@ -1,0 +1,37 @@
+/* Glassmorphism Token Box */
+.token-box {
+  backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 15px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  border: 2px solid #198754;
+}
+
+/* Gradient Glow Cards */
+.pricing-card {
+  border: none;
+  background: linear-gradient(135deg, #e0f7fa, #f0f8ff);
+  box-shadow: 0 4px 20px rgba(0, 123, 255, 0.2);
+  transition: transform 0.3s ease;
+}
+.pricing-card:hover {
+  transform: translateY(-5px);
+}
+
+/* Animated Button */
+.animated-button {
+  transition: all 0.3s ease;
+}
+.animated-button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 10px rgba(13, 110, 253, 0.4);
+}
+.animated-button:active {
+  transform: scale(0.98);
+}
+
+/* Responsive Padding */
+.pricing-page {
+  padding-top: 5vh;
+  padding-bottom: 5vh;
+}

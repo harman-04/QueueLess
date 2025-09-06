@@ -48,22 +48,6 @@ public class PasswordResetService {
         return "OTP sent to email";
     }
 
-//    public String verifyOtp(VerifyOtpRequest request) {
-//        Optional<OtpDocument> otpDocOpt = otpRepository.findByEmail(request.getEmail());
-//        if (otpDocOpt.isEmpty()) throw new RuntimeException("OTP not found");
-//
-//        OtpDocument otpDoc = otpDocOpt.get();
-//        if (!otpDoc.getOtp().equals(request.getOtp())) {
-//            throw new RuntimeException("Invalid OTP");
-//        }
-//
-//        if (otpDoc.getExpiryTime().isBefore(LocalDateTime.now())) {
-//            throw new RuntimeException("OTP expired");
-//        }
-//
-//        return "OTP verified";
-//    }
-
     public String verifyOtp(VerifyOtpRequest request) {
         Optional<OtpDocument> otpDocOpt = otpRepository.findByEmail(request.getEmail());
         if (otpDocOpt.isEmpty()) throw new RuntimeException("OTP not found");
@@ -80,25 +64,6 @@ public class PasswordResetService {
         otpVerificationStore.markVerified(request.getEmail()); // ✅ Mark email as verified
         return "OTP verified";
     }
-
-//
-//    public String resetPassword(ResetPasswordRequest request) {
-//        if (!request.getNewPassword().equals(request.getConfirmPassword())) {
-//            throw new RuntimeException("Passwords do not match");
-//        }
-//
-//        Optional<User> userOpt = userRepository.findByEmail(request.getEmail());
-//        if (userOpt.isEmpty()) throw new RuntimeException("User not found");
-//
-//        User user = userOpt.get();
-//        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
-//        userRepository.save(user);
-//
-//        // Delete used OTP
-//        otpRepository.deleteByEmail(request.getEmail());
-//
-//        return "Password reset successful";
-//    }
 
     public String resetPassword(ResetPasswordRequest request) {
         if (!request.getNewPassword().equals(request.getConfirmPassword())) {
@@ -123,21 +88,3 @@ public class PasswordResetService {
     }
 
 }
-
-
-//public ResponseEntity<String> resetPassword(String email, ResetPasswordRequest request) {
-//    if (!request.getNewPassword().equals(request.getConfirmPassword())) {
-//        return ResponseEntity.badRequest().body("Passwords do not match");
-//    }
-//
-//    Optional<User> optionalUser = userRepository.findByEmail(email);
-//    if (optionalUser.isEmpty()) {
-//        return ResponseEntity.badRequest().body("User not found");
-//    }
-//
-//    User user = optionalUser.get();
-//    user.setPassword(passwordEncoder.encode(request.getNewPassword()));
-//    userRepository.save(user);
-//
-//    return ResponseEntity.ok("Password reset successfully");
-//}

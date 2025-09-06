@@ -5,11 +5,14 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.List;
+import java.util.Collection;
+import java.util.HashMap;
 
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
@@ -19,33 +22,39 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         this.jwtProvider = jwtProvider;
     }
 
-    /**
-     * IMPORTANT:
-     * Do not run this HTTP filter for WebSocket handshake & SockJS endpoints.
-     */
-    @Override
-    protected boolean shouldNotFilter(HttpServletRequest request) {
-        String path = request.getServletPath();
-        // Skip all websocket & sockjs internal paths
-        return path.startsWith("/ws");
-    }
-
     @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
 
-        String authHeader = request.getHeader("Authorization");
-        System.out.println("🔐 JWT Filter triggered for: " + request.getRequestURI());
+        try {
+            String authHeader = request.getHeader("Authorization");
 
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            String token = authHeader.substring(7);
-            if (jwtProvider.validateToken(token)) {
-                String email = jwtProvider.getEmailFromToken(token);
-                UsernamePasswordAuthenticationToken authentication =
-                        new UsernamePasswordAuthenticationToken(email, null, List.of());
-                SecurityContextHolder.getContext().setAuthentication(authentication);
+            if (authHeader != null && authHeader.startsWith("Bearer ")) {
+                String token = authHeader.substring(7);
+
+                if (jwtProvider.validateToken(token)) {
+                    String userId = jwtProvider.getUserIdFromToken(token);
+                    String email = jwtProvider.getEmailFromToken(token);
+                    Collection<GrantedAuthority> authorities = jwtProvider.getAuthoritiesFromToken(token);
+
+                    // Use userId as principal
+                    UsernamePasswordAuthenticationToken authentication =
+                            new UsernamePasswordAuthenticationToken(userId, null, authorities);
+
+                    // Store additional details
+                    authentication.setDetails(new HashMap<String, Object>() {{
+                        put("userId", userId);
+                        put("email", email);
+                    }});
+
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                }
             }
+        } catch (Exception e) {
+            logger.error("Cannot set user authentication", e);
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Error: Unauthorized");
+            return;
         }
 
         filterChain.doFilter(request, response);

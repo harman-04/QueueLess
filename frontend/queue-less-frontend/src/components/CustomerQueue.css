@@ -1,0 +1,237 @@
+/* General Body and Container Styling */
+body {
+  background: linear-gradient(135deg, #f0f4f8, #d9e2ec);
+  font-family: 'Roboto', sans-serif;
+}
+
+.customer-queue-container {
+  padding: 3rem 1rem;
+  max-width: 900px;
+  margin: 0 auto;
+  position: relative;
+}
+
+/* Page Header */
+.header-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem; /* Reduced margin to bring badges closer */
+  position: relative;
+  z-index: 2;
+}
+
+.queue-title {
+  font-weight: 700;
+  color: #2c3e50;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+/* Badges Container */
+.badges-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem; /* Space between badges */
+  margin-bottom: 2rem; /* Separates badges from the next section */
+  margin-left: -0.25rem; /* Optional: Align badges with the main text block */
+}
+
+.badge {
+  font-size: 0.8em;
+  font-weight: 600;
+  padding: 0.4em 0.8em;
+  border-radius: 50px;
+}
+
+.badge-paused { background-color: #f1c40f; color: #fff; }
+.badge-info { background-color: #3498db; color: #fff; }
+.badge-danger { background-color: #e74c3c; color: #fff; }
+
+.btn-back-home {
+  background: none;
+  border: 2px solid #bdc3c7;
+  color: #7f8c8d;
+  font-weight: 600;
+  padding: 0.6rem 1.2rem;
+  border-radius: 50px;
+  transition: all 0.3s ease;
+}
+
+.btn-back-home:hover {
+  background-color: #7f8c8d;
+  color: #fff;
+  transform: translateY(-2px);
+}
+
+/* Card Styling */
+.status-card, .serving-card, .join-queue-card, .form-card, .stats-card {
+  background-color: #ffffff;
+  border-radius: 15px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  padding: 2.5rem;
+  margin-bottom: 2rem;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.status-card:hover, .serving-card:hover, .join-queue-card:hover, .form-card:hover, .stats-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.12);
+}
+
+/* Specific Card Headers and Titles */
+.status-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  border-bottom: 2px solid #ecf0f1;
+  padding-bottom: 1rem;
+}
+
+.status-icon {
+  font-size: 1.5rem;
+  color: #3498db;
+  margin-right: 1rem;
+}
+
+.status-title {
+  font-weight: 600;
+  color: #34495e;
+}
+
+.serving-token-id {
+  font-size: 4rem;
+  color: #2ecc71;
+  font-weight: 900;
+  text-shadow: 2px 2px 4px rgba(46, 204, 113, 0.4);
+}
+
+.join-button {
+  width: 100%;
+  max-width: 350px;
+  font-size: 1.1rem;
+  font-weight: 500;
+  padding: 0.8rem 1.5rem;
+  border-radius: 10px;
+  transition: transform 0.2s ease;
+}
+
+.join-button:hover {
+  transform: translateY(-2px);
+}
+
+/* Forms */
+.form-title {
+  font-weight: 600;
+  color: #34495e;
+}
+
+.form-subtitle {
+  font-size: 0.9rem;
+  color: #7f8c8d;
+}
+
+.group-member-row {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.group-member-row .form-control {
+  flex: 1;
+}
+
+.group-member-row button {
+  width: auto;
+}
+
+/* Stats Section */
+.stat-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.stat-icon {
+  font-size: 2rem;
+}
+
+/* Loading & Error Screens */
+.loading-screen, .error-screen {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  text-align: center;
+}
+
+.spinner-icon {
+  font-size: 3rem;
+  color: #3498db;
+  animation: spin 1s linear infinite;
+}
+
+.loading-text {
+  margin-top: 1rem;
+  font-size: 1.2rem;
+  color: #34495e;
+}
+
+.error-icon {
+  font-size: 4rem;
+  color: #e74c3c;
+}
+
+.error-title {
+  color: #34495e;
+  margin-top: 1rem;
+}
+
+/* Temporary Expired Token Message */
+.expired-message {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(8px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.expired-content {
+  background: #ffffff;
+  padding: 3rem 4rem;
+  border-radius: 20px;
+  text-align: center;
+  box-shadow: 0 15px 50px rgba(0, 0, 0, 0.2);
+  transform: scale(1.1);
+}
+
+.expired-icon {
+  font-size: 4rem;
+  color: #2ecc71;
+  margin-bottom: 1rem;
+}
+
+.expired-title {
+  font-weight: 700;
+  color: #2c3e50;
+  margin-bottom: 0.5rem;
+}
+
+.expired-text {
+  color: #7f8c8d;
+}
+
+.blurred-content {
+  filter: blur(5px);
+  pointer-events: none;
+}

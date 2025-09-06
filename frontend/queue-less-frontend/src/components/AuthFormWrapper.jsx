@@ -1,3 +1,4 @@
+//src/components/AuthFormWrapper.jsx
 const AuthFormWrapper = ({ children, title }) => (
   <div className="d-flex justify-content-center align-items-center min-vh-100 bg-light">
     <div className="card shadow p-4" style={{ maxWidth: '400px', width: '100%' }}>

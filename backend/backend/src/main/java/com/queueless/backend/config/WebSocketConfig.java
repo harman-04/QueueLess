@@ -17,18 +17,19 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     private final StompJwtChannelInterceptor stompJwtChannelInterceptor;
 
     @Override
-    public void configureMessageBroker(MessageBrokerRegistry registry) {
-        registry.enableSimpleBroker("/topic");
-        registry.setApplicationDestinationPrefixes("/app");
+    public void configureMessageBroker(MessageBrokerRegistry config) {
+        config.enableSimpleBroker("/topic", "/queue");
+        config.setApplicationDestinationPrefixes("/app");
+        config.setUserDestinationPrefix("/user");
     }
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint("/ws")
-                .setAllowedOriginPatterns("*"); // Allow all origins for development
+                .setAllowedOriginPatterns("http://localhost:5173")
+                .withSockJS();
     }
 
-    // 🔑 CRITICAL FIX: Register our custom JWT interceptor
     @Override
     public void configureClientInboundChannel(ChannelRegistration registration) {
         registration.interceptors(stompJwtChannelInterceptor);

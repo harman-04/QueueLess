@@ -1,8 +1,7 @@
 // src/pages/Login.jsx
-
 import { useFormik } from 'formik';
 import { loginSchema } from '../validation/authSchema';
-import axiosInstance from '../utils/axiosInstance';
+import { authService } from '../services/authService';
 import AuthFormWrapper from '../components/AuthFormWrapper';
 import { useNavigate, Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
@@ -23,33 +22,67 @@ const Login = () => {
     validationSchema: loginSchema,
     onSubmit: async (values) => {
       try {
-        const response = await axiosInstance.post('/login', values);
-        const { token, role, name, userId } = response.data; // ✅ Now getting 'name' from the response
+        const response = await authService.login(values);
+        console.log('Login response:', response); // Add this to debug
+        
+        if (response.data) {
+          const { token, role, userId, name, profileImageUrl, placeId, isVerified, preferences, ownedPlaceIds } = response.data;
 
-        // ✅ Dispatch Redux action with the 'name'
-        dispatch(loginSuccess({ token, role, name, userId }));
+          // ✅ Dispatch Redux action with all user data
+          dispatch(loginSuccess({ 
+            token, 
+            role, 
+            userId, 
+            name, 
+            profileImageUrl: profileImageUrl || null, 
+            placeId: placeId || null, 
+            isVerified: isVerified || false,
+            preferences: preferences || {
+              emailNotifications: true,
+              smsNotifications: false,
+              language: 'en',
+              defaultSearchRadius: 5,
+              darkMode: false,
+              favoritePlaceIds: []
+            },
+            ownedPlaceIds: ownedPlaceIds || []
+          }));
 
-        toast.success(`Welcome back, ${name}!`);
+          toast.success(`Welcome back, ${name}!`);
 
-        switch (role) {
-          case 'USER':
-            navigate('/user/dashboard');
-            break;
-          case 'PROVIDER':
-            navigate('/provider/dashboard');
-            break;
-          case 'ADMIN':
-            navigate('/admin/dashboard');
-            break;
-          default:
-            navigate('/');
+          // Redirect based on role
+          switch (role) {
+            case 'USER':
+              navigate('/user/dashboard');
+              break;
+            case 'PROVIDER':
+              navigate('/provider/queues');
+              break;
+            case 'ADMIN':
+              navigate('/admin/dashboard');
+              break;
+            default:
+              navigate('/');
+          }
+        } else {
+          console.error('No response data received');
+          toast.error('Login failed: No response from server');
         }
       } catch (err) {
-        toast.error(err.response?.data || 'Login failed');
+        console.error('Login error details:', err);
+        console.error('Response data:', err.response?.data);
+        console.error('Response status:', err.response?.status);
+        console.error('Response headers:', err.response?.headers);
+        toast.error(err.response?.data?.message || 'Login failed');
+
+         const errorMessage = err.response?.data?.message || err.message || 'Login failed';
+        toast.error(errorMessage);
       }
     },
   });
 
+
+  
   return (
     <AuthFormWrapper title="Welcome Back 👋">
       <form onSubmit={handleSubmit} className="login-form">

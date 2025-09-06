@@ -1,3 +1,4 @@
+//src/pages/ProviderPage.jsx
 import React, { useState } from 'react';
 import { Card, Button, Container, Row, Col, Form } from 'react-bootstrap';
 import axios from 'axios';
@@ -6,11 +7,22 @@ import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import { Link } from 'react-router-dom';
 import 'bootstrap-icons/font/bootstrap-icons.css';
+import './ProviderPricingPage.css'; // 
 
 const plans = [
   { name: "Basic", tokenType: "1_MONTH", price: 100, description: "Perfect for new providers." },
   { name: "Standard", tokenType: "1_YEAR", price: 500, description: "Great value for committed providers." },
   { name: "Premium", tokenType: "LIFETIME", price: 1000, description: "Full access for established providers." },
+];
+
+const trustedDomains = [
+  'gmail.com',
+  'outlook.com',
+  'yahoo.com',
+  'protonmail.com',
+  'zoho.com',
+  'icloud.com',
+  'yourcompany.com',
 ];
 
 const ProviderPricingPage = () => {
@@ -20,21 +32,27 @@ const ProviderPricingPage = () => {
   const formik = useFormik({
     initialValues: { email: '' },
     validationSchema: Yup.object({
-      email: Yup.string().email('Invalid email address').required('Required'),
+      email: Yup.string()
+        .email('Invalid email address')
+        .required('Required')
+        .test('trusted-domain', 'Please use a trusted email provider (e.g., Gmail, Outlook)', (value) => {
+          if (!value) return false;
+          const domain = value.split('@')[1];
+          return trustedDomains.includes(domain);
+        }),
     }),
-    onSubmit: () => {}, // Keep the onSubmit empty as we handle submission on button click
+    onSubmit: () => {},
   });
 
   const handleBuy = async (tokenType) => {
-    // Trigger form validation manually
     formik.handleSubmit();
 
-    if (formik.errors.email) {
-      Swal.fire('Error', 'Please enter a valid email address', 'error');
+    if (formik.errors.email || !formik.values.email) {
+      Swal.fire('Error', 'Please enter a valid and trusted email address', 'error');
       return;
     }
 
-    setPlanLoading(prevState => ({ ...prevState, [tokenType]: true }));
+    setPlanLoading(prev => ({ ...prev, [tokenType]: true }));
 
     try {
       const res = await axios.post('http://localhost:8080/api/payment/create-order', null, {
@@ -57,7 +75,7 @@ const ProviderPricingPage = () => {
         handler: async (response) => {
           const confirmRes = await axios.post('http://localhost:8080/api/payment/confirm-provider', null, {
             params: {
-              orderId: orderId,
+              orderId,
               paymentId: response.razorpay_payment_id,
               email: formik.values.email,
               tokenType,
@@ -81,7 +99,7 @@ const ProviderPricingPage = () => {
     } catch (error) {
       Swal.fire('Error', error?.response?.data?.message || 'Something went wrong!', 'error');
     } finally {
-      setPlanLoading(prevState => ({ ...prevState, [tokenType]: false }));
+      setPlanLoading(prev => ({ ...prev, [tokenType]: false }));
     }
   };
 
@@ -90,26 +108,32 @@ const ProviderPricingPage = () => {
     Swal.fire('Copied!', 'Token copied to clipboard.', 'success');
   };
 
+  const domain = formik.values.email.split('@')[1];
+  const isTrusted = trustedDomains.includes(domain);
+  const isEmailValid = formik.values.email && !formik.errors.email && isTrusted;
+
   return (
-    <Container className="py-5" style={{ backgroundColor: '#f0f8ff' }}> {/* Light blue background */}
-      <h2 className="text-center mb-5 text-success fw-bold">Become a Valued Provider</h2> {/* Engaging title */}
-      <p className="text-center lead mb-4 text-muted">Select a plan to unlock provider features.</p> {/* Clear subtitle */}
+    <Container className="py-5 pricing-page">
+      <h2 className="text-center mb-5 text-success fw-bold">Become a Valued Provider</h2>
+      <p className="text-center lead mb-4 text-muted">Select a plan to unlock provider features.</p>
 
       <Form className="mb-5" onSubmit={formik.handleSubmit}>
         <Row className="justify-content-center">
           <Col md={6}>
-            <Form.Group className="mb-3" controlId="formBasicEmail">
-              <Form.Label className="fw-bold">Enter your professional email:</Form.Label>
+            <Form.Group className="form-floating mb-3">
               <Form.Control
                 type="email"
                 name="email"
+                id="floatingEmail"
                 placeholder="professional@email.com"
                 value={formik.values.email}
                 onChange={formik.handleChange}
                 isInvalid={formik.touched.email && formik.errors.email}
               />
-              <Form.Control.Feedback type="invalid">{formik.errors.email}</Form.Control.Feedback>
-              <Form.Text className="text-muted">We'll use this to send your token.</Form.Text>
+              <Form.Label htmlFor="floatingEmail">Professional Email</Form.Label>
+              <Form.Control.Feedback type="invalid">
+                {formik.errors.email}
+              </Form.Control.Feedback>
             </Form.Group>
           </Col>
         </Row>
@@ -118,7 +142,7 @@ const ProviderPricingPage = () => {
       <Row className="justify-content-center">
         {plans.map((plan) => (
           <Col md={4} key={plan.tokenType} className="mb-4">
-            <Card className="shadow-sm border-primary rounded-lg h-100 d-flex flex-column"> {/* Subtle shadow, primary border */}
+            <Card className="pricing-card h-100 d-flex flex-column">
               <Card.Body className="text-center py-4 flex-grow-1 d-flex flex-column justify-content-between">
                 <div>
                   <Card.Title className="h5 fw-bold mb-3 text-primary">{plan.name} Plan</Card.Title>
@@ -127,11 +151,15 @@ const ProviderPricingPage = () => {
                 </div>
                 <Button
                   variant="primary"
-                  disabled={planLoading[plan.tokenType]}
+                  disabled={planLoading[plan.tokenType] || !isEmailValid}
                   onClick={() => handleBuy(plan.tokenType)}
-                  className="mt-3 rounded-pill"
+                  className="mt-3 animated-button rounded-pill"
                 >
-                  {planLoading[plan.tokenType] ? <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> : <i className="bi bi-briefcase-fill me-2"></i>}
+                  {planLoading[plan.tokenType] ? (
+                    <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                  ) : (
+                    <i className="bi bi-briefcase-fill me-2"></i>
+                  )}
                   {planLoading[plan.tokenType] ? 'Processing...' : 'Buy Now'}
                 </Button>
               </Card.Body>
@@ -141,7 +169,7 @@ const ProviderPricingPage = () => {
       </Row>
 
       {generatedToken && (
-        <div className="text-center mt-5 p-4 bg-light rounded-lg shadow-sm border border-success"> {/* Success border */}
+        <div className="text-center mt-5 p-4 token-box">
           <h4 className="text-success fw-bold mb-3"><i className="bi bi-key-fill me-2"></i> Your Provider Token is Ready!</h4>
           <p className="fw-bold text-info mb-3 selectable">{generatedToken}</p>
           <Button variant="outline-success" onClick={handleCopy} className="rounded-pill me-2">

@@ -30,11 +30,4 @@ public class PasswordResetController {
     public ResponseEntity<?> resetPassword(@RequestBody ResetPasswordRequest request) {
         return ResponseEntity.ok(passwordResetService.resetPassword(request));
     }
-
-
-//    @PostMapping("/reset")
-//    public ResponseEntity<String> resetPassword(@RequestParam("email") String email,
-//                                                @RequestBody ResetPasswordRequest request) {
-//        return passwordResetService.resetPassword(email, request);
-//    }
 }

@@ -1,3 +1,4 @@
+//src/utils/loadScript.js
 export function loadScript(src) {
   return new Promise((resolve) => {
     const script = document.createElement('script');

@@ -1,3 +1,4 @@
+//src/pages/PricingPage.jsx
 import React, { useState } from 'react';
 import { Card, Button, Container, Row, Col, Form } from 'react-bootstrap';
 import axios from 'axios';
@@ -13,6 +14,9 @@ const plans = [
   { name: "Enterprise Admin", tokenType: "LIFETIME", price: 1000, description: "Comprehensive control for platform leadership." },
 ];
 
+// Define a list of trusted email domains for validation
+const TRUSTED_DOMAINS = ['gmail.com', 'yahoo.com', 'outlook.com', 'hotmail.com'];
+
 const PricingPage = () => {
   const [planLoading, setPlanLoading] = useState({});
   const [generatedToken, setGeneratedToken] = useState('');
@@ -20,7 +24,14 @@ const PricingPage = () => {
   const formik = useFormik({
     initialValues: { email: '' },
     validationSchema: Yup.object({
-      email: Yup.string().email('Invalid email address').required('Required'),
+      email: Yup.string()
+        .email('Invalid email address')
+        .required('Required')
+        .test('is-trusted-domain', 'Only trusted email providers are allowed (e.g., gmail.com, yahoo.com).', (value) => {
+          if (!value) return false;
+          const domain = value.split('@')[1];
+          return TRUSTED_DOMAINS.includes(domain);
+        }),
     }),
     onSubmit: () => {},
   });
@@ -28,8 +39,9 @@ const PricingPage = () => {
   const handleBuy = async (tokenType) => {
     formik.handleSubmit();
 
-    if (formik.errors.email) {
-      Swal.fire('Error', 'Please enter a valid admin email', 'error');
+    // Check if there are any validation errors before proceeding
+    if (!formik.isValid) {
+      Swal.fire('Error', 'Please enter a valid email from a trusted domain.', 'error');
       return;
     }
 
@@ -107,6 +119,7 @@ const PricingPage = () => {
                 placeholder="admin@yourdomain.com"
                 value={formik.values.email}
                 onChange={formik.handleChange}
+                onBlur={formik.handleBlur} // Add onBlur to trigger validation on field exit
                 isInvalid={formik.touched.email && formik.errors.email}
                 className="shadow-sm" // Subtle shadow on input
               />
@@ -129,7 +142,7 @@ const PricingPage = () => {
                 </div>
                 <Button
                   variant="primary" // Using primary for a consistent feel
-                  disabled={planLoading[plan.tokenType]}
+                  disabled={planLoading[plan.tokenType] || !formik.isValid || !formik.values.email} // Disable if form is invalid or email is empty
                   onClick={() => handleBuy(plan.tokenType)}
                   className="mt-3 rounded-pill shadow-sm"
                   style={{ backgroundColor: '#6610f2', borderColor: '#6610f2' }}
