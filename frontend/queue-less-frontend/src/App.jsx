@@ -24,6 +24,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import { Navigate } from 'react-router-dom';
 import WebSocketService from './services/websocketService';
 import AdminPlaces from './components/AdminPlaces';
+import UserProfile from './pages/UserProfile';
 
 function App() {
   const { token, role } = useSelector((state) => state.auth);
@@ -63,14 +64,21 @@ function App() {
         
         {/* Protected Routes */}
 
+
+<Route path='/profile' element={
+  <ProtectedRoute allowedRoles={['USER', 'ADMIN', 'PROVIDER']}>
+            <UserProfile/>
+          </ProtectedRoute>
+}/>
         <Route path='/provider-pricing' element={
           <ProtectedRoute allowedRoles={['ADMIN']}>
             <ProviderPricingPage/>
          </ProtectedRoute>
       }/>
+      
 
         <Route path="/user/dashboard" element={
-          <ProtectedRoute allowedRoles={['USER', 'ADMIN', 'PROVIDER']}>
+          <ProtectedRoute allowedRoles={['USER']}>
             <UserDashboard />
           </ProtectedRoute>
         } />

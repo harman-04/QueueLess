@@ -73,6 +73,20 @@ public class SecurityConfig {
                                 "/api/payment/confirm-provider",
                                 "/api/payment/confirm-provider-bulk"
                         ).permitAll()
+
+
+
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/api/feedback/**"
+                        ).permitAll()
+                        .requestMatchers(
+                                HttpMethod.POST,
+                                "/api/feedback"
+                        ).hasRole("USER")
+
+                        // In SecurityConfig.java, update the authorized requests
+
                         // Public read-only endpoints
                         .requestMatchers(
                                 HttpMethod.GET,
@@ -92,12 +106,13 @@ public class SecurityConfig {
                         .requestMatchers("/api/queues/*/add-token").hasRole("USER")
                         .requestMatchers("/api/user/**").hasAnyRole("USER", "ADMIN", "PROVIDER")
                         // Provider endpoints
+                        .requestMatchers("/api/providers/**").hasRole("PROVIDER")
                         .requestMatchers("/api/queues/create").hasRole("PROVIDER")
                         .requestMatchers("/api/queues/by-provider").hasRole("PROVIDER")
                         .requestMatchers("/api/queues/*/serve-next").hasRole("PROVIDER")
                         .requestMatchers("/api/queues/*/complete-token").hasRole("PROVIDER")
-                        .requestMatchers("/api/queues/*/activate").hasRole("PROVIDER")
-                        .requestMatchers("/api/queues/*/deactivate").hasRole("PROVIDER")
+                        .requestMatchers("/api/queues/*/activate").hasAnyRole("PROVIDER","ADMIN")
+                        .requestMatchers("/api/queues/*/deactivate").hasAnyRole("PROVIDER", "ADMIN")
                         // Admin endpoints - ensure proper authorization
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/places").hasRole("ADMIN")

@@ -1,4 +1,4 @@
-// src/redux/middleware/websocketMiddleware.js
+// src/redux/queue/websocketMiddleware.js
 import { Client } from "@stomp/stompjs";
 
 let stompClient = null;

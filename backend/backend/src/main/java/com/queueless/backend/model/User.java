@@ -33,11 +33,15 @@ public class User {
     private String phoneNumber;
     private Role role;
     private String profileImageUrl;
-    private String placeId; // If user is associated with a place
+    private String placeId;
     private LocalDateTime createdAt;
     private Boolean isVerified;
     private UserPreferences preferences;
     private List<String> ownedPlaceIds;
+
+    // New fields for provider-admin relationship
+    private String adminId; // For PROVIDER role: ID of the admin who created this provider
+    private List<String> managedPlaceIds; // For PROVIDER role: Places this provider can manage
 
     @Data
     @NoArgsConstructor

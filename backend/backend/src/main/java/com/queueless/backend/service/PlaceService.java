@@ -20,9 +20,6 @@ public class PlaceService {
     public Place createPlace(PlaceDTO placeDTO) {
         log.debug("Creating new place: {}", placeDTO);
 
-        // Validate that the admin exists and is authorized
-        // You might want to add additional validation here
-
         Place place = new Place();
         place.setName(placeDTO.getName());
         place.setType(placeDTO.getType());
@@ -50,7 +47,6 @@ public class PlaceService {
         return placeRepository.save(place);
     }
 
-
     public Place getPlaceById(String id) {
         log.debug("Fetching place with ID: {}", id);
         return placeRepository.findById(id)
@@ -66,7 +62,7 @@ public class PlaceService {
         log.info("Found {} places for admin {}", places.size(), adminId);
         return places;
     }
-    // Add this method to verify admin ownership
+
     public boolean isPlaceOwnedByAdmin(String placeId, String adminId) {
         Optional<Place> place = placeRepository.findById(placeId);
         return place.isPresent() && place.get().getAdminId().equals(adminId);
@@ -117,12 +113,15 @@ public class PlaceService {
         log.info("Place deleted successfully with ID: {}", id);
     }
 
-
-    // PlaceService.java - Add this method
     public List<Place> getAllPlaces() {
         log.debug("Fetching all places");
         List<Place> places = placeRepository.findAll();
         log.info("Found {} places", places.size());
         return places;
+    }
+
+    public List<Place> getPlacesByIds(List<String> placeIds) {
+        log.debug("Fetching places by IDs: {}", placeIds);
+        return placeRepository.findAllById(placeIds);
     }
 }

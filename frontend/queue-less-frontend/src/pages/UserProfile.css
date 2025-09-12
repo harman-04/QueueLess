@@ -1,0 +1,239 @@
+/* src/pages/UserProfile.css */
+.user-profile-container {
+    max-width: 1000px;
+}
+
+.profile-title {
+    font-weight: 700;
+    color: #2c3e50;
+    margin-bottom: 2rem !important;
+    position: relative;
+}
+
+.profile-title::after {
+    content: '';
+    display: block;
+    width: 60px;
+    height: 4px;
+    background: linear-gradient(90deg, #3498db, #2980b9);
+    margin: 10px auto;
+    border-radius: 2px;
+}
+
+.profile-card {
+    border: none;
+    border-radius: 16px;
+    overflow: hidden;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.profile-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15) !important;
+}
+
+.section-title {
+    color: #2c3e50;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #f8f9fa;
+}
+
+.avatar-preview-wrapper {
+    position: relative;
+    display: inline-block;
+    margin-bottom: 1rem;
+}
+
+.profile-img-preview {
+    width: 150px;
+    height: 150px;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 4px solid #fff;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.avatar-overlay {
+    position: absolute;
+    bottom: 5px;
+    right: 5px;
+    background: #3498db;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(52, 152, 219, 0.4);
+}
+
+.avatar-overlay:hover {
+    background: #2980b9;
+    transform: scale(1.1);
+}
+
+.avatar-select-btn {
+    border-radius: 30px;
+    padding: 10px 20px;
+    font-weight: 500;
+    border-width: 2px;
+    transition: all 0.3s ease;
+}
+
+.avatar-select-btn:hover {
+    background-color: rgba(52, 152, 219, 0.1);
+    border-color: #3498db;
+    transform: translateY(-2px);
+}
+
+.divider {
+    display: flex;
+    align-items: center;
+    margin: 1.5rem 0;
+}
+
+.divider::before,
+.divider::after {
+    content: "";
+    flex: 1;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.divider span {
+    padding: 0 1rem;
+    color: #6c757d;
+    font-weight: 500;
+}
+
+.input-with-icon {
+    position: relative;
+}
+
+.input-with-icon i {
+    position: absolute;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #6c757d;
+    z-index: 5;
+}
+
+.input-with-icon .form-control {
+    padding-left: 45px;
+    border-radius: 10px;
+    border: 1px solid #e2e8f0;
+    transition: all 0.3s ease;
+    height: 50px;
+}
+
+.input-with-icon .form-control:focus {
+    border-color: #3498db;
+    box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
+}
+
+.update-btn, .password-btn, .delete-btn {
+    border-radius: 30px;
+    padding: 12px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.update-btn {
+    background: linear-gradient(90deg, #3498db, #2980b9);
+    border: none;
+}
+
+.update-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(52, 152, 219, 0.4);
+}
+
+.password-btn {
+    border: none;
+}
+
+.password-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(255, 193, 7, 0.4);
+}
+
+.delete-btn {
+    border-radius: 30px;
+    padding: 12px;
+}
+
+.delete-btn:hover {
+    transform: translateY(-2px);
+}
+
+.account-management {
+    border-left: 4px solid #e74c3c !important;
+}
+
+/* Avatar Selection Modal */
+.avatar-option {
+    cursor: pointer;
+    padding: 5px;
+    border-radius: 50%;
+    transition: all 0.3s ease;
+    display: inline-block;
+}
+
+.avatar-option img {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid transparent;
+    transition: all 0.3s ease;
+}
+
+.avatar-option:hover img {
+    border-color: #3498db;
+    transform: scale(1.1);
+}
+
+.avatar-option.selected img {
+    border-color: #2ecc71;
+    box-shadow: 0 0 15px rgba(46, 204, 113, 0.5);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .profile-img-preview {
+        width: 120px;
+        height: 120px;
+    }
+    
+    .avatar-option img {
+        width: 60px;
+        height: 60px;
+    }
+}
+
+/* Animation for form elements */
+.form-group {
+    transition: transform 0.3s ease;
+}
+
+.form-group:focus-within {
+    transform: translateX(5px);
+}
+
+/* Toast notification customization
+.Toastify__toast--success {
+    background: linear-gradient(90deg, #2ecc71, #27ae60) !important;
+    border-radius: 10px !important;
+}
+
+.Toastify__toast--error {
+    background: linear-gradient(90deg, #e74c3c, #c0392b) !important;
+    border-radius: 10px !important;
+} */

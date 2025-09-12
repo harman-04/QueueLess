@@ -22,7 +22,9 @@ public class Token {
     private boolean isUsed;
     private LocalDateTime expiryDate;
     private String createdForEmail;
-    private boolean isProviderToken; // Add this
-    private String providerEmail;    // Email of the provider using this token
+    private boolean isProviderToken;
+    private String providerEmail;
 
+    // New fields to track provider token ownership
+    private String createdByAdminId; // For PROVIDER tokens: which admin purchased this token
 }

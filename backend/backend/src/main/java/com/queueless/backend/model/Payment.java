@@ -24,4 +24,5 @@ public class Payment {
     private String createdForEmail;
     private Role role;
     private LocalDateTime createdAt;
+    private String createdByAdminId; // For provider tokens: which admin purchased this token
 }

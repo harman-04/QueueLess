@@ -1,9 +1,7 @@
-//src/components/ProviderQueueManagement.jsx
 import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import { logout } from "../redux/authSlice";
 import { toast } from "react-toastify";
 import {
   FaPlusCircle,
@@ -17,19 +15,16 @@ import {
   FaUsers,
   FaAmbulance,
 } from "react-icons/fa";
-import { fetchPlaces } from "../redux/placeSlice";
-import { fetchServicesByPlace } from "../redux/serviceSlice";
 import { normalizeQueues, normalizeQueue } from "../utils/normalizeQueue";
 import "animate.css";
 
-const API_BASE_URL = "http://localhost:8080/api/queues";
+const QUEUE_API_BASE_URL = "http://localhost:8080/api/queues";
+const PROVIDER_API_BASE_URL = "http://localhost:8080/api/providers"; // New base URL for provider endpoints
 
 const ProviderQueueManagement = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { id: providerId, token, name } = useSelector((state) => state.auth);
-  const { items: places } = useSelector((state) => state.places);
-  const { servicesByPlace } = useSelector((state) => state.services);
 
   const [queues, setQueues] = useState([]);
   const [newQueueName, setNewQueueName] = useState("");
@@ -38,30 +33,66 @@ const ProviderQueueManagement = () => {
   const [supportsGroupToken, setSupportsGroupToken] = useState(false);
   const [emergencySupport, setEmergencySupport] = useState(false);
   const [emergencyPriorityWeight, setEmergencyPriorityWeight] = useState(10);
-  const [maxCapacity, setMaxCapacity] = useState(50); // Keep this default
+  const [maxCapacity, setMaxCapacity] = useState(50);
   const [loading, setLoading] = useState(true);
   const [updatingStatus, setUpdatingStatus] = useState({});
+  const [managedPlaces, setManagedPlaces] = useState([]);
+  const [managedServices, setManagedServices] = useState([]);
 
   useEffect(() => {
     if (providerId && token) {
       fetchQueues();
-      dispatch(fetchPlaces());
+      fetchManagedPlaces();
+      fetchManagedServices();
     }
-  }, [providerId, dispatch, token]);
+  }, [providerId, token]);
 
-  useEffect(() => {
-    if (selectedPlaceId) {
-      dispatch(fetchServicesByPlace(selectedPlaceId));
+  const fetchManagedPlaces = async () => {
+    try {
+      const response = await axios.get(`${PROVIDER_API_BASE_URL}/my-places`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      // Defensive check to ensure the response data is an array
+      if (Array.isArray(response.data)) {
+        setManagedPlaces(response.data);
+      } else {
+        console.error("API response for managed places is not an array:", response.data);
+        setManagedPlaces([]);
+        toast.error("Invalid data received for places.");
+      }
+    } catch (error) {
+      console.error("Failed to fetch managed places:", error);
+      setManagedPlaces([]);
+      toast.error("Failed to fetch managed places.");
     }
-  }, [selectedPlaceId, dispatch]);
+  };
+
+  const fetchManagedServices = async () => {
+    try {
+      const response = await axios.get(`${PROVIDER_API_BASE_URL}/my-services`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      // Defensive check to ensure the response data is an array
+      if (Array.isArray(response.data)) {
+        setManagedServices(response.data);
+      } else {
+        console.error("API response for managed services is not an array:", response.data);
+        setManagedServices([]);
+        toast.error("Invalid data received for services.");
+      }
+    } catch (error) {
+      console.error("Failed to fetch managed services:", error);
+      setManagedServices([]);
+      toast.error("Failed to fetch managed services.");
+    }
+  };
 
   const fetchQueues = async () => {
     try {
-      const response = await axios.get(`${API_BASE_URL}/by-provider`, {
+      const response = await axios.get(`${QUEUE_API_BASE_URL}/by-provider`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      // Handle 204 No Content
       if (response.status === 204) {
         setQueues([]);
         toast.info("You don't have any queues yet.");
@@ -69,12 +100,9 @@ const ProviderQueueManagement = () => {
       }
 
       const normalizedQueues = normalizeQueues(response.data);
-
-      // Additional filter to ensure only own queues are shown
       const filteredQueues = normalizedQueues.filter(
         (queue) => queue.providerId === providerId
       );
-
       setQueues(filteredQueues);
     } catch (error) {
       if (error.response?.status === 404 || error.response?.status === 204) {
@@ -98,9 +126,21 @@ const ProviderQueueManagement = () => {
       return;
     }
 
+    const isPlaceManaged = managedPlaces.some(place => place.id === selectedPlaceId);
+    if (!isPlaceManaged) {
+      toast.error("You don't have permission to create queues for this place.");
+      return;
+    }
+
+    const isServiceManaged = managedServices.some(service => service.id === selectedServiceId);
+    if (!isServiceManaged) {
+      toast.error("You don't have permission to create queues for this service.");
+      return;
+    }
+
     try {
       const response = await axios.post(
-        `${API_BASE_URL}/create`,
+        `${QUEUE_API_BASE_URL}/create`,
         {
           providerId,
           serviceName: newQueueName,
@@ -109,21 +149,19 @@ const ProviderQueueManagement = () => {
           supportsGroupToken,
           emergencySupport,
           emergencyPriorityWeight,
-          // Correctly handle maxCapacity: send null if it's 0 or empty, otherwise send the number
           maxCapacity: maxCapacity > 0 ? maxCapacity : null,
         },
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
       toast.success(`${response.data.serviceName} queue created!`);
-      // Reset form fields
       setNewQueueName("");
       setSelectedPlaceId("");
       setSelectedServiceId("");
       setSupportsGroupToken(false);
       setEmergencySupport(false);
       setEmergencyPriorityWeight(10);
-      setMaxCapacity(50); // Reset to default
+      setMaxCapacity(50);
       setQueues((prevQueues) => [...prevQueues, normalizeQueue(response.data)]);
     } catch (error) {
       toast.error("Failed to create queue.");
@@ -135,8 +173,8 @@ const ProviderQueueManagement = () => {
     setUpdatingStatus((prev) => ({ ...prev, [queueId]: true }));
     try {
       const endpoint = currentStatus
-        ? `${API_BASE_URL}/${queueId}/deactivate`
-        : `${API_BASE_URL}/${queueId}/activate`;
+        ? `${QUEUE_API_BASE_URL}/${queueId}/deactivate`
+        : `${QUEUE_API_BASE_URL}/${queueId}/activate`;
 
       const response = await axios.put(
         endpoint,
@@ -146,7 +184,6 @@ const ProviderQueueManagement = () => {
         }
       );
 
-      // Update the specific queue in the state
       setQueues((prevQueues) =>
         prevQueues.map((queue) =>
           queue.id === queueId ? normalizeQueue(response.data) : queue
@@ -176,7 +213,7 @@ const ProviderQueueManagement = () => {
     navigate(`/provider/dashboard/${queueId}`);
   };
 
-  const services = selectedPlaceId ? servicesByPlace[selectedPlaceId] || [] : [];
+  const servicesForSelectedPlace = managedServices.filter(service => service.placeId === selectedPlaceId);
 
   if (loading) {
     return (
@@ -219,7 +256,7 @@ const ProviderQueueManagement = () => {
                 required
               >
                 <option value="">Select Place</option>
-                {places.map((place) => (
+                {managedPlaces.map((place) => (
                   <option key={place.id} value={place.id}>
                     {place.name}
                   </option>
@@ -236,7 +273,7 @@ const ProviderQueueManagement = () => {
                 required
               >
                 <option value="">Select Service</option>
-                {services.map((service) => (
+                {servicesForSelectedPlace.map((service) => (
                   <option key={service.id} value={service.id}>
                     {service.name}
                   </option>
@@ -363,7 +400,7 @@ const ProviderQueueManagement = () => {
                           <p className="card-text text-muted">
                             <FaBuilding className="me-1" />
                             <strong>Place:</strong>{" "}
-                            {places.find((p) => p.id === queue.placeId)?.name ||
+                            {managedPlaces.find((p) => p.id === queue.placeId)?.name ||
                               queue.placeId}
                           </p>
                         )}

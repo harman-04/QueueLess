@@ -16,4 +16,8 @@ public interface PlaceRepository extends MongoRepository<Place, String> {
     List<Place> findByLocationNear(Double longitude, Double latitude, Double maxDistance);
 
     List<Place> findByNameContainingIgnoreCase(String name);
+
+    List<Place> findAllById(List<String> ids);
+
+
 }

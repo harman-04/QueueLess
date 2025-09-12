@@ -1,10 +1,37 @@
-//src/components/PlaceList.jsx
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchPlaces } from '../redux/placeSlice';
 import { Card, Button, Spinner, Alert, Row, Col, Form } from 'react-bootstrap';
-import { FaMapMarkerAlt, FaStar, FaClock, FaPlus, FaSearch } from 'react-icons/fa';
+import { FaMapMarkerAlt, FaStar, FaStarHalfAlt, FaRegStar, FaClock, FaPlus, FaSearch } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
+
+// 🆕 New component to handle star display for fractional ratings
+const StarRatingDisplay = ({ rating }) => {
+  if (rating === null || rating === undefined || rating <= 0) {
+    return (
+      <span className="text-muted small">No ratings yet</span>
+    );
+  }
+
+  // Round to the nearest half-star for visual representation
+  const roundedRating = Math.round(rating * 2) / 2;
+  const fullStars = Math.floor(roundedRating);
+  const hasHalfStar = roundedRating % 1 !== 0;
+  const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
+
+  return (
+    <div className="d-flex align-items-center">
+      {[...Array(fullStars)].map((_, i) => (
+        <FaStar key={`full-${i}`} className="text-warning" />
+      ))}
+      {hasHalfStar && <FaStarHalfAlt className="text-warning" />}
+      {[...Array(emptyStars)].map((_, i) => (
+        <FaRegStar key={`empty-${i}`} className="text-warning" />
+      ))}
+      <span className="ms-2">{rating.toFixed(1)}</span>
+    </div>
+  );
+};
 
 const PlaceList = () => {
   const dispatch = useDispatch();
@@ -25,7 +52,7 @@ const PlaceList = () => {
   const filteredAndSortedPlaces = places
     .filter(place => {
       const matchesSearch = place.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                            place.description.toLowerCase().includes(searchTerm.toLowerCase());
+                          place.description.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesType = filterType === 'ALL' || place.type === filterType;
       return matchesSearch && matchesType;
     })
@@ -139,11 +166,9 @@ const PlaceList = () => {
                   <Card.Text>{place.description}</Card.Text>
 
                   <div className="d-flex justify-content-between align-items-center mb-2 mt-auto">
-                    <div>
-                      <FaStar className="text-warning me-1" />
-                      <span>{place.rating || 'No ratings'}</span>
-                      <span className="text-muted ms-2">({place.totalRatings || 0})</span>
-                    </div>
+                    {/* 🆕 Use the new StarRatingDisplay component */}
+                    <StarRatingDisplay rating={place.rating} />
+                    <span className="text-muted ms-2">({place.totalRatings || 0})</span>
                     <span className="badge bg-primary">{place.type}</span>
                   </div>
 

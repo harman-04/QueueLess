@@ -103,12 +103,17 @@ const Navbar = () => {
                   </>
                 ) : (
                   <>
+
                     <Button className="nav-btn-outline" onClick={() => navigate('/places')}>
                       <i className="bi bi-buildings me-2"></i>Places
                     </Button>
 
+
                     {role === 'ADMIN' && (
                       <>
+                      <Button className="nav-btn-outline" onClick={() => navigate('/admin/dashboard')}>
+                        <i className="bi bi-speedometer2 me-2"></i>My Dashboard
+                      </Button>
                         <Button className="nav-btn-info" onClick={() => navigate('/admin/places')}>
                           <i className="bi bi-gear me-2"></i>Manage Places
                         </Button>
@@ -164,9 +169,9 @@ const Navbar = () => {
                       </div>
                       <NavDropdown.Divider className="my-0" />
                       <NavDropdown.Item onClick={() => navigate('/profile')}>
-                        <i className="bi bi-person-circle me-2"></i>
-                        Profile
-                      </NavDropdown.Item>
+  <i className="bi bi-person-circle me-2"></i>
+  Profile
+</NavDropdown.Item>
                       <NavDropdown.Item onClick={() => navigate('/settings')}>
                         <i className="bi bi-gear-wide-connected me-2"></i>
                         Settings

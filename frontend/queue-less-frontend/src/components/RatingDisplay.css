@@ -1,0 +1,42 @@
+// src/components/RatingDisplay.css
+.rating-display {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.stars {
+  display: flex;
+  gap: 0.1rem;
+}
+
+.star {
+  color: #ddd;
+}
+
+.star.filled {
+  color: #ffc107;
+}
+
+.stars-sm .star {
+  font-size: 0.9rem;
+}
+
+.stars-md .star {
+  font-size: 1.1rem;
+}
+
+.stars-lg .star {
+  font-size: 1.5rem;
+}
+
+.rating-number {
+  font-weight: 600;
+  color: #333;
+}
+
+.review-count {
+  font-size: 0.8rem;
+  color: #666;
+  margin-left: 0.3rem;
+}

@@ -13,4 +13,6 @@ public interface QueueRepository extends MongoRepository<Queue, String> {
     List<Queue> findByPlaceIdAndServiceId(String placeId, String serviceId);
     Queue findByProviderIdAndId(String providerId, String id);
     List<Queue> findByIsActive(boolean isActive);
+    List<Queue> findByPlaceIdIn(List<String> placeIds);
+
 }

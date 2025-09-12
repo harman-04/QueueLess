@@ -8,5 +8,4 @@ import java.util.Optional;
 public interface TokenRepository extends MongoRepository<Token, String> {
     Optional<Token> findByTokenValue(String tokenValue);
     Optional<Token> findByCreatedForEmail(String email);
-
 }

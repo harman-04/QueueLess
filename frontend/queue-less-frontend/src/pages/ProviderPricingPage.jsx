@@ -1,4 +1,3 @@
-//src/pages/ProviderPage.jsx
 import React, { useState } from 'react';
 import { Card, Button, Container, Row, Col, Form } from 'react-bootstrap';
 import axios from 'axios';
@@ -7,7 +6,8 @@ import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import { Link } from 'react-router-dom';
 import 'bootstrap-icons/font/bootstrap-icons.css';
-import './ProviderPricingPage.css'; // 
+import './ProviderPricingPage.css';
+import { useSelector } from 'react-redux';
 
 const plans = [
   { name: "Basic", tokenType: "1_MONTH", price: 100, description: "Perfect for new providers." },
@@ -29,6 +29,9 @@ const ProviderPricingPage = () => {
   const [planLoading, setPlanLoading] = useState({});
   const [generatedToken, setGeneratedToken] = useState('');
 
+  // CORRECTED: Get both 'token' and 'id' from Redux store
+  const { token, id: adminId } = useSelector((state) => state.auth);
+
   const formik = useFormik({
     initialValues: { email: '' },
     validationSchema: Yup.object({
@@ -47,8 +50,22 @@ const ProviderPricingPage = () => {
   const handleBuy = async (tokenType) => {
     formik.handleSubmit();
 
-    if (formik.errors.email || !formik.values.email) {
+    const providerEmail = formik.values.email;
+
+    if (formik.errors.email || !providerEmail) {
       Swal.fire('Error', 'Please enter a valid and trusted email address', 'error');
+      return;
+    }
+
+    // Check if adminId is available
+    if (!adminId) {
+      Swal.fire('Error', 'Authentication error: Admin ID not found. Please log in again.', 'error');
+      return;
+    }
+    
+    // Check if token is available
+    if (!token) {
+      Swal.fire('Error', 'Authentication error: Token not found. Please log in again.', 'error');
       return;
     }
 
@@ -57,9 +74,13 @@ const ProviderPricingPage = () => {
     try {
       const res = await axios.post('http://localhost:8080/api/payment/create-order', null, {
         params: {
-          email: formik.values.email,
+          email: providerEmail,
           role: 'PROVIDER',
           tokenType,
+          adminId
+        },
+        headers: {
+          Authorization: `Bearer ${token}` // Now the 'token' variable is correctly defined
         }
       });
 
@@ -73,20 +94,25 @@ const ProviderPricingPage = () => {
         description: "Purchase Provider Token",
         order_id: orderId,
         handler: async (response) => {
-          const confirmRes = await axios.post('http://localhost:8080/api/payment/confirm-provider', null, {
-            params: {
-              orderId,
-              paymentId: response.razorpay_payment_id,
-              email: formik.values.email,
-              tokenType,
-            }
-          });
+          try {
+            const confirmRes = await axios.post('http://localhost:8080/api/payment/confirm-provider', null, {
+              params: {
+                orderId,
+                paymentId: response.razorpay_payment_id,
+                providerEmail: providerEmail,
+                tokenType,
+                adminId, 
+              }
+            });
 
-          setGeneratedToken(confirmRes.data.tokenValue);
-          Swal.fire('Success', 'Payment Successful! Token Generated.', 'success');
+            setGeneratedToken(confirmRes.data.tokenValue);
+            Swal.fire('Success', 'Payment Successful! Token Generated.', 'success');
+          } catch (error) {
+            Swal.fire('Error', error?.response?.data?.message || 'Payment confirmation failed.', 'error');
+          }
         },
         prefill: {
-          email: formik.values.email,
+          email: providerEmail,
         },
         theme: {
           color: "#0d6efd",

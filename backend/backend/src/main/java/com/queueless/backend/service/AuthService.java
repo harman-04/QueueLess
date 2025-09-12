@@ -1,4 +1,3 @@
-// Enhanced AuthService with better validation
 package com.queueless.backend.service;
 
 import com.queueless.backend.dto.JwtResponse;
@@ -17,6 +16,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.List;
 
 @Slf4j
 @Service
@@ -44,7 +44,6 @@ public class AuthService {
             log.warn("Login failed - Password mismatch for email: {}", request.getEmail());
             throw new RuntimeException("Invalid credentials");
         }
-        // Check if user is verified
         if (user.getRole() != Role.USER && !user.getIsVerified()) {
             log.warn("Login failed - User not verified: {}", request.getEmail());
             throw new RuntimeException("Account not verified. Please contact administrator.");
@@ -74,10 +73,8 @@ public class AuthService {
             throw new RuntimeException("Email already registered");
         }
 
-        // Variable to track if the account should be verified
         boolean isVerifiedAutomatically = false;
 
-        // 🔹 Validate token for ADMIN or PROVIDER
         if (request.getRole() == Role.ADMIN || request.getRole() == Role.PROVIDER) {
             if (request.getToken() == null || request.getToken().isEmpty()) {
                 log.error("Registration failed - Token required for role: {}", request.getRole());
@@ -112,14 +109,12 @@ public class AuthService {
                 throw new RuntimeException("Token is tied to a different email");
             }
 
-            // ✅ Mark token used and set verification flag
             token.setUsed(true);
             tokenRepository.save(token);
             log.debug("Token {} marked as used for {}", token.getTokenValue(), request.getEmail());
-            isVerifiedAutomatically = true; // Set flag to true
+            isVerifiedAutomatically = true;
         }
 
-        // Build user preferences
         User.UserPreferences userPreferences = null;
         if (request.getPreferences() != null) {
             userPreferences = User.UserPreferences.builder()
@@ -131,7 +126,6 @@ public class AuthService {
                     .favoritePlaceIds(new ArrayList<>())
                     .build();
         } else {
-            // Default preferences
             userPreferences = User.UserPreferences.builder()
                     .emailNotifications(true)
                     .smsNotifications(false)
@@ -142,6 +136,18 @@ public class AuthService {
                     .build();
         }
 
+        String adminId = null;
+        List<String> managedPlaceIds = new ArrayList<>();
+        if (request.getRole() == Role.PROVIDER) {
+            Token token = tokenRepository.findByTokenValue(request.getToken()).orElse(null);
+            if (token != null) {
+                adminId = token.getCreatedByAdminId();
+                if (request.getPlaceId() != null && !request.getPlaceId().isEmpty()) {
+                    managedPlaceIds.add(request.getPlaceId());
+                }
+            }
+        }
+
         User user = User.builder()
                 .name(request.getName())
                 .email(request.getEmail())
@@ -150,9 +156,11 @@ public class AuthService {
                 .role(request.getRole())
                 .placeId(request.getPlaceId())
                 .profileImageUrl(null)
-                .isVerified(isVerifiedAutomatically) // Now uses the dynamic flag
+                .isVerified(isVerifiedAutomatically)
                 .preferences(userPreferences)
                 .ownedPlaceIds(new ArrayList<>())
+                .adminId(adminId)
+                .managedPlaceIds(managedPlaceIds)
                 .createdAt(LocalDateTime.now())
                 .build();
 

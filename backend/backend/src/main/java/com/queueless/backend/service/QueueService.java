@@ -4,9 +4,10 @@ import com.queueless.backend.enums.TokenStatus;
 import com.queueless.backend.exception.QueueInactiveException;
 import com.queueless.backend.exception.ResourceNotFoundException;
 import com.queueless.backend.exception.UserAlreadyInQueueException;
-import com.queueless.backend.model.Queue;
-import com.queueless.backend.model.QueueToken;
+import com.queueless.backend.model.*;
+import com.queueless.backend.repository.FeedbackRepository;
 import com.queueless.backend.repository.QueueRepository;
+import com.queueless.backend.repository.UserRepository;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -14,7 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Service;
+
 
 import java.time.LocalDateTime;
 import java.util.Iterator;
@@ -23,7 +24,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Slf4j
-@Service
+@org.springframework.stereotype.Service
 @RequiredArgsConstructor
 public class QueueService {
 
@@ -31,8 +32,12 @@ public class QueueService {
 
     private final QueueRepository queueRepository;
     private final SimpMessagingTemplate messagingTemplate;
+    private final UserRepository userRepository;
+    private final PlaceService placeService;
+    private final ServiceService serviceService;
+    private final FeedbackService feedbackService;
+    private final FeedbackRepository feedbackRepository;
 
-    /** 🔄 Utility: Fetch queue or throw */
     private Queue getQueueOrThrow(String queueId) {
         return queueRepository.findById(queueId)
                 .orElseThrow(() -> {
@@ -41,7 +46,6 @@ public class QueueService {
                 });
     }
 
-    /** 👥 User joins queue */
     public QueueToken addNewToken(String queueId, String userId) {
         Queue queue = getQueueOrThrow(queueId);
 
@@ -50,7 +54,6 @@ public class QueueService {
             throw new QueueInactiveException("Provider is on break. Queue temporarily unavailable.");
         }
 
-        // Check if user already has an active token in this queue
         boolean hasActiveToken = queue.getTokens().stream()
                 .anyMatch(token -> token.getUserId().equals(userId) &&
                         (TokenStatus.WAITING.toString().equals(token.getStatus()) ||
@@ -60,7 +63,6 @@ public class QueueService {
             throw new UserAlreadyInQueueException("User already has an active token in this queue");
         }
 
-        // Check if queue has reached max capacity
         long waitingAndInServiceTokens = queue.getTokens().stream()
                 .filter(token -> TokenStatus.WAITING.toString().equals(token.getStatus()) ||
                         TokenStatus.IN_SERVICE.toString().equals(token.getStatus()))
@@ -84,7 +86,6 @@ public class QueueService {
         return token;
     }
 
-    /** 👥👥 User joins queue with group */
     public QueueToken addGroupToken(String queueId, String userId, List<QueueToken.GroupMember> groupMembers) {
         Queue queue = getQueueOrThrow(queueId);
 
@@ -97,7 +98,6 @@ public class QueueService {
             throw new UnsupportedOperationException("This queue does not support group tokens");
         }
 
-        // Check if user already has an active token in this queue
         boolean hasActiveToken = queue.getTokens().stream()
                 .anyMatch(token -> token.getUserId().equals(userId) &&
                         (TokenStatus.WAITING.toString().equals(token.getStatus()) ||
@@ -135,7 +135,6 @@ public class QueueService {
         return token;
     }
 
-    /** 🚑 User joins queue with emergency */
     public QueueToken addEmergencyToken(String queueId, String userId, String emergencyDetails) {
         Queue queue = getQueueOrThrow(queueId);
 
@@ -148,7 +147,6 @@ public class QueueService {
             throw new UnsupportedOperationException("This queue does not support emergency tokens");
         }
 
-        // Check if user already has an active token in this queue
         boolean hasActiveToken = queue.getTokens().stream()
                 .anyMatch(token -> token.getUserId().equals(userId) &&
                         (TokenStatus.WAITING.toString().equals(token.getStatus()) ||
@@ -167,7 +165,6 @@ public class QueueService {
             throw new IllegalStateException("Queue has reached its maximum capacity. Please try again later.");
         }
 
-
         int nextToken = queue.getTokenCounter() + 1;
         queue.setTokenCounter(nextToken);
         String tokenId = "E-" + String.format("%03d", nextToken);
@@ -183,24 +180,15 @@ public class QueueService {
         return token;
     }
 
-    /** 📡 Broadcast helper */
     private void broadcastQueueUpdate(String queueId, Queue queue) {
-        // Send to the specific queue topic
         messagingTemplate.convertAndSend("/topic/queues/" + queueId, queue);
-
-        // Also send to a general topic for all queue updates
         messagingTemplate.convertAndSend("/topic/queues", queue);
-
-        // Send to the place's queue topic for UI updates
         messagingTemplate.convertAndSend("/topic/places/" + queue.getPlaceId() + "/queues", queue);
     }
 
-
-    /** ⏩ Serve next waiting token */
     public Queue serveNextToken(String queueId) {
         Queue queue = getQueueOrThrow(queueId);
 
-        // First, complete any currently in-service token
         queue.getTokens().stream()
                 .filter(t -> TokenStatus.IN_SERVICE.toString().equals(t.getStatus()))
                 .findFirst()
@@ -210,7 +198,6 @@ public class QueueService {
                     log.info("Completed previous in-service token: {}", inServiceToken.getTokenId());
                 });
 
-        // Then find the next WAITING token (considering priority)
         Optional<QueueToken> nextToken = queue.getTokens().stream()
                 .filter(t -> TokenStatus.WAITING.toString().equals(t.getStatus()))
                 .max((t1, t2) -> Integer.compare(t1.getPriority(), t2.getPriority()));
@@ -230,7 +217,32 @@ public class QueueService {
         return queue;
     }
 
-    /** 🔁 Toggle queue active status */
+    // Update the createFeedbackOpportunity method
+    private void createFeedbackOpportunity(QueueToken token, Queue queue) {
+        try {
+            // Check if feedback already exists
+            Optional<Feedback> existingFeedback = feedbackRepository.findByTokenId(token.getTokenId());
+            if (existingFeedback.isPresent()) {
+                return; // Feedback already exists
+            }
+
+            Feedback feedback = new Feedback(
+                    queue.getId(),
+                    token.getTokenId(),
+                    token.getUserId(),
+                    queue.getProviderId(),
+                    queue.getPlaceId(),
+                    queue.getServiceId()
+            );
+
+            feedbackRepository.save(feedback);
+            logger.info("Feedback opportunity created for token: {}", token.getTokenId());
+
+        } catch (Exception e) {
+            logger.error("Error creating feedback opportunity: {}", e.getMessage());
+        }
+    }
+
     public Queue setQueueActiveStatus(String queueId, boolean active) {
         Queue queue = getQueueOrThrow(queueId);
         queue.setIsActive(active);
@@ -240,8 +252,7 @@ public class QueueService {
         return updatedQueue;
     }
 
-    /** 🕐 Scheduled method to update estimated wait times */
-    @Scheduled(fixedRate = 30000) // Every 30 seconds
+    @Scheduled(fixedRate = 30000)
     public void updateAllQueueWaitTimes() {
         log.info("🕐 Updating estimated wait times for all queues");
         List<Queue> allQueues = queueRepository.findAll();
@@ -252,13 +263,11 @@ public class QueueService {
                         .filter(t -> TokenStatus.WAITING.toString().equals(t.getStatus()))
                         .count();
 
-                // Simple calculation: 5 minutes per token
                 int estimatedWaitTime = waitingTokens * 5;
                 queue.setEstimatedWaitTime(estimatedWaitTime);
 
                 queueRepository.save(queue);
 
-                // Broadcast update if queue is active
                 if (queue.getIsActive()) {
                     broadcastQueueUpdate(queue.getId(), queue);
                 }
@@ -268,8 +277,6 @@ public class QueueService {
         }
     }
 
-
-    /** 🆕 Create a new queue with place and service references */
     public Queue createNewQueue(String providerId, String serviceName, String placeId, String serviceId) {
         logger.info("Creating queue for providerId={}, serviceName={}, placeId={}, serviceId={}",
                 providerId, serviceName, placeId, serviceId);
@@ -278,10 +285,31 @@ public class QueueService {
         return queueRepository.save(newQueue);
     }
 
-    /** 🆕 Create a new queue with advanced settings */
     public Queue createNewQueue(String providerId, String serviceName, String placeId, String serviceId,
                                 Integer maxCapacity, Boolean supportsGroupToken, Boolean emergencySupport, Integer emergencyPriorityWeight) {
         logger.info("Creating queue with advanced settings for providerId={}", providerId);
+
+        User provider = userRepository.findById(providerId)
+                .orElseThrow(() -> new RuntimeException("Provider not found"));
+
+        Place place = placeService.getPlaceById(placeId);
+        if (place == null) {
+            throw new RuntimeException("Place not found");
+        }
+
+        if (!place.getAdminId().equals(provider.getAdminId()) &&
+                (provider.getManagedPlaceIds() == null || !provider.getManagedPlaceIds().contains(placeId))) {
+            throw new RuntimeException("Provider does not have access to this place");
+        }
+
+        Service service = serviceService.getServiceById(serviceId);
+        if (service == null) {
+            throw new RuntimeException("Service not found");
+        }
+
+        if (!service.getPlaceId().equals(placeId)) {
+            throw new RuntimeException("Service does not belong to the selected place");
+        }
 
         Queue newQueue = new Queue(providerId, serviceName, placeId, serviceId);
         newQueue.setMaxCapacity(maxCapacity);
@@ -295,40 +323,33 @@ public class QueueService {
     public List<Queue> getQueuesByProviderId(String providerId) {
         logger.info("Fetching queues for providerId={}", providerId);
         List<Queue> queues = queueRepository.findByProviderId(providerId);
-
-        // Ensure the provider only accesses their own queues
         queues = queues.stream()
                 .filter(queue -> queue.getProviderId().equals(providerId))
                 .collect(Collectors.toList());
-
         logger.debug("Filtered to {} queues for providerId={}", queues.size(), providerId);
         return queues;
     }
 
-    /** 📋 Get all queues for a place */
     public List<Queue> getQueuesByPlaceId(String placeId) {
         logger.info("Fetching queues for placeId={}", placeId);
         return queueRepository.findByPlaceId(placeId);
     }
 
-    /** 📋 Get all queues for a service */
     public List<Queue> getQueuesByServiceId(String serviceId) {
         logger.info("Fetching queues for serviceId={}", serviceId);
         return queueRepository.findByServiceId(serviceId);
     }
 
-    /** 📌 Get queue by ID */
     public Queue getQueueById(String queueId) {
         return getQueueOrThrow(queueId);
     }
 
-    /** 🟢 Get all active queues */
     public List<Queue> getAllQueues() {
         logger.info("Fetching all active queues");
         return queueRepository.findByIsActive(true);
     }
 
-    /** ✅ Complete token */
+    // In QueueService.java - Update the completeToken method
     public Queue completeToken(String queueId, String tokenId) {
         Queue queue = getQueueOrThrow(queueId);
 
@@ -341,14 +362,15 @@ public class QueueService {
                 });
 
         token.setStatus(TokenStatus.COMPLETED.toString());
+        token.setCompletedAt(LocalDateTime.now());
         Queue updatedQueue = queueRepository.save(queue);
         broadcastQueueUpdate(queueId, updatedQueue);
 
+        // Create feedback opportunity
         logger.info("Token {} marked COMPLETED", tokenId);
         return updatedQueue;
     }
 
-    /** ❌ Cancel token */
     public Queue cancelToken(String queueId, String tokenId) {
         Queue queue = getQueueOrThrow(queueId);
 
@@ -365,7 +387,6 @@ public class QueueService {
         return updatedQueue;
     }
 
-    /** 🔃 Reorder tokens */
     public Queue reorderQueue(String queueId, List<QueueToken> newTokens) {
         Queue queue = getQueueOrThrow(queueId);
         queue.setTokens(newTokens);
@@ -376,7 +397,6 @@ public class QueueService {
         return updatedQueue;
     }
 
-    // In QueueService.java - Add this method
     @PostConstruct
     public void cleanupInconsistentTokenStatuses() {
         logger.info("Cleaning up inconsistent token statuses...");
@@ -385,7 +405,6 @@ public class QueueService {
         for (Queue queue : allQueues) {
             boolean needsUpdate = false;
 
-            // Check for multiple IN_SERVICE tokens
             long inServiceCount = queue.getTokens().stream()
                     .filter(t -> TokenStatus.IN_SERVICE.toString().equals(t.getStatus()))
                     .count();
@@ -393,7 +412,6 @@ public class QueueService {
             if (inServiceCount > 1) {
                 logger.warn("Queue {} has {} IN_SERVICE tokens, fixing...", queue.getId(), inServiceCount);
 
-                // Keep only the first IN_SERVICE token, mark others as COMPLETED
                 boolean foundFirst = false;
                 for (QueueToken token : queue.getTokens()) {
                     if (TokenStatus.IN_SERVICE.toString().equals(token.getStatus())) {
@@ -414,19 +432,13 @@ public class QueueService {
         }
     }
 
-    /** 🆕 Update queue statistics */
     public Queue updateQueueStatistics(String queueId) {
         Queue queue = getQueueOrThrow(queueId);
 
-        // Calculate average wait time
-        // This is a simplified implementation
-        // In a real scenario, you would track actual wait times
         if (queue.getStatistics() == null) {
             queue.setStatistics(new Queue.QueueStatistics());
         }
 
-        // Update statistics based on queue data
-        // This would be more complex in a real implementation
         queue.getStatistics().setTotalServed(
                 (int) queue.getTokens().stream()
                         .filter(t -> TokenStatus.COMPLETED.toString().equals(t.getStatus()))
@@ -440,8 +452,7 @@ public class QueueService {
         return updatedQueue;
     }
 
-    // In QueueService.java
-    @Scheduled(fixedRate = 60000) // Run every minute
+    @Scheduled(fixedRate = 60000)
     public void cleanupExpiredTokens() {
         logger.info("Cleaning up expired tokens...");
         List<Queue> allQueues = queueRepository.findAll();
@@ -452,7 +463,6 @@ public class QueueService {
 
             while (iterator.hasNext()) {
                 QueueToken token = iterator.next();
-                // Remove tokens older than 24 hours
                 if (token.getIssuedAt().isBefore(LocalDateTime.now().minusHours(24))) {
                     iterator.remove();
                     modified = true;
@@ -468,10 +478,11 @@ public class QueueService {
     }
 
     public List<Queue> getQueuesByUserId(String userId) {
-        // Find all queues that contain at least one token for the given userId
         return queueRepository.findAll().stream()
                 .filter(queue -> queue.getTokens().stream()
                         .anyMatch(token -> token.getUserId().equals(userId)))
                 .collect(Collectors.toList());
     }
+
+
 }

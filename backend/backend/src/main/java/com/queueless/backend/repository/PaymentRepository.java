@@ -12,4 +12,7 @@ public interface PaymentRepository extends MongoRepository<Payment, String> {
     // Add this new method
     List<Payment> findByCreatedForEmail(String email);
 
+    // Update PaymentRepository.java
+    List<Payment> findByCreatedByAdminId(String adminId);
+
 }

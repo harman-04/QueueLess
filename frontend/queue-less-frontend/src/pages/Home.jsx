@@ -1,4 +1,4 @@
-//src/pages/Home
+//src/pages/Home/jsx
 import { useNavigate } from 'react-router-dom';
 import { Button } from 'react-bootstrap';
 import { FaStar, FaMobileAlt, FaClock, FaCheckCircle } from 'react-icons/fa';

@@ -7,6 +7,7 @@ import com.queueless.backend.repository.PaymentRepository;
 import com.queueless.backend.repository.TokenRepository;
 import com.razorpay.Order;
 import com.razorpay.RazorpayClient;
+import com.razorpay.RazorpayException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.json.JSONObject;
@@ -31,7 +32,7 @@ public class PaymentService {
     @Value("${razorpay.secret}")
     private String RAZORPAY_SECRET;
 
-    public Order createOrder(String email, Role role, String tokenType) throws Exception {
+    public Order createOrder(String email, Role role, String tokenType, String adminId) throws Exception {
         log.info("Initiating order creation | email={}, role={}, tokenType={}", email, role, tokenType);
 
         RazorpayClient razorpayClient = new RazorpayClient(RAZORPAY_KEY, RAZORPAY_SECRET);
@@ -78,6 +79,12 @@ public class PaymentService {
             orderRequest.put("currency", "INR");
             orderRequest.put("receipt", "receipt_" + System.currentTimeMillis());
 
+            // Store the admin ID in a note
+            if (role == Role.PROVIDER && adminId != null) {
+                JSONObject notes = new JSONObject();
+                notes.put("adminId", adminId);
+                orderRequest.put("notes", notes);
+            }
             log.debug("Sending request to Razorpay | payload={}", orderRequest);
 
             Order order = razorpayClient.orders.create(orderRequest);
@@ -120,8 +127,8 @@ public class PaymentService {
         return "Payment confirmed";
     }
 
-    public Token generateToken(String email, String tokenType, Role role, boolean isProviderToken) {
-        log.info("Generating token | email={}, role={}, tokenType={}, isProviderToken={}", email, role, tokenType, isProviderToken);
+    public Token generateToken(String email, String tokenType, Role role, boolean isProviderToken, String adminId) {
+        log.info("Generating token | email={}, role={}, tokenType={}, isProviderToken={}, adminId={}", email, role, tokenType, isProviderToken, adminId);
 
         LocalDateTime expiry;
         try {
@@ -151,17 +158,36 @@ public class PaymentService {
                     .expiryDate(expiry)
                     .isUsed(false)
                     .isProviderToken(isProviderToken)
+                    .createdByAdminId(adminId)
                     .build();
+
+            if (role == Role.PROVIDER && adminId != null) {
+                token.setCreatedByAdminId(adminId);
+            } else {
+                token.setCreatedByAdminId(null);
+            }
 
             tokenRepository.save(token);
 
-            log.info("Token generated successfully | tokenValue={}, role={}, expiry={}", tokenValue, role, expiry);
+            log.info("Token generated successfully | tokenValue={}, role={}, expiry={}, adminId={}", tokenValue, role, expiry, adminId);
 
             return token;
 
         } catch (Exception e) {
             log.error("Failed to generate token | email={}, role={}, tokenType={}, error={}", email, role, tokenType, e.getMessage(), e);
             throw e;
+        }
+    }
+
+    public String getAdminIdFromOrder(String orderId) throws RazorpayException {
+        RazorpayClient razorpayClient = new RazorpayClient(RAZORPAY_KEY, RAZORPAY_SECRET);
+        try {
+            Order order = razorpayClient.orders.fetch(orderId);
+            JSONObject notes = order.get("notes");
+            return notes.getString("adminId");
+        } catch (Exception e) {
+            log.error("Failed to fetch order details for orderId={}", orderId, e);
+            throw new RuntimeException("Failed to retrieve admin ID from order", e);
         }
     }
 }
