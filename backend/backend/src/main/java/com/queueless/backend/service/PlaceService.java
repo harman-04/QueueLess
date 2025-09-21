@@ -5,10 +5,14 @@ import com.queueless.backend.model.Place;
 import com.queueless.backend.repository.PlaceRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.bson.types.ObjectId;
 import org.springframework.data.mongodb.core.geo.GeoJsonPoint;
 import org.springframework.stereotype.Service;
+
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -120,8 +124,35 @@ public class PlaceService {
         return places;
     }
 
-    public List<Place> getPlacesByIds(List<String> placeIds) {
-        log.debug("Fetching places by IDs: {}", placeIds);
-        return placeRepository.findAllById(placeIds);
-    }
+//    public List<Place> getPlacesByIds(List<String> placeIds) {
+//        log.debug("Fetching places by IDs: {}", placeIds);
+//        return placeRepository.findAllById(placeIds);
+//    }
+
+
+//    public List<Place> getPlacesByIds(List<String> placeIds) {
+//        if (placeIds == null || placeIds.isEmpty()) {
+//            return new ArrayList<>();
+//        }
+//        return placeRepository.findAllById(placeIds);
+//    }
+
+
+    /**
+     * New method to correctly fetch favorite places by converting String IDs to ObjectId.
+     * This avoids conflicts with the existing findAllById method and ensures correct data retrieval.
+     */
+
+        public List<Place> getPlacesByIds(List<String> placeIds) {
+            if (placeIds == null || placeIds.isEmpty()) {
+                return new ArrayList<>();
+            }
+            // This method will now convert the String IDs to ObjectId before querying
+            List<ObjectId> objectIds = placeIds.stream()
+                    .map(ObjectId::new)
+                    .collect(Collectors.toList());
+            return placeRepository.findFavoritesByIdIn(objectIds);
+        }
+
+    
 }

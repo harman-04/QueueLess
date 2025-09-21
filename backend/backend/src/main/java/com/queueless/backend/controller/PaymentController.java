@@ -2,7 +2,7 @@ package com.queueless.backend.controller;
 
 import com.queueless.backend.dto.OrderResponse;
 import com.queueless.backend.dto.TokenResponse;
-import com.queueless.backend.model.Role;
+import com.queueless.backend.enums.Role;
 import com.queueless.backend.model.Token;
 import com.queueless.backend.service.PaymentService;
 import com.razorpay.Order;

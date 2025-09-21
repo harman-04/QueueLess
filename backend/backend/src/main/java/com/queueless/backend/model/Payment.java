@@ -1,5 +1,6 @@
 package com.queueless.backend.model;
 
+import com.queueless.backend.enums.Role;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

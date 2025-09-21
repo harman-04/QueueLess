@@ -13,7 +13,7 @@ const PlaceRatingSummary = ({ placeId }) => {
     const fetchRatings = async () => {
       try {
         setLoading(true);
-        const response = await axios.get(`http://localhost:8080/api/feedback/place/${placeId}/detailed-ratings`);
+        const response = await axios.get(`https://localhost:8443/api/feedback/place/${placeId}/detailed-ratings`);
         
         // Check if the ratings data is empty or all ratings are 0
         const hasRatings = response.data && 

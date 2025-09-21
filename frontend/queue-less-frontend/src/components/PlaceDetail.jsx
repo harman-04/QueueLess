@@ -19,6 +19,7 @@ import axios from "axios";
 import { toast } from "react-toastify";
 import PlaceRatingSummary from "./PlaceRatingSummary";
 import FeedbackHistory from "./FeedbackHistory";
+import FavoriteButton from "./FavoriteButton";
 
 const PlaceDetail = () => {
   const dispatch = useDispatch();
@@ -51,7 +52,7 @@ const PlaceDetail = () => {
     const fetchQueues = async () => {
       try {
         const response = await axios.get(
-          `http://localhost:8080/api/queues/by-place/${id}`
+          `https://localhost:8443/api/queues/by-place/${id}`
         );
         setQueues(response.data);
       } catch (error) {
@@ -183,10 +184,12 @@ const PlaceDetail = () => {
                 {currentPlace.address}
               </Card.Text>
               <Card.Text>{currentPlace.description}</Card.Text>
+
               {currentPlace.rating !== null && (
                 <div className="mb-3">
                   <FaStar className="text-warning me-2" />
                   <strong>{currentPlace.rating.toFixed(1)}</strong>
+
                   <span className="text-muted ms-2">
                     ({currentPlace.totalRatings || 0} ratings)
                   </span>
@@ -243,6 +246,12 @@ const PlaceDetail = () => {
                 )}
             </Card.Body>
           </Card>
+          <Card.Header>
+            <div className="d-flex justify-content-between align-items-center">
+              <h2>{currentPlace.name}</h2>
+              <FavoriteButton placeId={currentPlace.id} size="md" />
+            </div>
+          </Card.Header>
           {currentPlace && (
             <>
               {/* Placement for a quick ratings summary */}

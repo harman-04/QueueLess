@@ -1,9 +1,8 @@
-// src/utils/axiosInstance.js
 import axios from 'axios';
 import store from '../store/store';
 
 const axiosInstance = axios.create({
-  baseURL: 'http://localhost:8080/api',
+  baseURL: 'https://localhost:8443/api',
 });
 
 // Request interceptor
@@ -30,6 +29,15 @@ axiosInstance.interceptors.response.use(
     if (error.response) {
       const { status, data } = error.response;
 
+      // Handle token expiry
+      if (status === 401 && data.message?.includes('JWT') && data.message?.includes('expired')) {
+        // Dispatch logout action
+        store.dispatch({ type: 'auth/logout' });
+        // Redirect to login page
+        window.location.href = '/login';
+        return Promise.reject(new Error('Token expired. Please login again.'));
+      }
+
       // Normalize backend ApiError
       const normalizedError = {
         status,
@@ -38,12 +46,6 @@ axiosInstance.interceptors.response.use(
         path: data?.path,
         timestamp: data?.timestamp,
       };
-
-      // Handle auth errors
-      if (status === 401) {
-        store.dispatch({ type: 'auth/logout' });
-        window.location.href = '/login';
-      }
 
       return Promise.reject(normalizedError);
     }

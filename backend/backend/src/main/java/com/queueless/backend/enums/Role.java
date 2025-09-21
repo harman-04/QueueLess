@@ -1,4 +1,4 @@
-package com.queueless.backend.model;
+package com.queueless.backend.enums;
 
 public enum Role {
     USER,

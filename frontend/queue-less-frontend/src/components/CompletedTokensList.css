@@ -1,0 +1,104 @@
+/* Container for the completed tokens section */
+.completed-tokens-container {
+    margin-top: 2.5rem;
+}
+
+.completed-tokens-accordion-header {
+    background-color: #f8f9fa !important;
+    border-radius: 16px !important;
+    padding: 1.2rem 1.5rem !important;
+    font-weight: 600 !important;
+    color: #4a5568 !important;
+    border: 1px solid #e2e8f0 !important;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+}
+
+.completed-tokens-accordion-header button {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    text-align: left;
+}
+
+.completed-tokens-accordion-header h5 {
+    margin-bottom: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.accordion-button:not(.collapsed) {
+    background-color: #e9ecef !important;
+    color: #212529 !important;
+}
+
+.completed-tokens-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.5rem;
+    padding-top: 1.5rem;
+}
+
+.completed-token-card {
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    transition: transform 0.2s ease-in-out;
+    border: 1px solid #d4edda;
+}
+
+.completed-token-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+.completed-card-header-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.completed-token-number {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #38a169;
+    margin: 0;
+}
+
+.completed-status-badge {
+    padding: 0.4em 0.8em;
+    font-size: 0.85em;
+    border-radius: 20px;
+}
+
+.completed-card-body-details {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    color: #718096;
+}
+
+.completed-detail-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.completed-user-details-summary {
+    font-size: 0.95rem;
+    color: #4a5568;
+    background: #f7fafc;
+    padding: 0.75rem;
+    border-radius: 8px;
+    border: 1px dashed #e2e8f0;
+}
+
+.completed-tokens-empty {
+    text-align: center;
+    padding: 3rem;
+    color: #a0aec0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}

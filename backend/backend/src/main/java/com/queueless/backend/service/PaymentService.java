@@ -1,7 +1,7 @@
 package com.queueless.backend.service;
 
 import com.queueless.backend.model.Payment;
-import com.queueless.backend.model.Role;
+import com.queueless.backend.enums.Role;
 import com.queueless.backend.model.Token;
 import com.queueless.backend.repository.PaymentRepository;
 import com.queueless.backend.repository.TokenRepository;

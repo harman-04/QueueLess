@@ -6,9 +6,9 @@ import com.queueless.backend.model.User;
 import com.queueless.backend.repository.UserRepository;
 import com.queueless.backend.service.PlaceService;
 import com.queueless.backend.service.ServiceService;
+import com.queueless.backend.security.annotations.ProviderOnly; // New import
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -27,7 +27,7 @@ public class ProviderController {
     private final ServiceService serviceService;
 
     @GetMapping("/my-places")
-    @PreAuthorize("hasRole('PROVIDER')")
+    @ProviderOnly
     public ResponseEntity<List<PlaceDTO>> getMyManagedPlaces(Authentication authentication) {
         String providerId = authentication.getName();
         User provider = userRepository.findById(providerId)
@@ -48,7 +48,7 @@ public class ProviderController {
     }
 
     @GetMapping("/my-services")
-    @PreAuthorize("hasRole('PROVIDER')")
+    @ProviderOnly
     public ResponseEntity<List<ServiceDTO>> getMyManagedServices(Authentication authentication) {
         String providerId = authentication.getName();
         User provider = userRepository.findById(providerId)

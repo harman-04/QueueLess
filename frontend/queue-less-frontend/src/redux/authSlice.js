@@ -1,4 +1,3 @@
-// src/redux/authSlice.js
 import { createSlice } from '@reduxjs/toolkit';
 
 // Get initial state from localStorage
@@ -124,8 +123,19 @@ const authSlice = createSlice({
       };
       state.ownedPlaceIds = [];
       
-      // Clear localStorage
-      localStorage.clear();
+      // Clear all localStorage items related to auth
+      localStorage.removeItem('token');
+      localStorage.removeItem('role');
+      localStorage.removeItem('userId');
+      localStorage.removeItem('name');
+      localStorage.removeItem('profileImageUrl');
+      localStorage.removeItem('placeId');
+      localStorage.removeItem('isVerified');
+      localStorage.removeItem('preferences');
+      localStorage.removeItem('ownedPlaceIds');
+      
+      // Clear any other stored data that might be related to the user session
+      localStorage.removeItem('dismissedFeedbackPrompts');
     },
   },
 });

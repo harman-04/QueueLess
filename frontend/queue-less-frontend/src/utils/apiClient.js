@@ -2,7 +2,7 @@
 import axios from 'axios';
 
 const apiClient = axios.create({
-  baseURL: 'http://localhost:8080/api', // change if your backend is deployed
+  baseURL: 'https://localhost:8443/api', // change if your backend is deployed
   headers: {
     'Content-Type': 'application/x-www-form-urlencoded',
   },

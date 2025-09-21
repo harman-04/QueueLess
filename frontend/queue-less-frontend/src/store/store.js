@@ -4,6 +4,8 @@ import authReducer from '../redux/authSlice';
 import queueReducer from '../redux/queue/queueSlice';
 import placeReducer from '../redux/placeSlice';
 import serviceReducer from '../redux/serviceSlice';
+import searchReducer from '../redux/searchSlice'; // Make sure this import exists
+import userReducer from '../redux/userSlice'; // Add this line
 import websocketMiddleware from '../redux/queue/websocketMiddleware';
 
 const store = configureStore({
@@ -12,6 +14,8 @@ const store = configureStore({
     queue: queueReducer,
     places: placeReducer,
     services: serviceReducer,
+    search: searchReducer,
+     user: userReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

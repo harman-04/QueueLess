@@ -1,0 +1,74 @@
+/* src/components/ExportReportModal.css */
+.modal-content {
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    border: none;
+}
+
+.modal-header {
+    border-bottom: none;
+    padding: 1.5rem 2rem 0.5rem;
+}
+
+.modal-title.export-modal-title {
+    font-weight: 700;
+    color: var(--primary-color, #007bff);
+    display: flex;
+    align-items: center;
+}
+
+.modal-body.export-modal-body {
+    padding: 1rem 2rem 2rem;
+}
+
+.export-card {
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.3s ease;
+    border: 1px solid var(--border-color, #e0e0e0);
+    border-radius: 10px;
+    padding: 1rem;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.export-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    background-color: var(--hover-bg, #f8f9fa);
+}
+
+.export-card.exporting {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.card-icon {
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.card-icon.pdf-icon {
+    color: #dc3545; /* Red for PDF */
+}
+
+.card-icon.excel-icon {
+    color: #28a745; /* Green for Excel */
+}
+
+.export-card .spinner-border {
+    margin-top: 0.5rem;
+    color: var(--primary-color, #007bff);
+}
+
+.modal-footer {
+    border-top: none;
+    padding: 0.5rem 2rem 1.5rem;
+}
+
+.btn-secondary {
+    border-radius: 20px;
+}

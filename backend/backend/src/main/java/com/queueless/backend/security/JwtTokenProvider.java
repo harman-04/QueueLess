@@ -30,19 +30,19 @@ public class JwtTokenProvider {
 
     public String generateToken(User user) {
         Map<String, Object> claims = new HashMap<>();
-        claims.put("sub", user.getId()); // Standard JWT subject claim
+        claims.put("sub", user.getId());
         claims.put("role", user.getRole().name());
-        claims.put("userId", user.getId()); // Keep for backward compatibility
+        claims.put("userId", user.getId());
         claims.put("email", user.getEmail());
         claims.put("name", user.getName());
-        claims.put("profileImageUrl", user.getProfileImageUrl());
+        // Remove profileImageUrl from token claims
         claims.put("placeId", user.getPlaceId());
         claims.put("isVerified", user.getIsVerified());
-        claims.put("preferences", user.getPreferences());
+        // Remove preferences from token if not absolutely necessary
         claims.put("ownedPlaceIds", user.getOwnedPlaceIds());
 
         return Jwts.builder()
-                .setClaims(claims) // Set all claims at once
+                .setClaims(claims)
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + jwtExpiration))
                 .signWith(getSigningKey(), SignatureAlgorithm.HS256)

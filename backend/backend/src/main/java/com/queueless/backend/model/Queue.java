@@ -1,4 +1,3 @@
-// Update Queue model to standardize field names
 package com.queueless.backend.model;
 
 import lombok.Data;
@@ -46,7 +45,7 @@ public class Queue {
     private Integer currentPosition = 0;
 
     @Field("estimatedWaitTime")
-    private Integer estimatedWaitTime = 0; // in minutes
+    private Integer estimatedWaitTime = 0;
 
     @Field("isActive")
     private Boolean isActive = true;
@@ -59,6 +58,9 @@ public class Queue {
 
     @Field("tokens")
     private List<QueueToken> tokens = new ArrayList<>();
+
+    @Field("pendingEmergencyTokens")
+    private List<QueueToken> pendingEmergencyTokens = new ArrayList<>();
 
     @Field("tokenCounter")
     private Integer tokenCounter = 0;
@@ -75,6 +77,12 @@ public class Queue {
     @Field("emergencyPriorityWeight")
     private Integer emergencyPriorityWeight = 10;
 
+    @Field("requiresEmergencyApproval")
+    private Boolean requiresEmergencyApproval = false;
+
+    @Field("autoApproveEmergency")
+    private Boolean autoApproveEmergency = false;
+
     public Queue(String providerId, String serviceName, String placeId, String serviceId) {
         this.providerId = providerId;
         this.serviceName = serviceName;
@@ -82,6 +90,7 @@ public class Queue {
         this.serviceId = serviceId;
         this.tokenCounter = 0;
         this.tokens = new ArrayList<>();
+        this.pendingEmergencyTokens = new ArrayList<>();
         this.isActive = true;
         this.startTime = LocalDateTime.now();
         this.statistics = new QueueStatistics();
@@ -97,7 +106,7 @@ public class Queue {
         private Integer dailyUsersServed = 0;
 
         @Field("busiestHours")
-        private Map<String, Integer> busiestHours; // hour -> count
+        private Map<String, Integer> busiestHours;
 
         @Field("totalServed")
         private Integer totalServed = 0;
@@ -109,7 +118,7 @@ public class Queue {
         private Double averageRating = 0.0;
 
         @Field("dailyAverages")
-        private Map<String, Integer> dailyAverages; // Day of week averages
+        private Map<String, Integer> dailyAverages;
 
         @Field("maxDailyCapacity")
         private Integer maxDailyCapacity = 0;

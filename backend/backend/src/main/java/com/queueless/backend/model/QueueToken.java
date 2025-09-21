@@ -18,6 +18,12 @@ public class QueueToken {
     @Field("userId")
     private String userId;
 
+    @Field("userName")
+    private String userName; // Store name for quick access
+
+    @Field("userDetails")
+    private UserQueueDetails userDetails; // Add this field
+
     @Field("status")
     private String status;
 
@@ -48,6 +54,13 @@ public class QueueToken {
     @Field("completedAt")
     private LocalDateTime completedAt;
 
+
+    // Add this field
+    @Field("serviceDurationMinutes")
+    private Long serviceDurationMinutes;
+
+
+
     // Constructor for regular tokens
     public QueueToken(String tokenId, String userId, String status, LocalDateTime issuedAt) {
         this.tokenId = tokenId;
@@ -59,11 +72,26 @@ public class QueueToken {
         this.priority = 0;
     }
 
+    // Constructor for regular tokens with userName
+    public QueueToken(String tokenId, String userId, String userName, String status, LocalDateTime issuedAt) {
+        this.tokenId = tokenId;
+        this.userId = userId;
+        this.userName = userName;
+        this.status = status;
+        this.issuedAt = issuedAt;
+        this.isGroup = false;
+        this.isEmergency = false;
+        this.priority = 0;
+        this.serviceDurationMinutes = null; // Initialize as null
+    }
+
+
     // Constructor for group tokens
-    public QueueToken(String tokenId, String userId, String status, LocalDateTime issuedAt,
+    public QueueToken(String tokenId, String userId, String userName, String status, LocalDateTime issuedAt,
                       List<GroupMember> groupMembers, Integer groupSize) {
         this.tokenId = tokenId;
         this.userId = userId;
+        this.userName = userName;
         this.status = status;
         this.issuedAt = issuedAt;
         this.isGroup = true;
@@ -74,10 +102,11 @@ public class QueueToken {
     }
 
     // Constructor for emergency tokens
-    public QueueToken(String tokenId, String userId, String status, LocalDateTime issuedAt,
+    public QueueToken(String tokenId, String userId, String userName, String status, LocalDateTime issuedAt,
                       String emergencyDetails, Integer priority) {
         this.tokenId = tokenId;
         this.userId = userId;
+        this.userName = userName;
         this.status = status;
         this.issuedAt = issuedAt;
         this.isGroup = false;

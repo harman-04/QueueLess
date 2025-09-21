@@ -18,8 +18,8 @@ import {
 import { normalizeQueues, normalizeQueue } from "../utils/normalizeQueue";
 import "animate.css";
 
-const QUEUE_API_BASE_URL = "http://localhost:8080/api/queues";
-const PROVIDER_API_BASE_URL = "http://localhost:8080/api/providers"; // New base URL for provider endpoints
+const QUEUE_API_BASE_URL = "https://localhost:8443/api/queues";
+const PROVIDER_API_BASE_URL = "https://localhost:8443/api/providers"; // New base URL for provider endpoints
 
 const ProviderQueueManagement = () => {
   const dispatch = useDispatch();

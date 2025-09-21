@@ -4,6 +4,7 @@ import com.queueless.backend.dto.ServiceDTO;
 import com.queueless.backend.model.Service;
 import com.queueless.backend.service.PlaceService;
 import com.queueless.backend.service.ServiceService;
+import com.queueless.backend.security.annotations.AdminOnly; // New import
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -32,7 +33,7 @@ public class ServiceController {
         return null;
     }
     @PostMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    @AdminOnly
     public ResponseEntity<ServiceDTO> createService(@Valid @RequestBody ServiceDTO serviceDTO) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String adminId = getUserIdFromAuthentication(authentication);
@@ -43,7 +44,6 @@ public class ServiceController {
 
         log.info("Request to create service: {} by admin: {}", serviceDTO, adminId);
 
-        // Verify the place belongs to the admin
         if (!placeService.isPlaceOwnedByAdmin(serviceDTO.getPlaceId(), adminId)) {
             log.warn("Unauthorized attempt to create service for place={} by {}", serviceDTO.getPlaceId(), adminId);
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
@@ -76,7 +76,7 @@ public class ServiceController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @AdminOnly
     public ResponseEntity<ServiceDTO> updateService(@PathVariable String id, @Valid @RequestBody ServiceDTO serviceDTO) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || authentication.getName() == null) {
@@ -87,7 +87,6 @@ public class ServiceController {
         String adminId = authentication.getName();
         log.info("Updating service with ID: {} | Data: {} by admin: {}", id, serviceDTO, adminId);
 
-        // Verify the service belongs to the admin
         if (!serviceService.isServiceOwnedByAdmin(id, adminId)) {
             log.warn("Unauthorized attempt to update service={} by {}", id, adminId);
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
@@ -104,7 +103,7 @@ public class ServiceController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @AdminOnly
     public ResponseEntity<Void> deleteService(@PathVariable String id) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || authentication.getName() == null) {
@@ -115,7 +114,6 @@ public class ServiceController {
         String adminId = authentication.getName();
         log.warn("Deleting service with ID: {} by admin: {}", id, adminId);
 
-        // Verify the service belongs to the admin
         if (!serviceService.isServiceOwnedByAdmin(id, adminId)) {
             log.warn("Unauthorized attempt to delete service={} by {}", id, adminId);
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
@@ -132,7 +130,6 @@ public class ServiceController {
     }
 
 
-    // ServiceController.java - Add this method
     @GetMapping
     public ResponseEntity<List<ServiceDTO>> getAllServices() {
         log.debug("Fetching all services");

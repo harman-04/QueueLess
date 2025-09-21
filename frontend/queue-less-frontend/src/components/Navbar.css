@@ -1,440 +1,423 @@
-
-        .custom-navbar {
-          background: linear-gradient(90deg, #2563eb, #4f46e5);
-          box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-          z-index: 1030;
-          transition: all 0.3s ease;
-          padding: 0.5rem 0;
-        }
-
-        .custom-navbar.scrolled {
-          background: rgba(37, 99, 235, 0.98);
-          backdrop-filter: blur(10px);
-          box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-          padding: 0.3rem 0;
-        }
-
-        .navbar-toggler {
-          background: rgba(255,255,255,0.15);
-          border-radius: 8px;
-          padding: 0.5rem;
-          width: 48px;
-          height: 48px;
-          display: flex;
-          flex-direction: column;
-          justify-content: center;
-          align-items: center;
-          position: relative;
-          transition: all 0.3s ease;
-        }
-
-        .navbar-toggler:hover {
-          background: rgba(255,255,255,0.25);
-        }
-
-        .navbar-toggler.open {
-          transform: rotate(90deg);
-        }
-
-        .toggler-icon {
-          display: block;
-          width: 24px;
-          height: 2px;
-          background-color: white;
-          margin: 2.5px 0;
-          transition: all 0.3s ease;
-          border-radius: 1px;
-        }
-
-        .navbar-toggler.open .toggler-icon-top {
-          transform: translateY(7px) rotate(45deg);
-        }
-
-        .navbar-toggler.open .toggler-icon-middle {
-          opacity: 0;
-        }
-
-        .navbar-toggler.open .toggler-icon-bottom {
-          transform: translateY(-7px) rotate(-45deg);
-        }
-
-        .nav-btn, .nav-btn-outline, .nav-btn-warning, .nav-btn-info {
-          border-radius: 50px;
-          padding: 8px 20px;
-          font-weight: 500;
-          font-size: 0.9rem;
-          height: 40px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          transition: all 0.3s ease;
-          position: relative;
-          overflow: hidden;
-          border: none;
-        }
-
-        .nav-btn:hover, .nav-btn-outline:hover, .nav-btn-warning:hover, .nav-btn-info:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 6px 12px rgba(0,0,0,0.15);
-        }
-
-        .nav-btn:active, .nav-btn-outline:active, .nav-btn-warning:active, .nav-btn-info:active {
-          transform: translateY(0);
-        }
-
-        .nav-btn {
-          background: rgba(255,255,255,0.2);
-          color: white;
-        }
-
-        .nav-btn:hover {
-          background: rgba(255,255,255,0.3);
-        }
-
-        .nav-btn-outline {
-          background: transparent;
-          border: 1px solid rgba(255,255,255,0.5);
-          color: white;
-        }
-
-        .nav-btn-outline:hover {
-          background: rgba(255,255,255,0.1);
-          border-color: rgba(255,255,255,0.8);
-        }
-
-        .nav-btn-warning {
-          background: linear-gradient(90deg, #f59e0b, #f97316);
-          color: white;
-        }
-
-        .nav-btn-warning:hover {
-          background: linear-gradient(90deg, #f97316, #ea580c);
-        }
-
-        .nav-btn-info {
-          background: linear-gradient(90deg, #0ea5e9, #3b82f6);
-          color: white;
-        }
-
-        .nav-btn-info:hover {
-          background: linear-gradient(90deg, #3b82f6, #2563eb);
-        }
-
-        .live-badge {
-          background: rgba(34, 197, 94, 0.9);
-          border: 1px solid rgba(255,255,255,0.3);
-          font-size: 0.7rem;
-          padding: 4px 8px;
-          display: flex;
-          align-items: center;
-          gap: 4px;
-          animation: pulse 1.5s infinite;
-        }
-
-        .live-dot {
-          width: 6px;
-          height: 6px;
-          background: white;
-          border-radius: 50%;
-          display: inline-block;
-        }
-
-        @keyframes pulse {
-          0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
-          70% { box-shadow: 0 0 0 6px rgba(34, 197, 94, 0); }
-          100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
-        }
-
-        .profile-name {
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          max-width: 120px;
-          font-weight: 500;
-        }
-
-        .profile-avatar {
-          transition: all 0.3s ease-in-out;
-          border: 2px solid rgba(255,255,255,0.3);
-        }
-
-        .profile-avatar:hover {
-          transform: scale(1.1);
-          border-color: rgba(255,255,255,0.6);
-        }
-
-        /* --- Advanced Logo and Animation Styles --- */
-        .logo-animation-container {
-          position: relative;
-          transition: transform 0.3s ease;
-        }
-
-        .logo-animation-container:hover {
-          transform: translateY(-2px);
-        }
-
-        .brand-text {
-          position: relative;
-          color: white;
-          text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
-          font-weight: 700;
-          letter-spacing: 0.5px;
-          transition: all 0.3s ease;
-        }
-
-        .logo-animation-container:hover .brand-text {
-          text-shadow: 2px 2px 8px rgba(255, 255, 255, 0.3);
-        }
-
-        .logo-art {
-          width: 36px;
-          height: 36px;
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          position: relative;
-          overflow: visible;
-        }
-
-        .logo-circle {
-          width: 28px;
-          height: 28px;
-          border: 2px solid rgba(255,255,255,0.8);
-          border-radius: 50%;
-          position: relative;
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          animation: rotate 15s linear infinite;
-        }
-
-        .logo-inner-circle {
-          width: 6px;
-          height: 6px;
-          background: white;
-          border-radius: 50%;
-        }
-
-        .logo-line {
-          position: absolute;
-          height: 2px;
-          background: rgba(255,255,255,0.7);
-          border-radius: 1px;
-          transform-origin: center;
-          transition: all 0.5s ease;
-        }
-
-        .logo-line-1 { width: 30px; top: 8px; left: 20px; transform: rotate(30deg); }
-        .logo-line-2 { width: 30px; top: 8px; right: 20px; transform: rotate(-30deg); }
-        .logo-line-3 { width: 25px; bottom: 8px; left: 20px; transform: rotate(-30deg); }
-        .logo-line-4 { width: 25px; bottom: 8px; right: 20px; transform: rotate(30deg); }
-        .logo-line-5 { width: 20px; top: 15px; left: 25px; transform: rotate(60deg); }
-        .logo-line-6 { width: 20px; top: 15px; right: 25px; transform: rotate(-60deg); }
-
-        .logo-person {
-          position: absolute;
-          width: 8px;
-          height: 8px;
-          background: white;
-          border-radius: 50%;
-          z-index: 2;
-          animation: movePerson 3s ease-in-out infinite;
-        }
-
-        .logo-arrow {
-          position: absolute;
-          width: 0;
-          height: 0;
-          border-left: 5px solid transparent;
-          border-right: 5px solid transparent;
-          border-bottom: 8px solid white;
-          transform: rotate(90deg);
-          right: -5px;
-          opacity: 0;
-          transition: all 0.3s ease;
-        }
-
-        .logo-animation-container:hover .logo-arrow {
-          opacity: 1;
-          right: -8px;
-          animation: bounce 0.5s ease infinite alternate;
-        }
-
-        .logo-animation-container:hover .logo-line {
-          background: rgba(255,255,255,0.9);
-        }
-
-        .logo-animation-container:hover .logo-line-1 {
-          transform: rotate(35deg) translateY(-2px);
-          width: 32px;
-        }
-
-        .logo-animation-container:hover .logo-line-2 {
-          transform: rotate(-35deg) translateY(-2px);
-          width: 32px;
-        }
-
-        .logo-animation-container:hover .logo-line-3 {
-          transform: rotate(-35deg) translateY(2px);
-          width: 27px;
-        }
-
-        .logo-animation-container:hover .logo-line-4 {
-          transform: rotate(35deg) translateY(2px);
-          width: 27px;
-        }
-
-        .logo-animation-container:hover .logo-line-5 {
-          transform: rotate(65deg) translateY(-1px);
-          width: 22px;
-        }
-
-        .logo-animation-container:hover .logo-line-6 {
-          transform: rotate(-65deg) translateY(-1px);
-          width: 22px;
-        }
-
-        @keyframes rotate {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
-        }
-
-        @keyframes movePerson {
-          0%, 100% { transform: translateX(-5px) translateY(0); }
-          25% { transform: translateX(0) translateY(-3px); }
-          50% { transform: translateX(5px) translateY(0); }
-          75% { transform: translateX(0) translateY(3px); }
-        }
-
-        @keyframes bounce {
-          from { transform: rotate(90deg) translateX(0); }
-          to { transform: rotate(90deg) translateX(3px); }
-        }
-        /* --- End Advanced Logo Styles --- */
-
-        /* Dropdown & Profile Trigger Styles */
-        .profile-dropdown-btn .dropdown-toggle {
-          padding: 0;
-          height: 40px;
-          border-radius: 50px;
-          display: flex;
-          align-items: center;
-          background: rgba(255,255,255,0.15);
-          border: none;
-          transition: all 0.3s ease;
-        }
-
-        .profile-dropdown-btn .dropdown-toggle:hover {
-          background: rgba(255,255,255,0.25);
-        }
-
-        .profile-dropdown-btn .dropdown-toggle::after {
-          margin-left: 0.5rem;
-          margin-right: 0.8rem;
-          color: white;
-        }
-
-        .profile-avatar-wrapper {
-          width: 36px;
-          height: 36px;
-          border-radius: 50%;
-          overflow: hidden;
-          transition: transform 0.3s ease-in-out;
-          border: 2px solid rgba(255,255,255,0.3);
-        }
-        
-        .profile-dropdown-btn .dropdown-toggle:hover .profile-avatar-wrapper {
-          transform: scale(1.1);
-          border-color: rgba(255,255,255,0.6);
-        }
-
-        .profile-avatar-img {
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-          display: block;
-        }
-
-        .profile-name-text {
-          color: white;
-          font-weight: 500;
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          max-width: 120px;
-        }
-
-        .dropdown-menu {
-          background: linear-gradient(135deg, #f0f4f8, #e8f0f8);
-          border: 1px solid rgba(0,0,0,0.05);
-          border-radius: 12px;
-          box-shadow: 0 10px 25px rgba(0,0,0,0.15);
-          overflow: hidden;
-          padding: 0;
-          min-width: 220px;
-          animation: fadeInScale 0.2s ease-out;
-        }
-
-        @keyframes fadeInScale {
-            from {
-                opacity: 0;
-                transform: scale(0.95) translateY(-5px);
-            }
-            to {
-                opacity: 1;
-                transform: scale(1) translateY(0);
-            }
-        }
-
-        .dropdown-header-custom {
-          background: #f8fafc;
-          border-bottom: 1px solid #e2e8f0;
-        }
-
-        .dropdown-item {
-          padding: 0.75rem 1.25rem;
-          color: #4b5563;
-          font-weight: 500;
-          transition: all 0.2s ease;
-          display: flex;
-          align-items: center;
-          gap: 1rem;
-          white-space: nowrap;
-        }
-
-        .dropdown-item i {
-          color: #9ca3af;
-          transition: color 0.2s ease;
-        }
-
-        .dropdown-item:hover {
-          background: #eef2ff;
-          color: #4338ca;
-        }
-
-        .dropdown-item:hover i {
-          color: #4338ca;
-        }
-
-        .dropdown-divider {
-          margin: 0;
-          border-color: #e5e7eb;
-        }
-
-        @media (max-width: 991px) {
-          .navbar-collapse {
-            background: linear-gradient(180deg, #2563eb, #4f46e5);
-            padding: 1rem;
-            border-radius: 0 0 12px 12px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-            margin-top: 0.5rem;
-          }
-
-          .nav-btn, .nav-btn-outline, .nav-btn-warning, .nav-btn-info {
-            width: 100%;
-            margin-bottom: 0.5rem;
-            justify-content: flex-start;
-            padding-left: 1.5rem;
-          }
-        }
-      
+/* --- Base Navbar Styles --- */
+.ql-navbar {
+  background: linear-gradient(90deg, #2563eb, #4f46e5);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+  z-index: 1030;
+  transition: all 0.3s ease;
+  padding: 0.5rem 0;
+}
+
+.ql-navbar.scrolled {
+  background: rgba(37, 99, 235, 0.98);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+  padding: 0.3rem 0;
+}
+
+/* --- Mobile Toggler Styles --- */
+.ql-toggler {
+  background: rgba(255,255,255,0.15);
+  border-radius: 8px;
+  padding: 0.5rem;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.ql-toggler:hover {
+  background: rgba(255,255,255,0.25);
+}
+
+.ql-toggler.open {
+  transform: rotate(90deg);
+}
+
+.ql-toggler-icon {
+  display: block;
+  width: 24px;
+  height: 2px;
+  background-color: white;
+  margin: 2.5px 0;
+  transition: all 0.3s ease;
+  border-radius: 1px;
+}
+
+.ql-toggler.open .ql-toggler-icon-top {
+  transform: translateY(7px) rotate(45deg);
+}
+
+.ql-toggler.open .ql-toggler-icon-middle {
+  opacity: 0;
+}
+
+.ql-toggler.open .ql-toggler-icon-bottom {
+  transform: translateY(-7px) rotate(-45deg);
+}
+
+/* --- Button Styles --- */
+.ql-nav-btn, .ql-nav-btn-outline, .ql-nav-btn-warning, .ql-nav-btn-info {
+  border-radius: 50px;
+  padding: 8px 20px;
+  font-weight: 500;
+  font-size: 0.9rem;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  border: none;
+}
+
+.ql-nav-btn:hover, .ql-nav-btn-outline:hover, .ql-nav-btn-warning:hover, .ql-nav-btn-info:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+}
+
+.ql-nav-btn:active, .ql-nav-btn-outline:active, .ql-nav-btn-warning:active, .ql-nav-btn-info:active {
+  transform: translateY(0);
+}
+
+.ql-nav-btn {
+  background: rgba(255,255,255,0.2);
+  color: white;
+}
+
+.ql-nav-btn:hover {
+  background: rgba(255,255,255,0.3);
+}
+
+.ql-nav-btn-outline {
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.5);
+  color: white;
+}
+
+.ql-nav-btn-outline:hover {
+  background: rgba(255,255,255,0.1);
+  border-color: rgba(255,255,255,0.8);
+}
+
+.ql-nav-btn-warning {
+  background: linear-gradient(90deg, #f59e0b, #f97316);
+  color: white;
+}
+
+.ql-nav-btn-warning:hover {
+  background: linear-gradient(90deg, #f97316, #ea580c);
+}
+
+.ql-nav-btn-info {
+  background: linear-gradient(90deg, #0ea5e9, #3b82f6);
+  color: white;
+}
+
+.ql-nav-btn-info:hover {
+  background: linear-gradient(90deg, #3b82f6, #2563eb);
+}
+
+/* --- Live Badge Styles --- */
+.ql-live-badge {
+  background: rgba(34, 197, 94, 0.9);
+  border: 1px solid rgba(255,255,255,0.3);
+  font-size: 0.7rem;
+  padding: 4px 8px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  animation: ql-pulse 1.5s infinite;
+}
+
+.ql-live-dot {
+  width: 6px;
+  height: 6px;
+  background: white;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+@keyframes ql-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
+  70% { box-shadow: 0 0 0 6px rgba(34, 197, 94, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+}
+
+/* --- Advanced Logo and Animation Styles --- */
+.ql-logo-animation-container {
+  position: relative;
+  transition: transform 0.3s ease;
+}
+
+.ql-logo-animation-container:hover {
+  transform: translateY(-2px);
+}
+
+.ql-brand-text {
+  position: relative;
+  color: white;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  transition: all 0.3s ease;
+}
+
+.ql-logo-animation-container:hover .ql-brand-text {
+  text-shadow: 2px 2px 8px rgba(255, 255, 255, 0.3);
+}
+
+.ql-logo-art {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  overflow: visible;
+}
+
+.ql-logo-circle {
+  width: 28px;
+  height: 28px;
+  border: 2px solid rgba(255,255,255,0.8);
+  border-radius: 50%;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  animation: ql-rotate 15s linear infinite;
+}
+
+.ql-logo-inner-circle {
+  width: 6px;
+  height: 6px;
+  background: white;
+  border-radius: 50%;
+}
+
+.ql-logo-line {
+  position: absolute;
+  height: 2px;
+  background: rgba(255,255,255,0.7);
+  border-radius: 1px;
+  transform-origin: center;
+  transition: all 0.5s ease;
+}
+
+.ql-logo-line-1 { width: 30px; top: 8px; left: 20px; transform: rotate(30deg); }
+.ql-logo-line-2 { width: 30px; top: 8px; right: 20px; transform: rotate(-30deg); }
+.ql-logo-line-3 { width: 25px; bottom: 8px; left: 20px; transform: rotate(-30deg); }
+.ql-logo-line-4 { width: 25px; bottom: 8px; right: 20px; transform: rotate(30deg); }
+.ql-logo-line-5 { width: 20px; top: 15px; left: 25px; transform: rotate(60deg); }
+.ql-logo-line-6 { width: 20px; top: 15px; right: 25px; transform: rotate(-60deg); }
+
+.ql-logo-person {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  background: white;
+  border-radius: 50%;
+  z-index: 2;
+  animation: ql-movePerson 3s ease-in-out infinite;
+}
+
+.ql-logo-arrow {
+  position: absolute;
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-bottom: 8px solid white;
+  transform: rotate(90deg);
+  right: -5px;
+  opacity: 0;
+  transition: all 0.3s ease;
+}
+
+.ql-logo-animation-container:hover .ql-logo-arrow {
+  opacity: 1;
+  right: -8px;
+  animation: ql-bounce 0.5s ease infinite alternate;
+}
+
+.ql-logo-animation-container:hover .ql-logo-line {
+  background: rgba(255,255,255,0.9);
+}
+
+.ql-logo-animation-container:hover .ql-logo-line-1 {
+  transform: rotate(35deg) translateY(-2px);
+  width: 32px;
+}
+
+.ql-logo-animation-container:hover .ql-logo-line-2 {
+  transform: rotate(-35deg) translateY(-2px);
+  width: 32px;
+}
+
+.ql-logo-animation-container:hover .ql-logo-line-3 {
+  transform: rotate(-35deg) translateY(2px);
+  width: 27px;
+}
+
+.ql-logo-animation-container:hover .ql-logo-line-4 {
+  transform: rotate(35deg) translateY(2px);
+  width: 27px;
+}
+
+.ql-logo-animation-container:hover .ql-logo-line-5 {
+  transform: rotate(65deg) translateY(-1px);
+  width: 22px;
+}
+
+.ql-logo-animation-container:hover .ql-logo-line-6 {
+  transform: rotate(-65deg) translateY(-1px);
+  width: 22px;
+}
+
+@keyframes ql-rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes ql-movePerson {
+  0%, 100% { transform: translateX(-5px) translateY(0); }
+  25% { transform: translateX(0) translateY(-3px); }
+  50% { transform: translateX(5px) translateY(0); }
+  75% { transform: translateX(0) translateY(3px); }
+}
+
+@keyframes ql-bounce {
+  from { transform: rotate(90deg) translateX(0); }
+  to { transform: rotate(90deg) translateX(3px); }
+}
+
+/* --- Dropdown & Profile Trigger Styles --- */
+.ql-profile-dropdown-btn .dropdown-toggle {
+  padding: 0;
+  height: 40px;
+  border-radius: 50px;
+  display: flex;
+  align-items: center;
+  background: rgba(255,255,255,0.15);
+  border: none;
+  transition: all 0.3s ease;
+}
+
+.ql-profile-dropdown-btn .dropdown-toggle:hover {
+  background: rgba(255,255,255,0.25);
+}
+
+.ql-profile-dropdown-btn .dropdown-toggle::after {
+  margin-left: 0.5rem;
+  margin-right: 0.8rem;
+  color: white;
+}
+
+.ql-profile-avatar-wrapper {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  overflow: hidden;
+  transition: transform 0.3s ease-in-out;
+  border: 2px solid rgba(255,255,255,0.3);
+}
+  
+.ql-profile-dropdown-btn .dropdown-toggle:hover .ql-profile-avatar-wrapper {
+  transform: scale(1.1);
+  border-color: rgba(255,255,255,0.6);
+}
+
+.ql-profile-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.ql-profile-name-text {
+  color: white;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 120px;
+}
+
+.ql-dropdown-menu {
+  background: linear-gradient(135deg, #f0f4f8, #e8f0f8);
+  border: 1px solid rgba(0,0,0,0.05);
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+  overflow: hidden;
+  padding: 0;
+  min-width: 220px;
+  animation: ql-fadeInScale 0.2s ease-out;
+}
+
+@keyframes ql-fadeInScale {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.ql-dropdown-header {
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.ql-dropdown-item {
+  padding: 0.75rem 1.25rem;
+  color: #4b5563;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  white-space: nowrap;
+}
+
+.ql-dropdown-item i {
+  color: #9ca3af;
+  transition: color 0.2s ease;
+}
+
+.ql-dropdown-item:hover {
+  background: #eef2ff;
+  color: #4338ca;
+}
+
+.ql-dropdown-item:hover i {
+  color: #4338ca;
+}
+
+.ql-dropdown-divider {
+  margin: 0;
+  border-color: #e5e7eb;
+}
+
+@media (max-width: 991px) {
+  .ql-navbar-collapse {
+    background: linear-gradient(180deg, #2563eb, #4f46e5);
+    padding: 1rem;
+    border-radius: 0 0 12px 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    margin-top: 0.5rem;
+  }
+
+  .ql-nav-btn, .ql-nav-btn-outline, .ql-nav-btn-warning, .ql-nav-btn-info {
+    width: 100%;
+    margin-bottom: 0.5rem;
+    justify-content: flex-start;
+    padding-left: 1.5rem;
+  }
+}

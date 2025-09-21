@@ -31,7 +31,7 @@ const websocketMiddleware = (store) => (next) => (action) => {
       }
 
       stompClient = new Client({
-        brokerURL: "ws://localhost:8080/ws",
+        brokerURL: "ws://localhost:8443/ws",
         connectHeaders: {
           Authorization: "Bearer " + store.getState().auth.token,
         },

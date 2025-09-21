@@ -1,4 +1,3 @@
-// Updated AdminController.java
 package com.queueless.backend.controller;
 
 import com.queueless.backend.dto.AdminQueueDTO;
@@ -11,9 +10,9 @@ import com.queueless.backend.repository.PlaceRepository;
 import com.queueless.backend.repository.QueueRepository;
 import com.queueless.backend.repository.UserRepository;
 import com.queueless.backend.service.AdminService;
+import com.queueless.backend.security.annotations.AdminOnly; // New import
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -37,15 +36,13 @@ public class AdminController {
     private final QueueRepository queueRepository;
 
     @GetMapping("/payments")
-    @PreAuthorize("hasRole('ADMIN')")
+    @AdminOnly
     public List<Payment> getMyPaymentHistory() {
         log.info("Fetching payment history for admin dashboard.");
-
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String adminId = authentication.getName();
 
         try {
-            // Get admin user to retrieve email
             Optional<User> adminUser = userRepository.findById(adminId);
             if (adminUser.isEmpty()) {
                 log.error("Admin user not found with ID: {}", adminId);
@@ -63,10 +60,9 @@ public class AdminController {
     }
 
     @GetMapping("/stats")
-    @PreAuthorize("hasRole('ADMIN')")
+    @AdminOnly
     public Map<String, Object> getAdminStats() {
         log.info("Fetching admin dashboard statistics");
-
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String adminId = authentication.getName();
 
@@ -78,11 +74,8 @@ public class AdminController {
         }
     }
 
-
-    // Add these endpoints to AdminController.java
-
     @GetMapping("/providers")
-    @PreAuthorize("hasRole('ADMIN')")
+    @AdminOnly
     public List<Map<String, Object>> getProvidersWithQueues() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String adminId = authentication.getName();
@@ -96,17 +89,15 @@ public class AdminController {
     }
 
     @GetMapping("/queues")
-    @PreAuthorize("hasRole('ADMIN')")
+    @AdminOnly
     public List<Queue> getAllAdminQueues() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String adminId = authentication.getName();
 
         try {
-            // Get places owned by this admin
             List<Place> adminPlaces = placeRepository.findByAdminId(adminId);
             List<String> placeIds = adminPlaces.stream().map(Place::getId).toList();
 
-            // Get all queues for these places
             return queueRepository.findByPlaceIdIn(placeIds);
         } catch (Exception e) {
             log.error("Failed to fetch queues for adminId: {}", adminId, e);
@@ -114,10 +105,8 @@ public class AdminController {
         }
     }
 
-
-    // Add new endpoints to AdminController.java
     @GetMapping("/queues/enhanced")
-    @PreAuthorize("hasRole('ADMIN')")
+    @AdminOnly
     public List<AdminQueueDTO> getAdminQueuesWithDetails() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String adminId = authentication.getName();
@@ -131,7 +120,7 @@ public class AdminController {
     }
 
     @GetMapping("/payments/enhanced")
-    @PreAuthorize("hasRole('ADMIN')")
+    @AdminOnly
     public List<Payment> getEnhancedPaymentHistory() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String adminId = authentication.getName();

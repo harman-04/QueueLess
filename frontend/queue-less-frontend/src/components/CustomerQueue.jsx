@@ -17,13 +17,17 @@ import {
   FaArrowRight,
   FaExclamationCircle,
   FaHandPointRight,
+  FaInfoCircle,
+  FaFileMedical
 } from "react-icons/fa";
+import { Modal, Button, Form } from "react-bootstrap";
 import { normalizeQueue } from "../utils/normalizeQueue";
 import "animate.css/animate.min.css";
 import "./CustomerQueue.css";
 import FeedbackPrompt from "./FeedbackPrompt";
+import UserQueueRestriction from "./UserQueueRestriction";
 
-const API_BASE_URL = "http://localhost:8080/api/queues";
+const API_BASE_URL = "https://localhost:8443/api/queues";
 
 const CustomerQueue = () => {
   const { queueId } = useParams();
@@ -36,47 +40,23 @@ const CustomerQueue = () => {
   const [addingToken, setAddingToken] = useState(false);
   const [showGroupForm, setShowGroupForm] = useState(false);
   const [showEmergencyForm, setShowEmergencyForm] = useState(false);
+  const [showDetailsForm, setShowDetailsForm] = useState(false);
   const [groupMembers, setGroupMembers] = useState([{ name: "", details: "" }]);
   const [emergencyDetails, setEmergencyDetails] = useState("");
+  const [userDetails, setUserDetails] = useState({
+    purpose: "",
+    condition: "",
+    notes: "",
+    isPrivate: false,
+    visibleToProvider: true,
+    visibleToAdmin: true
+  });
   const [userToken, setUserToken] = useState(null);
   const [refreshInterval, setRefreshInterval] = useState(null);
   const [isTokenExpired, setIsTokenExpired] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
-
+  const [canJoinQueue, setCanJoinQueue] = useState(true);
   const [showExpiredMessage, setShowExpiredMessage] = useState(false);
-
-  // DEBUGGING LINE: Log component render and Redux state
-  useEffect(() => {
-    console.log("CustomerQueue rendered.");
-    console.log("Redux state: userId =", userId, "token =", token);
-  });
-
-  useEffect(() => {
-    const checkFeedbackEligibility = async () => {
-      console.log("Checking feedback eligibility for:", userToken);
-      if (userToken?.status === "COMPLETED") {
-        try {
-          const response = await axios.get(
-            `http://localhost:8080/api/feedback/token/${userToken.tokenId}`,
-            { headers: { Authorization: `Bearer ${token}` } }
-          );
-          console.log("Feedback already provided:", response.data);
-          setShowFeedback(false);
-        } catch (error) {
-          if (error.response?.status === 404) {
-            console.log("Feedback not provided yet. Showing prompt.");
-            setShowFeedback(true);
-          } else {
-            console.error("Error checking feedback eligibility:", error);
-            setShowFeedback(true);
-          }
-        }
-      } else {
-        setShowFeedback(false);
-      }
-    };
-    checkFeedbackEligibility();
-  }, [userToken, token]);
 
   useEffect(() => {
     if (!queueId) {
@@ -86,16 +66,12 @@ const CustomerQueue = () => {
 
     const fetchQueue = async () => {
       try {
-        console.log("Fetching queue data...");
         const response = await axios.get(`${API_BASE_URL}/${queueId}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
 
         const normalizedQueue = normalizeQueue(response.data);
         setQueue(normalizedQueue);
-
-        // DEBUGGING LINE: Check the API response
-        console.log("API response (normalizedQueue):", normalizedQueue);
 
         if (userId) {
           const userActiveToken = normalizedQueue.tokens.find(
@@ -111,28 +87,21 @@ const CustomerQueue = () => {
               t.status === "COMPLETED"
           );
 
-          console.log("userActiveToken:", userActiveToken);
-          console.log("completedToken:", completedToken);
-
           if (userActiveToken) {
-            console.log("Active token found. Setting userToken.");
             setUserToken(userActiveToken);
             setIsTokenExpired(false);
             setShowExpiredMessage(false);
           } else if (completedToken) {
-            console.log("Completed token found. Setting userToken to completed token.");
             setUserToken(completedToken);
             setIsTokenExpired(true);
             setShowExpiredMessage(false);
           } else {
-            console.log("No active or completed token found for the user. Resetting userToken.");
             setUserToken(null);
             setIsTokenExpired(false);
             setShowExpiredMessage(false);
           }
         } else {
-            console.log("userId is null. Cannot find user's token.");
-            setUserToken(null);
+          setUserToken(null);
         }
       } catch (error) {
         console.error("Failed to fetch queue:", error);
@@ -152,80 +121,158 @@ const CustomerQueue = () => {
     };
   }, [queueId, token, navigate, userId, userToken?.tokenId]);
 
-  const handleAddToken = async (isGroup = false, isEmergency = false) => {
-    // ... (rest of the handleAddToken function remains the same)
-    if (!userId || !token) {
-        toast.error("You must be logged in to join a queue.");
-        navigate("/login");
-        return;
-      }
+  useEffect(() => {
+  const checkFeedbackEligibility = async () => {
     
-      if (!queue.isActive) {
-        toast.error("This queue is currently paused by the provider.");
-        return;
-      }
-  
-      if (isEmergency && !queue.emergencySupport) {
-        toast.error("This queue does not support emergency tokens.");
-        return;
-      }
-  
-      if (isGroup && !queue.supportsGroupToken) {
-        toast.error("This queue does not support group tokens.");
-        return;
-      }
-  
-      setAddingToken(true);
+    console.log("Checking feedback eligibility for:", userToken);
+      // Read the dismissed tokens from local storage
+    const dismissedTokens = JSON.parse(localStorage.getItem('dismissedFeedbackPrompts') || '[]');
+    const isDismissed = dismissedTokens.includes(userToken?.tokenId);
+
+    if (userToken?.status === "COMPLETED" && !isDismissed) {
       try {
-        let endpoint = `${API_BASE_URL}/${queueId}/add-token`;
-        let requestData = null;
-  
-        if (isGroup) {
-          endpoint = `${API_BASE_URL}/${queueId}/add-group-token`;
-          requestData = { 
-            groupMembers: groupMembers.filter(m => m.name && m.details) 
-          };
-        } else if (isEmergency) {
-          endpoint = `${API_BASE_URL}/${queueId}/add-emergency-token`;
-          requestData = { emergencyDetails };
-        }
-  
-        const response = await axios.post(
-          endpoint,
-          requestData,
+        const response = await axios.get(
+          `https://localhost:8443/api/feedback/token/${userToken.tokenId}`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
-       
-        const newTokenId = response.data.tokenId;
-        const tokenType = isGroup ? "group" : isEmergency ? "emergency" : "regular";
-        
-        toast.success(`You have joined the queue! Your ${tokenType} token is ${newTokenId}.`);
-        
-        setUserToken(response.data);
-        
-        setShowGroupForm(false);
-        setShowEmergencyForm(false);
-        setGroupMembers([{ name: "", details: "" }]);
-        setEmergencyDetails("");
-        
-        const queueResponse = await axios.get(`${API_BASE_URL}/${queueId}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        setQueue(normalizeQueue(queueResponse.data));
+        console.log("Feedback already provided:", response.data);
+        setShowFeedback(false);
       } catch (error) {
-        console.error("Error adding token:", error);
-        if (error.response?.status === 409) {
-          toast.error(error.response.data.message || "You already have an active token in this queue.");
-        } else if (error.response?.status === 400) {
-          toast.error(error.response.data.message || "Invalid request.");
-        } else if (error.response?.status === 403) {
-          toast.error("You don't have permission to perform this action.");
+        if (error.response?.status === 404) {
+          console.log("Feedback not provided yet. Showing prompt.");
+          setShowFeedback(true);
         } else {
-          toast.error("Failed to add token to the queue.");
+          console.error("Error checking feedback eligibility:", error);
+          setShowFeedback(true);
         }
-      } finally {
-        setAddingToken(false);
       }
+    } else {
+      setShowFeedback(false);
+    }
+  };
+  checkFeedbackEligibility();
+}, [userToken, token]);
+
+  const handleAddToken = async (isGroup = false, isEmergency = false, withDetails = false) => {
+    if (!userId || !token) {
+      toast.error("You must be logged in to join a queue.");
+      navigate("/login");
+      return;
+    }
+
+    if (!queue.isActive) {
+      toast.error("This queue is currently paused by the provider.");
+      return;
+    }
+
+    if (isEmergency && !queue.emergencySupport) {
+      toast.error("This queue does not support emergency tokens.");
+      return;
+    }
+
+    if (isGroup && !queue.supportsGroupToken) {
+      toast.error("This queue does not support group tokens.");
+      return;
+    }
+
+    if (withDetails) {
+      setShowDetailsForm(true);
+      return;
+    }
+
+    setAddingToken(true);
+    try {
+      let endpoint = `${API_BASE_URL}/${queueId}/add-token`;
+      let requestData = null;
+
+      if (isGroup) {
+        endpoint = `${API_BASE_URL}/${queueId}/add-group-token`;
+        requestData = { 
+          groupMembers: groupMembers.filter(m => m.name && m.details) 
+        };
+      } else if (isEmergency) {
+        endpoint = `${API_BASE_URL}/${queueId}/add-emergency-token`;
+        requestData = { emergencyDetails };
+      }
+
+      const response = await axios.post(
+        endpoint,
+        requestData,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      
+      const newTokenId = response.data.tokenId;
+      const tokenType = isGroup ? "group" : isEmergency ? "emergency" : "regular";
+      
+      toast.success(`You have joined the queue! Your ${tokenType} token is ${newTokenId}.`);
+      
+      setUserToken(response.data);
+      
+      setShowGroupForm(false);
+      setShowEmergencyForm(false);
+      setGroupMembers([{ name: "", details: "" }]);
+      setEmergencyDetails("");
+      
+      const queueResponse = await axios.get(`${API_BASE_URL}/${queueId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setQueue(normalizeQueue(queueResponse.data));
+    } catch (error) {
+      console.error("Error adding token:", error);
+      if (error.response?.status === 409) {
+        toast.error(error.response.data.message || "You already have an active token in this queue.");
+      } else if (error.response?.status === 400) {
+        toast.error(error.response.data.message || "Invalid request.");
+      } else if (error.response?.status === 403) {
+        toast.error("You don't have permission to perform this action.");
+      } else {
+        toast.error("Failed to add token to the queue.");
+      }
+    } finally {
+      setAddingToken(false);
+    }
+  };
+
+  const handleAddTokenWithDetails = async () => {
+    setAddingToken(true);
+    try {
+      const response = await axios.post(
+        `${API_BASE_URL}/${queueId}/add-token-with-details`,
+        userDetails,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      
+      toast.success(`You have joined the queue! Your token is ${response.data.tokenId}.`);
+      
+      setUserToken(response.data);
+      setShowDetailsForm(false);
+      setUserDetails({
+        purpose: "",
+        condition: "",
+        notes: "",
+        isPrivate: false,
+        visibleToProvider: true,
+        visibleToAdmin: true
+      });
+      
+      const queueResponse = await axios.get(`${API_BASE_URL}/${queueId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setQueue(normalizeQueue(queueResponse.data));
+    } catch (error) {
+      console.error("Error adding token with details:", error);
+      if (error.response?.status === 409) {
+        toast.error(error.response.data.message || "You already have an active token in this queue.");
+      } else if (error.response?.status === 400) {
+        toast.error(error.response.data.message || "Invalid request.");
+      } else if (error.response?.status === 403) {
+        toast.error("You don't have permission to perform this action.");
+      } else {
+        toast.error("Failed to add token to the queue.");
+      }
+    } finally {
+      setAddingToken(false);
+    }
   };
 
   const addGroupMember = () => {
@@ -270,6 +317,11 @@ const CustomerQueue = () => {
   const handleFeedbackDismissed = () => {
     setShowFeedback(false);
     setShowExpiredMessage(true);
+  };
+
+   // ADD THIS NEW HANDLER
+  const handleFeedbackPromptClosed = () => {
+      setShowFeedback(false); // This is the crucial line to remove the blur
   };
 
   const handleExpiredMessageDismissed = () => {
@@ -450,6 +502,28 @@ const CustomerQueue = () => {
                   <p className="text-muted">{userToken.emergencyDetails}</p>
                 </div>
               )}
+
+              {userToken.userDetails && (
+                <div className="mt-3">
+                  <h6>Your Details:</h6>
+                  <div className="card">
+                    <div className="card-body">
+                      {userToken.userDetails.purpose && (
+                        <p><strong>Purpose:</strong> {userToken.userDetails.purpose}</p>
+                      )}
+                      {userToken.userDetails.condition && (
+                        <p><strong>Condition:</strong> {userToken.userDetails.condition}</p>
+                      )}
+                      {userToken.userDetails.notes && (
+                        <p><strong>Notes:</strong> {userToken.userDetails.notes}</p>
+                      )}
+                      <small className="text-muted">
+                        Privacy: {userToken.userDetails.isPrivate ? "Private" : "Visible to provider"}
+                      </small>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -472,6 +546,13 @@ const CustomerQueue = () => {
               <h4 className="fw-semibold text-secondary mb-3">
                 Join this Queue
               </h4>
+
+              <UserQueueRestriction
+                onRestrictionCheck={(restriction) =>
+                  setCanJoinQueue(restriction.canJoinQueue)
+                }
+              />
+
               <p className="text-muted">
                 Current tokens in queue:{" "}
                 {queue.tokens.filter((t) => t.status === "WAITING").length}
@@ -491,7 +572,7 @@ const CustomerQueue = () => {
                 <button
                   onClick={() => handleAddToken(false, false)}
                   className="btn btn-primary btn-lg join-button"
-                  disabled={addingToken || !queue.isActive}
+                  disabled={addingToken || !queue.isActive || !canJoinQueue}
                 >
                   {addingToken ? (
                     <>
@@ -504,6 +585,22 @@ const CustomerQueue = () => {
                   )}
                 </button>
 
+                <button
+                  onClick={() => handleAddToken(false, false, true)}
+                  className="btn btn-secondary btn-lg join-button"
+                  disabled={addingToken || !queue.isActive || !canJoinQueue}
+                >
+                  {addingToken ? (
+                    <>
+                      <FaSpinner className="fa-spin me-2" /> Adding...
+                    </>
+                  ) : (
+                    <>
+                      <FaFileMedical className="me-2" /> Get Token with Details
+                    </>
+                  )}
+                </button>
+
                 {queue.supportsGroupToken && (
                   <button
                     onClick={() => {
@@ -511,7 +608,7 @@ const CustomerQueue = () => {
                       setShowEmergencyForm(false);
                     }}
                     className="btn btn-info btn-lg join-button"
-                    disabled={addingToken || !queue.isActive}
+                    disabled={addingToken || !queue.isActive || !canJoinQueue}
                   >
                     <FaUsers className="me-2" />
                     {showGroupForm ? "Cancel Group" : "Get a Group Token"}
@@ -525,7 +622,7 @@ const CustomerQueue = () => {
                       setShowGroupForm(false);
                     }}
                     className="btn btn-danger btn-lg join-button"
-                    disabled={addingToken || !queue.isActive}
+                    disabled={addingToken || !queue.isActive || !canJoinQueue}
                   >
                     <FaAmbulance className="me-2" />
                     {showEmergencyForm ? "Cancel Emergency" : "Emergency Token"}
@@ -686,11 +783,111 @@ const CustomerQueue = () => {
           </div>
         </div>
       </div>
+
+      {/* User Details Modal */}
+      <Modal show={showDetailsForm} onHide={() => setShowDetailsForm(false)} size="lg">
+        <Modal.Header closeButton>
+          <Modal.Title>
+            <FaFileMedical className="me-2" />
+            Provide Your Details
+          </Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form>
+            <Form.Group className="mb-3">
+              <Form.Label>Purpose *</Form.Label>
+              <Form.Control
+                type="text"
+                placeholder="Why are you joining this queue?"
+                value={userDetails.purpose}
+                onChange={(e) => setUserDetails({...userDetails, purpose: e.target.value})}
+                required
+              />
+            </Form.Group>
+
+            <Form.Group className="mb-3">
+              <Form.Label>Condition (if applicable)</Form.Label>
+              <Form.Control
+                type="text"
+                placeholder="Medical condition or special circumstances"
+                value={userDetails.condition}
+                onChange={(e) => setUserDetails({...userDetails, condition: e.target.value})}
+              />
+            </Form.Group>
+
+            <Form.Group className="mb-3">
+              <Form.Label>Additional Notes</Form.Label>
+              <Form.Control
+                as="textarea"
+                rows={3}
+                placeholder="Any additional information the provider should know"
+                value={userDetails.notes}
+                onChange={(e) => setUserDetails({...userDetails, notes: e.target.value})}
+              />
+            </Form.Group>
+
+            <Form.Group className="mb-3">
+              <Form.Check
+                type="checkbox"
+                label="Keep my details private"
+                checked={userDetails.isPrivate}
+                onChange={(e) => setUserDetails({...userDetails, isPrivate: e.target.checked})}
+              />
+              <Form.Text className="text-muted">
+                When checked, your details will only be visible to administrators
+              </Form.Text>
+            </Form.Group>
+
+            {!userDetails.isPrivate && (
+              <>
+                <Form.Group className="mb-3">
+                  <Form.Check
+                    type="checkbox"
+                    label="Visible to provider"
+                    checked={userDetails.visibleToProvider}
+                    onChange={(e) => setUserDetails({...userDetails, visibleToProvider: e.target.checked})}
+                  />
+                </Form.Group>
+                <Form.Group className="mb-3">
+                  <Form.Check
+                    type="checkbox"
+                    label="Visible to administrators"
+                    checked={userDetails.visibleToAdmin}
+                    onChange={(e) => setUserDetails({...userDetails, visibleToAdmin: e.target.checked})}
+                  />
+                </Form.Group>
+              </>
+            )}
+          </Form>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowDetailsForm(false)}>
+            Cancel
+          </Button>
+          <Button 
+            variant="primary" 
+            onClick={handleAddTokenWithDetails}
+            disabled={addingToken || !userDetails.purpose.trim()}
+          >
+            {addingToken ? (
+              <>
+                <FaSpinner className="fa-spin me-2" /> Adding...
+              </>
+            ) : (
+              <>
+                <FaUserPlus className="me-2" /> Join Queue
+              </>
+            )}
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
       {showFeedback && userToken?.status === "COMPLETED" && (
         <FeedbackPrompt
           queueId={queueId}
           tokenId={userToken.tokenId}
           onFeedbackSubmitted={handleFeedbackDismissed}
+           onClose={handleFeedbackPromptClosed}
         />
       )}
     </div>

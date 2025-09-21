@@ -25,7 +25,7 @@ connect() {
     }
 
     this.client = new Client({
-        webSocketFactory: () => new SockJS('http://localhost:8080/ws'),
+        webSocketFactory: () => new SockJS('https://localhost:8443/ws'),
         connectHeaders: {
             Authorization: `Bearer ${token}`,
         },

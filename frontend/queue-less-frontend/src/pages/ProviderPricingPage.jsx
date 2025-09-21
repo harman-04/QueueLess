@@ -72,7 +72,7 @@ const ProviderPricingPage = () => {
     setPlanLoading(prev => ({ ...prev, [tokenType]: true }));
 
     try {
-      const res = await axios.post('http://localhost:8080/api/payment/create-order', null, {
+      const res = await axios.post('https://localhost:8443/api/payment/create-order', null, {
         params: {
           email: providerEmail,
           role: 'PROVIDER',
@@ -95,7 +95,7 @@ const ProviderPricingPage = () => {
         order_id: orderId,
         handler: async (response) => {
           try {
-            const confirmRes = await axios.post('http://localhost:8080/api/payment/confirm-provider', null, {
+            const confirmRes = await axios.post('https://localhost:8443/api/payment/confirm-provider', null, {
               params: {
                 orderId,
                 paymentId: response.razorpay_payment_id,

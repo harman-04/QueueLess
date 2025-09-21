@@ -3,7 +3,7 @@ package com.queueless.backend.service;
 import com.queueless.backend.dto.JwtResponse;
 import com.queueless.backend.dto.LoginRequest;
 import com.queueless.backend.dto.RegisterRequest;
-import com.queueless.backend.model.Role;
+import com.queueless.backend.enums.Role;
 import com.queueless.backend.model.Token;
 import com.queueless.backend.model.User;
 import com.queueless.backend.repository.TokenRepository;

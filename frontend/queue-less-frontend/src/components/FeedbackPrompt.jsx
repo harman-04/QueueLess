@@ -4,7 +4,7 @@ import { FaStar, FaTimes } from "react-icons/fa";
 import FeedbackForm from "./FeedbackForm";
 import './FeedbackPrompt.css';
 
-const FeedbackPrompt = ({ tokenId, queueId, onFeedbackSubmitted }) => {
+const FeedbackPrompt = ({ tokenId, queueId, onFeedbackSubmitted, onClose }) => {
   const [showFeedbackForm, setShowFeedbackForm] = useState(false);
   const [dismissed, setDismissed] = useState(false);
 
@@ -22,6 +22,10 @@ const FeedbackPrompt = ({ tokenId, queueId, onFeedbackSubmitted }) => {
       localStorage.setItem('dismissedFeedbackPrompts', JSON.stringify(dismissedTokens));
     }
     setDismissed(true);
+    // Call the parent's onClose function to signal dismissal
+    if (onClose) {
+      onClose();
+    }
   };
 
   const handleFeedbackFormSubmitted = () => {

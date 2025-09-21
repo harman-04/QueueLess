@@ -48,7 +48,7 @@ const PricingPage = () => {
     setPlanLoading(prevState => ({ ...prevState, [tokenType]: true }));
 
     try {
-      const res = await axios.post('http://localhost:8080/api/payment/create-order', null, {
+      const res = await axios.post('https://localhost:8443/api/payment/create-order', null, {
         params: {
           email: formik.values.email,
           role: 'ADMIN',
@@ -66,7 +66,7 @@ const PricingPage = () => {
         description: "Purchase Admin Access Token",
         order_id: orderId,
         handler: async (response) => {
-          const confirmRes = await axios.post('http://localhost:8080/api/payment/confirm', null, {
+          const confirmRes = await axios.post('https://localhost:8443/api/payment/confirm', null, {
             params: {
               orderId: orderId,
               paymentId: response.razorpay_payment_id,

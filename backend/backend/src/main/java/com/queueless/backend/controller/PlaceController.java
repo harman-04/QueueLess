@@ -12,6 +12,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+import com.queueless.backend.security.annotations.AdminOnly; // New import
+import com.queueless.backend.security.annotations.Authenticated; // New import
 
 import java.util.List;
 import java.util.Map;
@@ -25,17 +27,16 @@ public class PlaceController {
 
     private final PlaceService placeService;
 
-
-
     private String getUserIdFromAuthentication(Authentication authentication) {
         if (authentication != null && authentication.getPrincipal() instanceof String) {
-            return (String) authentication.getPrincipal(); // Now returns userId
+            return (String) authentication.getPrincipal();
         }
         return null;
     }
 
+    // Admins only: Create a new place
     @PostMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    @AdminOnly
     public ResponseEntity<PlaceDTO> createPlace(@Valid @RequestBody PlaceDTO placeDTO) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String adminId = getUserIdFromAuthentication(authentication);
@@ -63,6 +64,7 @@ public class PlaceController {
         }
     }
 
+    // Public access: Get a specific place by ID
     @GetMapping("/{id}")
     public ResponseEntity<PlaceDTO> getPlace(@PathVariable String id) {
         log.debug("Fetching place with ID: {}", id);
@@ -76,8 +78,9 @@ public class PlaceController {
         }
     }
 
+    // Admins only: Get all places managed by the authenticated admin
     @GetMapping("/admin/my-places")
-    @PreAuthorize("hasRole('ADMIN')")
+    @AdminOnly
     public ResponseEntity<List<PlaceDTO>> getMyPlaces() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String adminId = getUserIdFromAuthentication(authentication);
@@ -96,8 +99,9 @@ public class PlaceController {
         }
     }
 
+    // Admins only: Get all places managed by a specific admin ID
     @GetMapping("/admin/{adminId}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @AdminOnly
     public ResponseEntity<List<PlaceDTO>> getPlacesByAdmin(@PathVariable String adminId) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null) {
@@ -122,6 +126,7 @@ public class PlaceController {
         }
     }
 
+    // Public access: Get places by a specified type
     @GetMapping("/type/{type}")
     public ResponseEntity<List<PlaceDTO>> getPlacesByType(@PathVariable String type) {
         log.debug("Fetching places of type: {}", type);
@@ -130,6 +135,7 @@ public class PlaceController {
         return ResponseEntity.ok(places.stream().map(PlaceDTO::fromEntity).collect(Collectors.toList()));
     }
 
+    // Public access: Get nearby places
     @GetMapping("/nearby")
     public ResponseEntity<List<PlaceDTO>> getNearbyPlaces(
             @RequestParam double longitude,
@@ -141,8 +147,9 @@ public class PlaceController {
         return ResponseEntity.ok(places.stream().map(PlaceDTO::fromEntity).collect(Collectors.toList()));
     }
 
+    // Admins only: Update a place
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @AdminOnly
     public ResponseEntity<PlaceDTO> updatePlace(@PathVariable String id, @Valid @RequestBody PlaceDTO placeDTO) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || authentication.getName() == null) {
@@ -169,8 +176,9 @@ public class PlaceController {
         }
     }
 
+    // Admins only: Delete a place
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @AdminOnly
     public ResponseEntity<Void> deletePlace(@PathVariable String id) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || authentication.getName() == null) {
@@ -197,7 +205,7 @@ public class PlaceController {
         }
     }
 
-
+    // Public access: Get all places
     @GetMapping
     public ResponseEntity<List<PlaceDTO>> getAllPlaces() {
         log.debug("Fetching all places");

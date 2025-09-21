@@ -5,12 +5,15 @@ import com.queueless.backend.model.Feedback;
 import com.queueless.backend.model.Queue;
 import com.queueless.backend.service.FeedbackService;
 import com.queueless.backend.service.QueueService;
+import com.queueless.backend.security.annotations.UserOnly;
+import com.queueless.backend.security.annotations.Authenticated;
+import com.queueless.backend.security.annotations.AdminOrProviderOnly;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -27,13 +30,12 @@ public class FeedbackController {
     private final QueueService queueService;
 
     @PostMapping
-    @PreAuthorize("hasRole('USER')")
+    @UserOnly
     public ResponseEntity<Feedback> submitFeedback(@RequestBody FeedbackDTO feedbackDTO, Authentication authentication) {
         String userId = authentication.getName();
         log.info("Received feedback submission request from user {} for token {}", userId, feedbackDTO.getTokenId());
 
         try {
-            // Check if feedback already exists for this token
             log.debug("Checking for existing feedback for token: {}", feedbackDTO.getTokenId());
             Optional<Feedback> existingFeedback = feedbackService.getFeedbackByTokenId(feedbackDTO.getTokenId());
             if (existingFeedback.isPresent()) {
@@ -42,7 +44,6 @@ public class FeedbackController {
             }
             log.debug("No existing feedback found for token: {}", feedbackDTO.getTokenId());
 
-            // Get queue information
             log.debug("Fetching queue details for queue ID: {}", feedbackDTO.getQueueId());
             Queue queue = queueService.getQueueById(feedbackDTO.getQueueId());
             if (queue == null) {
@@ -51,7 +52,6 @@ public class FeedbackController {
             }
             log.info("Queue details found for ID {}. Proceeding with feedback creation.", feedbackDTO.getQueueId());
 
-            // Create new feedback
             Feedback feedback = new Feedback();
             feedback.setTokenId(feedbackDTO.getTokenId());
             feedback.setQueueId(feedbackDTO.getQueueId());
@@ -77,12 +77,25 @@ public class FeedbackController {
     }
 
     @GetMapping("/token/{tokenId}")
+    @Authenticated
     public ResponseEntity<Feedback> getFeedbackByTokenId(@PathVariable String tokenId) {
-        log.info("Received request to get feedback by token ID: {}", tokenId);
-        Optional<Feedback> feedback = feedbackService.getFeedbackByTokenId(tokenId);
-        if (feedback.isPresent()) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String userId = authentication.getName();
+
+        log.info("Received request to get feedback by token ID: {} from user {}", tokenId, userId);
+        Optional<Feedback> feedbackOptional = feedbackService.getFeedbackByTokenId(tokenId);
+
+        if (feedbackOptional.isPresent()) {
+            Feedback feedback = feedbackOptional.get();
+
+            // Check if the authenticated user has access
+            if (!feedback.getUserId().equals(userId) &&
+                    !authentication.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN") || a.getAuthority().equals("ROLE_PROVIDER"))) {
+                log.warn("Unauthorized attempt by user {} to access feedback for token {}.", userId, tokenId);
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            }
             log.info("Found feedback for token ID: {}", tokenId);
-            return ResponseEntity.ok(feedback.get());
+            return ResponseEntity.ok(feedback);
         } else {
             log.info("No feedback found for token ID: {}", tokenId);
             return ResponseEntity.notFound().build();
@@ -98,8 +111,18 @@ public class FeedbackController {
     }
 
     @GetMapping("/provider/{providerId}")
-    public ResponseEntity<List<Feedback>> getFeedbackByProviderId(@PathVariable String providerId) {
-        log.info("Received request to get feedback for provider ID: {}", providerId);
+    @AdminOrProviderOnly
+    public ResponseEntity<List<Feedback>> getFeedbackByProviderId(@PathVariable String providerId, Authentication authentication) {
+        String requesterId = authentication.getName();
+
+        // Ensure providers can only access their own feedback
+        if (authentication.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_PROVIDER")) &&
+                !requesterId.equals(providerId)) {
+            log.warn("Unauthorized access attempt. Provider {} tried to access feedback for provider {}.", requesterId, providerId);
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
+        log.info("Received request to get feedback for provider ID: {} from user {}", providerId, requesterId);
         List<Feedback> feedbacks = feedbackService.getFeedbackByProviderId(providerId);
         log.info("Found {} feedbacks for provider ID: {}", feedbacks.size(), providerId);
         return ResponseEntity.ok(feedbacks);
@@ -132,12 +155,15 @@ public class FeedbackController {
     }
 
     @GetMapping("/user/{userId}/token/{tokenId}")
+    @UserOnly
     public ResponseEntity<Boolean> hasUserProvidedFeedback(@PathVariable String userId, @PathVariable String tokenId, Authentication authentication) {
         log.info("Received request to check if user {} provided feedback for token {}", userId, tokenId);
-        // Verify the authenticated user is checking their own feedback
+
+        // This check is a good practice for defense-in-depth, ensuring a user can't check
+        // feedback status for another user. The @UserOnly annotation handles the role check.
         if (!authentication.getName().equals(userId)) {
             log.warn("Unauthorized attempt by user {} to check feedback status for user {}.", authentication.getName(), userId);
-            return ResponseEntity.status(403).build();
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
         log.debug("Authenticated user {} is authorized to check feedback for token {}.", userId, tokenId);
 
@@ -146,7 +172,6 @@ public class FeedbackController {
         return ResponseEntity.ok(hasProvidedFeedback);
     }
 
-    // In FeedbackController.java - Create a new endpoint
     @GetMapping("/place/{placeId}/detailed-ratings")
     public ResponseEntity<Map<String, Double>> getDetailedRatingsForPlace(@PathVariable String placeId) {
         log.info("Received request for detailed ratings for place ID: {}", placeId);
