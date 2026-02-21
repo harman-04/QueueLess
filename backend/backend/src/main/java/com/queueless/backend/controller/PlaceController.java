@@ -6,6 +6,9 @@ import com.queueless.backend.service.PlaceService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -212,5 +215,16 @@ public class PlaceController {
         List<Place> places = placeService.getAllPlaces();
         log.info("Fetched {} places", places.size());
         return ResponseEntity.ok(places.stream().map(PlaceDTO::fromEntity).collect(Collectors.toList()));
+    }
+
+    // src/main/java/com/queueless/backend/controller/PlaceController.java
+
+    @GetMapping("/paginated")
+    public ResponseEntity<Page<PlaceDTO>> getPlacesPaginated(
+            @PageableDefault(size = 20, sort = "name") Pageable pageable) {
+        log.debug("Fetching paginated places: page={}, size={}", pageable.getPageNumber(), pageable.getPageSize());
+        Page<Place> placePage = placeService.getAllPlacesPaginated(pageable);
+        Page<PlaceDTO> dtoPage = placePage.map(PlaceDTO::fromEntity);
+        return ResponseEntity.ok(dtoPage);
     }
 }

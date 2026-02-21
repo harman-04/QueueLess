@@ -314,7 +314,8 @@ public class QueueController {
 
     @DeleteMapping("/{queueId}/cancel-token/{tokenId}")
     @Authenticated
-    public ResponseEntity<Queue> cancelToken(@PathVariable String queueId, @PathVariable String tokenId) {
+    public ResponseEntity<Queue> cancelToken(@PathVariable String queueId, @PathVariable String tokenId,
+                                             @RequestParam(required = false) String reason) {
         // Removed manual authentication check as @Authenticated handles it
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String userId = authentication.getName();
@@ -335,7 +336,7 @@ public class QueueController {
             return new ResponseEntity<>(HttpStatus.FORBIDDEN);
         }
 
-        Queue updatedQueue = queueService.cancelToken(queueId, tokenId);
+        Queue updatedQueue = queueService.cancelToken(queueId, tokenId, reason);
         logger.debug("Queue after cancellation: {}", updatedQueue);
         return ResponseEntity.ok(updatedQueue);
     }
@@ -437,7 +438,6 @@ public class QueueController {
     @GetMapping("/user/{userId}/restriction")
     @UserOnly
     public ResponseEntity<UserQueueRestrictionDTO> checkUserQueueRestriction(@PathVariable String userId) {
-        // The check for userId match is still necessary for security.
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (!authentication.getName().equals(userId)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
@@ -445,15 +445,14 @@ public class QueueController {
 
         LocalDateTime lastJoinTime = queueService.getLastQueueJoinTime(userId);
         boolean canJoin = queueService.canUserJoinQueue(userId);
-        LocalDateTime canJoinAfter = lastJoinTime != null ?
-                lastJoinTime.plusMinutes(queueService.getJoinCooldownMinutes()) : null;
+        LocalDateTime canJoinAfter = null; // No fixed cooldown; user can join immediately after token completion
 
         UserQueueRestrictionDTO restriction = new UserQueueRestrictionDTO(
                 userId,
                 canJoin,
                 lastJoinTime,
                 canJoinAfter,
-                canJoin ? null : "You can only join one queue at a time. Please complete or cancel your current queue participation."
+                canJoin ? null : "You already have an active token in another queue. Please complete or cancel it before joining a new queue."
         );
 
         return ResponseEntity.ok(restriction);
@@ -554,5 +553,11 @@ public class QueueController {
             logger.error("Error resetting queue: {}", e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
+    }
+
+    @GetMapping("/{queueId}/best-time")
+    public ResponseEntity<Map<String, Object>> getBestTimeToJoin(@PathVariable String queueId) {
+        Map<String, Object> bestTime = queueService.getBestTimeToJoin(queueId);
+        return ResponseEntity.ok(bestTime);
     }
 }

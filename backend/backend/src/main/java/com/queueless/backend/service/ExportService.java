@@ -43,59 +43,48 @@ public class ExportService {
      * Exports queue data to a professionally formatted PDF document.
      */
     public byte[] exportQueueToPdf(Queue queue, String reportType, Boolean includeUserDetails) throws DocumentException {
-        log.info("Starting PDF export for Queue ID: {} with report type: {}", queue.getId(), reportType);
-
+        // 1. Validate Queue first to prevent NPE in logs
         if (queue == null) {
             log.error("Attempted PDF export with a null Queue object.");
             throw new IllegalArgumentException("Queue object cannot be null for PDF export.");
         }
 
-        Document document = new Document(PageSize.A4.rotate()); // Landscape for better table viewing
+        // 2. Validate Report Type outside of try-catch so it doesn't get wrapped
+        String type = reportType != null ? reportType.toLowerCase() : "";
+        if (!List.of("tokens", "statistics", "full").contains(type)) {
+            log.error("Invalid report type '{}' requested for PDF export", reportType);
+            throw new IllegalArgumentException("Invalid report type: " + reportType);
+        }
+
+        log.info("Starting PDF export for Queue ID: {} with report type: {}", queue.getId(), reportType);
+
+        Document document = new Document(PageSize.A4.rotate());
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 
         try {
             PdfWriter writer = PdfWriter.getInstance(document, outputStream);
-
-            // Add header and footer
             HeaderFooter event = new HeaderFooter(queue.getServiceName());
             writer.setPageEvent(event);
 
             document.open();
-
-            // Add title section
             addTitleSection(document, queue);
-
-            // Add summary statistics
             addSummarySection(document, queue);
 
-            // Add content based on report type
-            switch (reportType.toLowerCase()) {
-                case "tokens":
-                    addTokensSection(document, queue, includeUserDetails);
-                    break;
-                case "statistics":
-                    addStatisticsSection(document, queue);
-                    break;
+            switch (type) {
+                case "tokens": addTokensSection(document, queue, includeUserDetails); break;
+                case "statistics": addStatisticsSection(document, queue); break;
                 case "full":
                     addTokensSection(document, queue, includeUserDetails);
                     document.newPage();
                     addStatisticsSection(document, queue);
                     break;
-                default:
-                    log.error("Invalid report type '{}' requested for PDF export", reportType);
-                    throw new IllegalArgumentException("Invalid report type: " + reportType);
             }
 
             document.close();
-            log.info("PDF export completed successfully for Queue ID: {}", queue.getId());
             return outputStream.toByteArray();
         } catch (Exception e) {
             log.error("Error during PDF generation for Queue ID: {}", queue.getId(), e);
             throw new DocumentException("Failed to generate PDF: " + e.getMessage(), e);
-        } finally {
-            if (document.isOpen()) {
-                document.close();
-            }
         }
     }
 
@@ -103,35 +92,34 @@ public class ExportService {
      * Exports queue data to a professionally formatted Excel document.
      */
     public byte[] exportQueueToExcel(Queue queue, String reportType, Boolean includeUserDetails) throws IOException {
-        log.info("Starting Excel export for Queue ID: {} with report type: {}", queue.getId(), reportType);
-
+        // 1. Validate Queue first
         if (queue == null) {
             log.error("Attempted Excel export with a null Queue object.");
             throw new IllegalArgumentException("Queue object cannot be null for Excel export.");
         }
 
+        // 2. Validate Report Type outside of try-catch
+        String type = reportType != null ? reportType.toLowerCase() : "";
+        if (!List.of("tokens", "statistics", "full").contains(type)) {
+            log.error("Invalid report type '{}' requested for Excel export", reportType);
+            throw new IllegalArgumentException("Invalid report type: " + reportType);
+        }
+
+        log.info("Starting Excel export for Queue ID: {} with report type: {}", queue.getId(), reportType);
+
         try (Workbook workbook = new XSSFWorkbook();
              ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
 
-            // Create different sheets based on report type
-            switch (reportType.toLowerCase()) {
-                case "tokens":
-                    createTokensSheet(workbook, queue, includeUserDetails);
-                    break;
-                case "statistics":
-                    createStatisticsSheet(workbook, queue);
-                    break;
+            switch (type) {
+                case "tokens": createTokensSheet(workbook, queue, includeUserDetails); break;
+                case "statistics": createStatisticsSheet(workbook, queue); break;
                 case "full":
                     createTokensSheet(workbook, queue, includeUserDetails);
                     createStatisticsSheet(workbook, queue);
                     break;
-                default:
-                    log.error("Invalid report type '{}' requested for Excel export", reportType);
-                    throw new IllegalArgumentException("Invalid report type: " + reportType);
             }
 
             workbook.write(outputStream);
-            log.info("Excel export completed successfully for Queue ID: {}", queue.getId());
             return outputStream.toByteArray();
         } catch (Exception e) {
             log.error("Error during Excel generation for Queue ID: {}", queue.getId(), e);

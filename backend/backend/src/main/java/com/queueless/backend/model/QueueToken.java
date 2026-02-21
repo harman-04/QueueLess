@@ -59,6 +59,12 @@ public class QueueToken {
     @Field("serviceDurationMinutes")
     private Long serviceDurationMinutes;
 
+    @Field("notificationSent")
+    private Boolean notificationSent = false;
+
+    @Field("cancellationReason")
+    private String cancellationReason;
+
 
 
     // Constructor for regular tokens

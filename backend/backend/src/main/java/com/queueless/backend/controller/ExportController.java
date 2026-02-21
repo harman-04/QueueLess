@@ -10,6 +10,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import com.queueless.backend.exception.ResourceNotFoundException;
 import com.itextpdf.text.DocumentException;
@@ -17,6 +18,10 @@ import com.queueless.backend.security.annotations.AdminOrProviderOnly; // New im
 
 import java.io.IOException;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * REST controller for handling export requests for queue data.
@@ -127,20 +132,49 @@ public class ExportController {
     @GetMapping("/exports/{exportId}")
     @AdminOrProviderOnly
     public ResponseEntity<ByteArrayResource> downloadExport(@PathVariable String exportId) {
-        try {
-            byte[] data = exportCacheService.getExport(exportId);
-            if (data == null) {
-                return ResponseEntity.notFound().build();
-            }
-
-            return ResponseEntity.ok()
-                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + exportId + ".pdf")
-                    .contentType(MediaType.APPLICATION_PDF)
-                    .contentLength(data.length)
-                    .body(new ByteArrayResource(data));
-        } catch (Exception e) {
-            log.error("Error downloading export: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        ExportCacheService.ExportEntry entry = exportCacheService.getExport(exportId);
+        if (entry == null) {
+            return ResponseEntity.notFound().build();
         }
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + entry.getFilename())
+                .contentType(entry.getFormat().equals("pdf") ? MediaType.APPLICATION_PDF : MediaType.APPLICATION_OCTET_STREAM)
+                .contentLength(entry.getData().length)
+                .body(new ByteArrayResource(entry.getData()));
     }
+
+    @GetMapping("/exports")
+    @AdminOrProviderOnly
+    public ResponseEntity<List<Map<String, Object>>> listExports(Authentication authentication) {
+        String userId = authentication.getName();
+        // For now, return all exports – later we can filter by providerId if needed
+        Map<String, ExportCacheService.ExportEntry> all = exportCacheService.getAllExports();
+        List<Map<String, Object>> list = all.entrySet().stream()
+                .map(entry -> {
+                    Map<String, Object> map = new HashMap<>();
+                    map.put("exportId", entry.getKey());
+                    map.put("filename", entry.getValue().getFilename());
+                    map.put("createdAt", entry.getValue().getCreatedAt());
+                    map.put("queueId", entry.getValue().getQueueId());
+                    map.put("reportType", entry.getValue().getReportType());
+                    map.put("format", entry.getValue().getFormat());
+                    return map;
+                })
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(list);
+    }
+
+//    @GetMapping("/exports/{exportId}/download")
+//    @AdminOrProviderOnly
+//    public ResponseEntity<ByteArrayResource> downloadExport(@PathVariable String exportId) {
+//        ExportCacheService.ExportEntry entry = exportCacheService.getExport(exportId);
+//        if (entry == null) {
+//            return ResponseEntity.notFound().build();
+//        }
+//        return ResponseEntity.ok()
+//                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + entry.getFilename())
+//                .contentType(entry.getFormat().equals("pdf") ? MediaType.APPLICATION_PDF : MediaType.APPLICATION_OCTET_STREAM)
+//                .contentLength(entry.getData().length)
+//                .body(new ByteArrayResource(entry.getData()));
+//    }
 }

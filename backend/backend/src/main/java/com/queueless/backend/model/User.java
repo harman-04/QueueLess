@@ -9,6 +9,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.mongodb.core.mapping.Field;
+
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -38,6 +40,12 @@ public class User {
     private Boolean isVerified;
     private UserPreferences preferences;
     private List<String> ownedPlaceIds;
+
+    @Field("activeTokenId")
+    private String activeTokenId;
+    @Field("lastQueueJoinTime")
+    private LocalDateTime lastQueueJoinTime;
+
 
     // New fields for provider-admin relationship
     private String adminId; // For PROVIDER role: ID of the admin who created this provider

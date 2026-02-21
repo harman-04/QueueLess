@@ -45,7 +45,7 @@ public class SearchService {
 
         // 2. Search for places first if the flag is true or if a place-specific filter is used.
         if (request.isSearchPlaces()) {
-            Query placeQuery = new Query();
+            // Build criteria for places
             List<Criteria> placeCriteriaList = new ArrayList<>();
 
             if (request.getQuery() != null && !request.getQuery().isEmpty()) {
@@ -61,25 +61,32 @@ public class SearchService {
                 placeCriteriaList.add(Criteria.where("isActive").is(request.getIsActive()));
             }
 
+            // Build the query for finding places (with pagination)
+            Query placeFindQuery = new Query();
             if (!placeCriteriaList.isEmpty()) {
-                placeQuery.addCriteria(new Criteria().andOperator(placeCriteriaList.toArray(new Criteria[0])));
+                placeFindQuery.addCriteria(new Criteria().andOperator(placeCriteriaList.toArray(new Criteria[0])));
             }
+            List<Place> places = mongoTemplate.find(placeFindQuery.with(pageable), Place.class);
 
-            // Execute the place search and get the results
-            List<Place> places = mongoTemplate.find(placeQuery.with(pageable), Place.class);
-            long totalPlaces = mongoTemplate.count(Query.of(placeQuery).with(Pageable.unpaged()), Place.class);
+            // Build a separate query for counting (without pagination)
+            Query placeCountQuery = new Query();
+            if (!placeCriteriaList.isEmpty()) {
+                placeCountQuery.addCriteria(new Criteria().andOperator(placeCriteriaList.toArray(new Criteria[0])));
+            }
+            long totalPlaces = mongoTemplate.count(placeCountQuery, Place.class);
 
             result.setPlaces(places.stream().map(PlaceDTO::fromEntity).collect(Collectors.toList()));
             result.setTotalPlaces(totalPlaces);
+            int size = pageable.getPageSize();
+            result.setPlacesPage(pageable.getPageNumber());
+            result.setPlacesTotalPages((int) Math.ceil((double) totalPlaces / size));
 
             // Collect place IDs for the next searches
             placeIds = places.stream().map(Place::getId).collect(Collectors.toList());
         }
 
-
         // 3. Search Services
         if (request.isSearchServices()) {
-            Query serviceQuery = new Query();
             List<Criteria> serviceCriteriaList = new ArrayList<>();
 
             // If a place search was performed, use the returned place IDs as a filter.
@@ -105,20 +112,29 @@ public class SearchService {
                 serviceCriteriaList.add(Criteria.where("isActive").is(request.getIsActive()));
             }
 
+            // Build find query with pagination
+            Query serviceFindQuery = new Query();
             if (!serviceCriteriaList.isEmpty()) {
-                serviceQuery.addCriteria(new Criteria().andOperator(serviceCriteriaList.toArray(new Criteria[0])));
+                serviceFindQuery.addCriteria(new Criteria().andOperator(serviceCriteriaList.toArray(new Criteria[0])));
             }
+            List<Service> services = mongoTemplate.find(serviceFindQuery.with(pageable), Service.class);
 
-            List<Service> services = mongoTemplate.find(serviceQuery.with(pageable), Service.class);
-            long totalServices = mongoTemplate.count(Query.of(serviceQuery).with(Pageable.unpaged()), Service.class);
+            // Build count query without pagination
+            Query serviceCountQuery = new Query();
+            if (!serviceCriteriaList.isEmpty()) {
+                serviceCountQuery.addCriteria(new Criteria().andOperator(serviceCriteriaList.toArray(new Criteria[0])));
+            }
+            long totalServices = mongoTemplate.count(serviceCountQuery, Service.class);
 
             result.setServices(services.stream().map(ServiceDTO::fromEntity).collect(Collectors.toList()));
             result.setTotalServices(totalServices);
+            int size = pageable.getPageSize();
+            result.setServicesPage(pageable.getPageNumber());
+            result.setServicesTotalPages((int) Math.ceil((double) totalServices / size));
         }
 
         // 4. Search Queues
         if (request.isSearchQueues()) {
-            Query queueQuery = new Query();
             List<Criteria> queueCriteriaList = new ArrayList<>();
 
             // If a place search was performed, use the returned place IDs as a filter.
@@ -143,12 +159,19 @@ public class SearchService {
                 queueCriteriaList.add(Criteria.where("isActive").is(request.getIsActive()));
             }
 
+            // Build find query with pagination
+            Query queueFindQuery = new Query();
             if (!queueCriteriaList.isEmpty()) {
-                queueQuery.addCriteria(new Criteria().andOperator(queueCriteriaList.toArray(new Criteria[0])));
+                queueFindQuery.addCriteria(new Criteria().andOperator(queueCriteriaList.toArray(new Criteria[0])));
             }
+            List<Queue> queues = mongoTemplate.find(queueFindQuery.with(pageable), Queue.class);
 
-            List<Queue> queues = mongoTemplate.find(queueQuery.with(pageable), Queue.class);
-            long totalQueues = mongoTemplate.count(Query.of(queueQuery).with(Pageable.unpaged()), Queue.class);
+            // Build count query without pagination
+            Query queueCountQuery = new Query();
+            if (!queueCriteriaList.isEmpty()) {
+                queueCountQuery.addCriteria(new Criteria().andOperator(queueCriteriaList.toArray(new Criteria[0])));
+            }
+            long totalQueues = mongoTemplate.count(queueCountQuery, Queue.class);
 
             // Fetch place information for the found queues
             List<String> queuePlaceIds = queues.stream()
@@ -175,6 +198,9 @@ public class SearchService {
 
             result.setQueues(enhancedQueues);
             result.setTotalQueues(totalQueues);
+            int size = pageable.getPageSize();
+            result.setQueuesPage(pageable.getPageNumber());
+            result.setQueuesTotalPages((int) Math.ceil((double) totalQueues / size));
         }
 
         return result;

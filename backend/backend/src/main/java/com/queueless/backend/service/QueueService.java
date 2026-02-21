@@ -13,6 +13,7 @@ import com.queueless.backend.exception.UserAlreadyInQueueException;
 import com.queueless.backend.model.*;
 import com.queueless.backend.model.Queue;
 import com.queueless.backend.repository.FeedbackRepository;
+import com.queueless.backend.repository.QueueHourlyStatsRepository;
 import com.queueless.backend.repository.QueueRepository;
 import com.queueless.backend.repository.UserRepository;
 import jakarta.annotation.PostConstruct;
@@ -34,8 +35,8 @@ import java.util.stream.Collectors;
 public class QueueService {
 
 
-    private final ConcurrentHashMap<String, LocalDateTime> userQueueJoins = new ConcurrentHashMap<>();
-    private static final long JOIN_COOLDOWN_MINUTES = 30;
+//    private final ConcurrentHashMap<String, LocalDateTime> userQueueJoins = new ConcurrentHashMap<>();
+//    private static final long JOIN_COOLDOWN_MINUTES = 30;
 
     private static final Logger logger = LoggerFactory.getLogger(QueueService.class);
 
@@ -48,27 +49,42 @@ public class QueueService {
     private final FeedbackRepository feedbackRepository;
     private final ExportService exportService;
     private final ExportCacheService exportCacheService;
+    private final QueueHourlyStatsRepository statsRepository;
 
-    // Add these missing methods
-    public LocalDateTime getLastQueueJoinTime(String userId) {
-        return userQueueJoins.get(userId);
+    private User getUserOrThrow(String userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
     }
+    // Add these missing methods
+//    public LocalDateTime getLastQueueJoinTime(String userId) {
+//        return userQueueJoins.get(userId);
+//    }
+    public LocalDateTime getLastQueueJoinTime(String userId) {
+        User user = getUserOrThrow(userId);
+        return user.getLastQueueJoinTime();
+    }
+//    public boolean canUserJoinQueue(String userId) {
+//        LocalDateTime lastJoin = userQueueJoins.get(userId);
+//        if (lastJoin == null) return true;
+//
+//        return lastJoin.plusMinutes(JOIN_COOLDOWN_MINUTES).isBefore(LocalDateTime.now());
+//    }
 
     public boolean canUserJoinQueue(String userId) {
-        LocalDateTime lastJoin = userQueueJoins.get(userId);
-        if (lastJoin == null) return true;
-
-        return lastJoin.plusMinutes(JOIN_COOLDOWN_MINUTES).isBefore(LocalDateTime.now());
+        User user = getUserOrThrow(userId);
+        return user.getActiveTokenId() == null;
     }
 
-    public long getJoinCooldownMinutes() {
-        return JOIN_COOLDOWN_MINUTES;
-    }
+//    public long getJoinCooldownMinutes() {
+//        return JOIN_COOLDOWN_MINUTES;
+//    }
 
+//    private boolean hasActiveQueueParticipation(String userId) {
+//        return !canUserJoinQueue(userId);
+//    }
     private boolean hasActiveQueueParticipation(String userId) {
         return !canUserJoinQueue(userId);
     }
-
     private Queue getQueueOrThrow(String queueId) {
         return queueRepository.findById(queueId)
                 .orElseThrow(() -> {
@@ -129,7 +145,10 @@ public class QueueService {
         token.setUserDetails(userDetails);
 
         queue.getTokens().add(token);
-        userQueueJoins.put(userId, LocalDateTime.now());
+        user.setActiveTokenId(tokenId);
+        user.setLastQueueJoinTime(LocalDateTime.now());
+        userRepository.save(user);
+//        userQueueJoins.put(userId, LocalDateTime.now());
 
         Queue updatedQueue = queueRepository.save(queue);
         broadcastQueueUpdate(queueId, updatedQueue);
@@ -219,7 +238,12 @@ public class QueueService {
                 // In a real implementation, you would save this to cloud storage or a file system
                 // For now, we'll just log it and generate a mock URL
                 String exportId = "export-" + System.currentTimeMillis() + "-" + queueId;
-                exportCacheService.saveExport(exportId, exportData);
+                String filename = String.format("queue-reset-%s-%s.%s",
+                        queue.getServiceName().replaceAll("\\s+", "-"),
+                        System.currentTimeMillis(),
+                        resetRequest.getReportType() != null && resetRequest.getReportType().equals("excel") ? "xlsx" : "pdf"
+                );
+                exportCacheService.saveExport(exportId, exportData, filename, queueId, resetRequest.getReportType(), "pdf");
                 log.info("Queue data exported for queue {} with ID {}", queueId, exportId);
 
                 response.setExportFileUrl("/export/exports/" + exportId);
@@ -253,8 +277,11 @@ public class QueueService {
         broadcastQueueUpdate(queueId, queue);
         // Remove user tracking for the affected users
         affectedUserIds.forEach(userId -> {
-            userQueueJoins.remove(userId);
-            log.info("Removed user {} from tracking due to queue reset", userId);
+            userRepository.findById(userId).ifPresent(user -> {
+                user.setActiveTokenId(null);
+                user.setLastQueueJoinTime(null);
+                userRepository.save(user);
+            });
         });
 
         response.setSuccess(true);
@@ -302,7 +329,12 @@ public class QueueService {
         QueueToken token = new QueueToken(tokenId, userId, TokenStatus.WAITING.toString(), LocalDateTime.now());
         queue.getTokens().add(token);
 
-        userQueueJoins.put(userId, LocalDateTime.now());
+        User user = getUserOrThrow(userId);
+        user.setActiveTokenId(tokenId);
+        user.setLastQueueJoinTime(LocalDateTime.now());
+        userRepository.save(user);
+
+//        userQueueJoins.put(userId, LocalDateTime.now());
 
         Queue updatedQueue = queueRepository.save(queue);
         broadcastQueueUpdate(queueId, updatedQueue);
@@ -356,6 +388,9 @@ public class QueueService {
                 LocalDateTime.now(), groupMembers, groupMembers.size());
 
         queue.getTokens().add(token);
+        user.setActiveTokenId(tokenId);
+        user.setLastQueueJoinTime(LocalDateTime.now());
+        userRepository.save(user);
 
         Queue updatedQueue = queueRepository.save(queue);
         broadcastQueueUpdate(queueId, updatedQueue);
@@ -404,7 +439,10 @@ public class QueueService {
             token = new QueueToken(tokenId, userId, user.getName(), TokenStatus.WAITING.toString(),
                     LocalDateTime.now(), emergencyDetails, queue.getEmergencyPriorityWeight());
             queue.getTokens().add(token);
-            userQueueJoins.put(userId, LocalDateTime.now());
+            user.setActiveTokenId(tokenId);
+            user.setLastQueueJoinTime(LocalDateTime.now());
+            userRepository.save(user);
+//            userQueueJoins.put(userId, LocalDateTime.now());
         } else {
             // Require provider approval
             token = new QueueToken(tokenId, userId, user.getName(), TokenStatus.PENDING.toString(),
@@ -436,7 +474,12 @@ public class QueueService {
             // Move to active tokens
             token.setStatus(TokenStatus.WAITING.toString());
             queue.getTokens().add(token);
-            userQueueJoins.put(token.getUserId(), LocalDateTime.now());
+
+            // Update user's active token
+            User user = getUserOrThrow(token.getUserId());   // FIXED: use token.getUserId()
+            user.setActiveTokenId(tokenId);
+            user.setLastQueueJoinTime(LocalDateTime.now());
+            userRepository.save(user);
 
             // Notify user
             messagingTemplate.convertAndSendToUser(
@@ -471,7 +514,6 @@ public class QueueService {
 
         return updatedQueue;
     }
-
     public List<QueueToken> getPendingEmergencyTokens(String queueId) {
         Queue queue = getQueueOrThrow(queueId);
         return queue.getPendingEmergencyTokens();
@@ -507,6 +549,7 @@ public class QueueService {
             Queue updatedQueue = queueRepository.save(queue);
             broadcastQueueUpdate(queueId, updatedQueue);
             log.info("Token {} moved to IN_SERVICE", token.getTokenId());
+
             return updatedQueue;
         }
 
@@ -706,8 +749,13 @@ public class QueueService {
             token.setServiceDurationMinutes(durationInMinutes); // You'll need to add this field to your QueueToken model
         }
 
+        User user = getUserOrThrow(token.getUserId());
+        user.setActiveTokenId(null);
+        user.setLastQueueJoinTime(null);   // optional, allows immediate rejoin
+        userRepository.save(user);
+
         // Remove from user tracking
-        userQueueJoins.remove(token.getUserId());
+//        userQueueJoins.remove(token.getUserId());
 
         Queue updatedQueue = queueRepository.save(queue);
         broadcastQueueUpdate(queueId, updatedQueue);
@@ -717,17 +765,79 @@ public class QueueService {
     }
 
     // Scheduled cleanup for tracking map
-    @Scheduled(fixedRate = 3600000) // Cleanup every hour
-    public void cleanupUserQueueTracking() {
-        LocalDateTime cutoffTime = LocalDateTime.now().minusMinutes(JOIN_COOLDOWN_MINUTES);
-        userQueueJoins.entrySet().removeIf(entry ->
-                entry.getValue().isBefore(cutoffTime)
-        );
-        log.info("Cleaned up user queue tracking. Current size: {}", userQueueJoins.size());
+//    @Scheduled(fixedRate = 3600000) // Cleanup every hour
+//    public void cleanupUserQueueTracking() {
+////        LocalDateTime cutoffTime = LocalDateTime.now().minusMinutes(JOIN_COOLDOWN_MINUTES);
+////        userQueueJoins.entrySet().removeIf(entry ->
+////                entry.getValue().isBefore(cutoffTime)
+////        );
+////        log.info("Cleaned up user queue tracking. Current size: {}", userQueueJoins.size());
+//
+//        List<Queue> allQueues = queueRepository.findAll();
+//
+//        for (Queue queue : allQueues) {
+//            boolean modified = false;
+//            Iterator<QueueToken> iterator = queue.getTokens().iterator();
+//
+//            while (iterator.hasNext()) {
+//                QueueToken token = iterator.next();
+//                if (token.getIssuedAt().isBefore(LocalDateTime.now().minusHours(24))) {
+//                    // Clear user's active token if it matches
+//                    userRepository.findById(token.getUserId()).ifPresent(user -> {
+//                        if (token.getTokenId().equals(user.getActiveTokenId())) {
+//                            user.setActiveTokenId(null);
+//                            user.setLastQueueJoinTime(null);
+//                            userRepository.save(user);
+//                        }
+//                    });
+//                    iterator.remove();
+//                    modified = true;
+//                    logger.info("Removed expired token: {}", token.getTokenId());
+//                }
+//            }
+//
+//            if (modified) {
+//                queueRepository.save(queue);
+//                broadcastQueueUpdate(queue.getId(), queue);
+//            }
+//        }
+//    }
+
+@Scheduled(fixedRate = 3600000) // Run every hour
+public void cleanupExpiredTokens() {
+    logger.info("Cleaning up expired tokens (older than 24 hours)...");
+    List<Queue> allQueues = queueRepository.findAll();
+
+    for (Queue queue : allQueues) {
+        boolean modified = false;
+        Iterator<QueueToken> iterator = queue.getTokens().iterator();
+
+        while (iterator.hasNext()) {
+            QueueToken token = iterator.next();
+            if (token.getIssuedAt().isBefore(LocalDateTime.now().minusHours(24))) {
+                // Clear user's active token if it matches
+                userRepository.findById(token.getUserId()).ifPresent(user -> {
+                    if (token.getTokenId().equals(user.getActiveTokenId())) {
+                        user.setActiveTokenId(null);
+                        user.setLastQueueJoinTime(null);
+                        userRepository.save(user);
+                    }
+                });
+                iterator.remove();
+                modified = true;
+                logger.info("Removed expired token: {}", token.getTokenId());
+            }
+        }
+
+        if (modified) {
+            queueRepository.save(queue);
+            broadcastQueueUpdate(queue.getId(), queue);
+        }
     }
+}
 
     // Update cancellation to remove from tracking
-    public Queue cancelToken(String queueId, String tokenId) {
+    public Queue cancelToken(String queueId, String tokenId, String reason) {
         Queue queue = getQueueOrThrow(queueId);
 
         Optional<QueueToken> tokenToCancel = queue.getTokens().stream()
@@ -747,7 +857,25 @@ public class QueueService {
 
         // Remove from user tracking if it was an active token
         if (tokenToCancel.isPresent()) {
-            userQueueJoins.remove(tokenToCancel.get().getUserId());
+//            userQueueJoins.remove(tokenToCancel.get().getUserId());
+            QueueToken token = tokenToCancel.get();
+            token.setCancellationReason(reason); // store reason (optional)
+
+            User user = getUserOrThrow(tokenToCancel.get().getUserId());
+            user.setActiveTokenId(null);
+            user.setLastQueueJoinTime(null);
+            userRepository.save(user);
+
+            // Send WebSocket notification to user
+            messagingTemplate.convertAndSendToUser(
+                    token.getUserId(),
+                    "/queue/token-cancelled",
+                    Map.of(
+                            "tokenId", tokenId,
+                            "queueId", queueId,
+                            "reason", reason != null ? reason : "Your token was cancelled by the provider."
+                    )
+            );
         }
 
         Queue updatedQueue = queueRepository.save(queue);
@@ -760,6 +888,10 @@ public class QueueService {
     public Queue reorderQueue(String queueId, List<QueueToken> newTokens) {
         Queue queue = getQueueOrThrow(queueId);
         queue.setTokens(newTokens);
+        // After setting newTokens, reset notification flags for all waiting tokens
+        newTokens.stream()
+                .filter(t -> "WAITING".equals(t.getStatus()))
+                .forEach(t -> t.setNotificationSent(false));
         Queue updatedQueue = queueRepository.save(queue);
         broadcastQueueUpdate(queueId, updatedQueue);
 
@@ -822,30 +954,30 @@ public class QueueService {
         return updatedQueue;
     }
 
-    @Scheduled(fixedRate = 60000)
-    public void cleanupExpiredTokens() {
-        logger.info("Cleaning up expired tokens...");
-        List<Queue> allQueues = queueRepository.findAll();
-
-        for (Queue queue : allQueues) {
-            boolean modified = false;
-            Iterator<QueueToken> iterator = queue.getTokens().iterator();
-
-            while (iterator.hasNext()) {
-                QueueToken token = iterator.next();
-                if (token.getIssuedAt().isBefore(LocalDateTime.now().minusHours(24))) {
-                    iterator.remove();
-                    modified = true;
-                    logger.info("Removed expired token: {}", token.getTokenId());
-                }
-            }
-
-            if (modified) {
-                queueRepository.save(queue);
-                broadcastQueueUpdate(queue.getId(), queue);
-            }
-        }
-    }
+//    @Scheduled(fixedRate = 60000)
+//    public void cleanupExpiredTokens() {
+//        logger.info("Cleaning up expired tokens...");
+//        List<Queue> allQueues = queueRepository.findAll();
+//
+//        for (Queue queue : allQueues) {
+//            boolean modified = false;
+//            Iterator<QueueToken> iterator = queue.getTokens().iterator();
+//
+//            while (iterator.hasNext()) {
+//                QueueToken token = iterator.next();
+//                if (token.getIssuedAt().isBefore(LocalDateTime.now().minusHours(24))) {
+//                    iterator.remove();
+//                    modified = true;
+//                    logger.info("Removed expired token: {}", token.getTokenId());
+//                }
+//            }
+//
+//            if (modified) {
+//                queueRepository.save(queue);
+//                broadcastQueueUpdate(queue.getId(), queue);
+//            }
+//        }
+//    }
 
     public List<Queue> getQueuesByUserId(String userId) {
         return queueRepository.findAll().stream()
@@ -869,5 +1001,36 @@ public class QueueService {
         Integer averageServiceTime = service != null ? service.getAverageServiceTime() : 5;
 
         return (int) (waitingTokens * averageServiceTime);
+    }
+
+    public Map<String, Object> getBestTimeToJoin(String queueId) {
+        LocalDateTime thirtyDaysAgo = LocalDateTime.now().minusDays(30);
+        List<QueueHourlyStats> stats = statsRepository.findByQueueIdAndHourBetween(queueId, thirtyDaysAgo, LocalDateTime.now());
+
+        // Group by hour of day (0-23) and calculate average waiting count
+        Map<Integer, Double> avgByHour = stats.stream()
+                .collect(Collectors.groupingBy(
+                        s -> s.getHour().getHour(),
+                        Collectors.averagingInt(QueueHourlyStats::getWaitingCount)
+                ));
+
+        // Find hours with lowest average waiting count
+        List<Map.Entry<Integer, Double>> sorted = avgByHour.entrySet().stream()
+                .sorted(Map.Entry.comparingByValue())
+                .limit(3) // top 3 best hours
+                .collect(Collectors.toList());
+
+        List<String> bestHours = sorted.stream()
+                .map(e -> String.format("%02d:00 - %02d:00", e.getKey(), (e.getKey() + 1) % 24))
+                .collect(Collectors.toList());
+
+        List<Double> averages = sorted.stream()
+                .map(Map.Entry::getValue)
+                .collect(Collectors.toList());
+
+        return Map.of(
+                "bestHours", bestHours,
+                "averageWaitTimes", averages
+        );
     }
 }

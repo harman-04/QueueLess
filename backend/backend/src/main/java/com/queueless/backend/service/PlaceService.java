@@ -6,6 +6,8 @@ import com.queueless.backend.repository.PlaceRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.bson.types.ObjectId;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.core.geo.GeoJsonPoint;
 import org.springframework.stereotype.Service;
 
@@ -154,5 +156,12 @@ public class PlaceService {
             return placeRepository.findFavoritesByIdIn(objectIds);
         }
 
+
+    // src/main/java/com/queueless/backend/service/PlaceService.java
+
+    public Page<Place> getAllPlacesPaginated(Pageable pageable) {
+        log.debug("Fetching paginated places with pageable: {}", pageable);
+        return placeRepository.findAll(pageable);
+    }
     
 }

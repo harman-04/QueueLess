@@ -4,6 +4,11 @@ import com.queueless.backend.dto.JwtResponse;
 import com.queueless.backend.dto.LoginRequest;
 import com.queueless.backend.dto.RegisterRequest;
 import com.queueless.backend.service.AuthService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -13,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 @Slf4j
 @RestController
 @RequestMapping("/api/auth")
+@Tag(name = "Authentication", description = "Endpoints for user registration and login")
 public class AuthController {
 
     private final AuthService authService;
@@ -31,6 +37,11 @@ public class AuthController {
     }
 
     @PostMapping("/login")
+    @Operation(summary = "Login user", description = "Authenticates a user and returns a JWT token")
+    @ApiResponse(responseCode = "200", description = "Successful login",
+            content = @Content(schema = @Schema(implementation = JwtResponse.class)))
+    @ApiResponse(responseCode = "401", description = "Invalid credentials")
+
     public ResponseEntity<JwtResponse> login(@Valid @RequestBody LoginRequest request) {
         log.debug("API call: /api/auth/login for email: {}", request.getEmail());
         try {

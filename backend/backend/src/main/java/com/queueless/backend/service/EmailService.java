@@ -51,4 +51,26 @@ public class EmailService {
             return reader.lines().collect(Collectors.joining("\n"));
         }
     }
+
+    public void sendUpcomingTokenEmail(String toEmail, String tokenId, String serviceName, int minutes) {
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+
+            helper.setTo(toEmail);
+            helper.setSubject("QueueLess – Your turn is coming up!");
+
+            String htmlTemplate = loadHtmlTemplate("templates/upcoming-token-template.html");
+            String processedHtml = htmlTemplate
+                    .replace("{{TOKEN_ID}}", tokenId)
+                    .replace("{{SERVICE_NAME}}", serviceName)
+                    .replace("{{MINUTES}}", String.valueOf(minutes));
+
+            helper.setText(processedHtml, true);
+            mailSender.send(message);
+            log.info("Upcoming token email sent to {}", toEmail);
+        } catch (Exception e) {
+            log.error("Failed to send upcoming token email to {}", toEmail, e);
+        }
+    }
 }
