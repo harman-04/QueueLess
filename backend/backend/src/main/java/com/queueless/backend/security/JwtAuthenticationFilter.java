@@ -4,6 +4,7 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -12,8 +13,9 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.util.Collection;
-import java.util.HashMap;
+import java.util.Map;
 
+@Slf4j
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtTokenProvider jwtProvider;
@@ -38,23 +40,23 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     String email = jwtProvider.getEmailFromToken(token);
                     Collection<GrantedAuthority> authorities = jwtProvider.getAuthoritiesFromToken(token);
 
-                    // Use userId as principal
                     UsernamePasswordAuthenticationToken authentication =
                             new UsernamePasswordAuthenticationToken(userId, null, authorities);
 
-                    // Store additional details
-                    authentication.setDetails(new HashMap<String, Object>() {{
-                        put("userId", userId);
-                        put("email", email);
-                    }});
+                    // Store additional details using Map.of (Java 9+)
+                    authentication.setDetails(Map.of(
+                            "userId", userId,
+                            "email", email
+                    ));
 
                     SecurityContextHolder.getContext().setAuthentication(authentication);
+                    log.debug("Authenticated user: {} ({})", email, userId);
                 }
             }
         } catch (Exception e) {
-            logger.error("Cannot set user authentication", e);
-//            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Error: Unauthorized");
-            return;
+            log.error("Cannot set user authentication: {}", e.getMessage());
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid or expired token");
+            return; // Stop further processing
         }
 
         filterChain.doFilter(request, response);

@@ -35,6 +35,7 @@ public class RegisterRequest {
     public static class UserPreferences {
         private Boolean emailNotifications = true;
         private Boolean smsNotifications = false;
+        private Boolean pushNotifications = true;
         private String language = "en";
 
         @Min(value = 1, message = "Search radius must be at least 1km")

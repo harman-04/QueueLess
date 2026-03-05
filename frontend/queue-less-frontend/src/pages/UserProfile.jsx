@@ -1,9 +1,8 @@
-// src/pages/UserProfile.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Card, Form, Button, Alert, Container, Row, Col, Modal } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
-import { logout } from '../redux/authSlice';
+import { logout, updatePreferences } from '../redux/authSlice'; // import updatePreferences
 import { authService } from '../services/authService';
 import { toast } from 'react-toastify';
 import './UserProfile.css';
@@ -11,7 +10,7 @@ import './UserProfile.css';
 const UserProfile = () => {
     const dispatch = useDispatch();
     const navigate = useNavigate();
-    const { name: currentName, phoneNumber: currentPhoneNumber, profileImageUrl: currentProfileImageUrl } = useSelector((state) => state.auth);
+    const { name: currentName, phoneNumber: currentPhoneNumber, profileImageUrl: currentProfileImageUrl, preferences: currentPreferences } = useSelector((state) => state.auth);
 
     const [name, setName] = useState(currentName || '');
     const [phoneNumber, setPhoneNumber] = useState(currentPhoneNumber || '');
@@ -23,6 +22,15 @@ const UserProfile = () => {
     const [passwordError, setPasswordError] = useState('');
     const [deleteWarning, setDeleteWarning] = useState(false);
     const [showAvatarModal, setShowAvatarModal] = useState(false);
+    const [preferences, setPreferences] = useState({
+        emailNotifications: true,
+        smsNotifications: false,
+        pushNotifications: true,
+        language: 'en',
+        defaultSearchRadius: 5,
+        darkMode: false,
+        favoritePlaceIds: []
+    });
 
     // Premium avatar collection
     const premiumAvatars = [
@@ -39,6 +47,12 @@ const UserProfile = () => {
         'https://images.unsplash.com/photo-1552058544-f2b08422138a?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&q=80',
         'https://images.unsplash.com/photo-1599566150163-29194dcaad36?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&q=80'
     ];
+
+    useEffect(() => {
+        if (currentPreferences) {
+            setPreferences(currentPreferences);
+        }
+    }, [currentPreferences]);
 
     const handleProfileUpdate = async (e) => {
         e.preventDefault();
@@ -68,7 +82,7 @@ const UserProfile = () => {
             setPasswordError('New password must be at least 8 characters.');
             return;
         }
-        
+
         setIsSubmitting(true);
         try {
             await authService.changePassword({ currentPassword, newPassword });
@@ -91,7 +105,6 @@ const UserProfile = () => {
         }
         setIsSubmitting(true);
         try {
-            // New: Call the backend API to delete the account
             await authService.deleteAccount();
             toast.success('Account deleted successfully. You will be logged out.');
             dispatch(logout());
@@ -109,8 +122,22 @@ const UserProfile = () => {
         setShowAvatarModal(false);
     };
 
+    const handleSavePreferences = async () => {
+        setIsSubmitting(true);
+        try {
+            // Update preferences via authService (you may need to add an endpoint or reuse updateProfile)
+            // For now, we'll dispatch updatePreferences action (only updates local state and localStorage)
+            dispatch(updatePreferences(preferences));
+            toast.success('Preferences saved!');
+        } catch (error) {
+            toast.error('Failed to save preferences.');
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
     return (
-        <Container className="my-5 user-profile-container">
+        <Container className="user-profile-container">
             <h1 className="text-center mb-4 profile-title">My Profile</h1>
             <Row className="justify-content-center">
                 <Col md={8} lg={6}>
@@ -130,30 +157,30 @@ const UserProfile = () => {
                                     </div>
                                 </div>
                             </div>
-                            
+
                             <div className="d-grid gap-2">
-                                <Button 
-                                    variant="outline-primary" 
+                                <Button
+                                    variant="outline-primary"
                                     className="avatar-select-btn"
                                     onClick={() => setShowAvatarModal(true)}
                                 >
                                     <i className="fas fa-user-circle me-2"></i>Choose from Premium Avatars
                                 </Button>
                             </div>
-                            
+
                             <div className="divider">
                                 <span>OR</span>
                             </div>
-                            
+
                             <Form.Group controlId="formProfileImageUrl" className="mb-3">
                                 <Form.Label>Enter Custom Image URL</Form.Label>
                                 <div className="input-with-icon">
                                     <i className="fas fa-link"></i>
-                                    <Form.Control 
-                                        type="url" 
+                                    <Form.Control
+                                        type="url"
                                         placeholder="https://example.com/your-image.jpg"
-                                        value={profileImageUrl} 
-                                        onChange={(e) => setProfileImageUrl(e.target.value)} 
+                                        value={profileImageUrl}
+                                        onChange={(e) => setProfileImageUrl(e.target.value)}
                                     />
                                 </div>
                             </Form.Group>
@@ -169,10 +196,10 @@ const UserProfile = () => {
                                     <Form.Label>Full Name</Form.Label>
                                     <div className="input-with-icon">
                                         <i className="fas fa-user"></i>
-                                        <Form.Control 
-                                            type="text" 
-                                            value={name} 
-                                            onChange={(e) => setName(e.target.value)} 
+                                        <Form.Control
+                                            type="text"
+                                            value={name}
+                                            onChange={(e) => setName(e.target.value)}
                                         />
                                     </div>
                                 </Form.Group>
@@ -180,17 +207,21 @@ const UserProfile = () => {
                                     <Form.Label>Phone Number</Form.Label>
                                     <div className="input-with-icon">
                                         <i className="fas fa-phone"></i>
-                                        <Form.Control 
-                                            type="text" 
-                                            value={phoneNumber} 
-                                            onChange={(e) => setPhoneNumber(e.target.value)} 
+                                        <Form.Control
+                                            type="text"
+                                            value={phoneNumber}
+                                            onChange={(e) => setPhoneNumber(e.target.value)}
+                                            placeholder='Enter Your Phone Number'
+                                            minLength={10}
+                                            maxLength={15}
+                                            required
                                         />
                                     </div>
                                 </Form.Group>
                                 <div className="d-grid">
-                                    <Button 
-                                        variant="primary" 
-                                        type="submit" 
+                                    <Button
+                                        variant="primary"
+                                        type="submit"
                                         disabled={isSubmitting}
                                         className="update-btn"
                                     >
@@ -210,11 +241,12 @@ const UserProfile = () => {
                                     <Form.Label>Current Password</Form.Label>
                                     <div className="input-with-icon">
                                         <i className="fas fa-lock"></i>
-                                        <Form.Control 
-                                            type="password" 
-                                            value={currentPassword} 
-                                            onChange={(e) => setCurrentPassword(e.target.value)} 
-                                            required 
+                                        <Form.Control
+                                            type="password"
+                                            value={currentPassword}
+                                            onChange={(e) => setCurrentPassword(e.target.value)}
+                                            required
+                                            placeholder='Enter Your Current Password'
                                         />
                                     </div>
                                 </Form.Group>
@@ -222,11 +254,12 @@ const UserProfile = () => {
                                     <Form.Label>New Password</Form.Label>
                                     <div className="input-with-icon">
                                         <i className="fas fa-key"></i>
-                                        <Form.Control 
-                                            type="password" 
-                                            value={newPassword} 
-                                            onChange={(e) => setNewPassword(e.target.value)} 
-                                            required 
+                                        <Form.Control
+                                            type="password"
+                                            value={newPassword}
+                                            onChange={(e) => setNewPassword(e.target.value)}
+                                            placeholder='Enter New Password'
+                                            required
                                         />
                                     </div>
                                 </Form.Group>
@@ -234,23 +267,65 @@ const UserProfile = () => {
                                     <Form.Label>Confirm New Password</Form.Label>
                                     <div className="input-with-icon">
                                         <i className="fas fa-check-circle"></i>
-                                        <Form.Control 
-                                            type="password" 
-                                            value={confirmNewPassword} 
-                                            onChange={(e) => setConfirmNewPassword(e.target.value)} 
-                                            required 
+                                        <Form.Control
+                                            type="password"
+                                            value={confirmNewPassword}
+                                            onChange={(e) => setConfirmNewPassword(e.target.value)}
+                                            placeholder='Re-Entered New Password To Confirm'
+                                            required
                                         />
                                     </div>
                                 </Form.Group>
                                 {passwordError && <Alert variant="danger" className="mt-3">{passwordError}</Alert>}
                                 <div className="d-grid">
-                                    <Button 
-                                        variant="warning" 
-                                        type="submit" 
+                                    <Button
+                                        variant="warning"
+                                        type="submit"
                                         disabled={isSubmitting}
                                         className="password-btn"
                                     >
                                         {isSubmitting ? 'Changing...' : 'Change Password'}
+                                    </Button>
+                                </div>
+                            </Form>
+                        </Card.Body>
+                    </Card>
+
+                    {/* Notification Preferences Section */}
+                    <Card className="shadow-lg mb-4 profile-card">
+                        <Card.Body className="p-4">
+                            <h4 className="card-title section-title">Notification Preferences</h4>
+                            <Form>
+                                <Form.Group className="mb-3">
+                                    <Form.Check
+                                        type="switch"
+                                        label="Email Notifications"
+                                        checked={preferences.emailNotifications}
+                                        onChange={(e) => setPreferences({ ...preferences, emailNotifications: e.target.checked })}
+                                    />
+                                </Form.Group>
+                                <Form.Group className="mb-3">
+                                    <Form.Check
+                                        type="switch"
+                                        label="SMS Notifications"
+                                        checked={preferences.smsNotifications}
+                                        onChange={(e) => setPreferences({ ...preferences, smsNotifications: e.target.checked })}
+                                    />
+                                </Form.Group>
+                                <Form.Group className="mb-3">
+                                    <Form.Check
+                                        type="switch"
+                                        label="Push Notifications"
+                                        checked={preferences.pushNotifications}
+                                        onChange={(e) => setPreferences({ ...preferences, pushNotifications: e.target.checked })}
+                                    />
+                                    <Form.Text className="text-muted">
+                                        Receive push notifications when your token is about to be served.
+                                    </Form.Text>
+                                </Form.Group>
+                                <div className="d-grid">
+                                    <Button variant="primary" className='update-btn' onClick={handleSavePreferences} disabled={isSubmitting}>
+                                        {isSubmitting ? 'Saving...' : 'Save Preferences'}
                                     </Button>
                                 </div>
                             </Form>
@@ -289,7 +364,7 @@ const UserProfile = () => {
                     <Row>
                         {premiumAvatars.map((avatar, index) => (
                             <Col xs={4} md={3} key={index} className="mb-3 text-center">
-                                <div 
+                                <div
                                     className={`avatar-option ${profileImageUrl === avatar ? 'selected' : ''}`}
                                     onClick={() => selectAvatar(avatar)}
                                 >

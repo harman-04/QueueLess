@@ -20,12 +20,10 @@ import {
   FaUsers,
   FaAmbulance,
   FaSort,
-  FaAngleDown,
   FaMapMarkerAlt,
   FaTimesCircle,
-  FaAngleRight
 } from 'react-icons/fa';
-import { performSearch, setFilters, setSorting, fetchFilterOptions, setPage } from '../redux/searchSlice';
+import { performSearch, setFilters, setSorting, fetchFilterOptions } from '../redux/searchSlice';
 import SearchResults from './SearchResults';
 import './AdvancedSearch.css';
 
@@ -37,15 +35,21 @@ const AdvancedSearch = () => {
     filterOptions,
     loading,
     error,
-    currentPage,
     sortBy,
     sortDirection
   } = searchState || {};
 
   const [localFilters, setLocalFilters] = useState(filters || {
+    query: '',
+    placeType: '',
+    minRating: 0,
+    maxWaitTime: null,
     supportsGroupToken: null,
     emergencySupport: null,
-    // ...other default filters from your Redux state
+    isActive: true,
+    searchPlaces: true,
+    searchServices: true,
+    searchQueues: true,
   });
   const [showFilters, setShowFilters] = useState(false);
   const searchTimeoutRef = useRef(null);
@@ -59,6 +63,7 @@ const AdvancedSearch = () => {
     setLocalFilters(filters);
   }, [filters]);
 
+  // Debounced search when query changes
   useEffect(() => {
     if (isInitialMount.current) {
       isInitialMount.current = false;
@@ -68,15 +73,17 @@ const AdvancedSearch = () => {
     if (searchTimeoutRef.current) {
       clearTimeout(searchTimeoutRef.current);
     }
-    
-    if (localFilters.query !== filters.query) {
+
+    if (localFilters.query !== filters?.query) {
       searchTimeoutRef.current = setTimeout(() => {
         dispatch(setFilters(localFilters));
         dispatch(performSearch({
           filters: localFilters,
           page: 0,
-          sortBy: sortBy,
-          sortDirection: sortDirection
+          size: 20,
+          sortBy,
+          sortDirection,
+          type: 'all'
         }));
       }, 500);
     }
@@ -86,13 +93,10 @@ const AdvancedSearch = () => {
         clearTimeout(searchTimeoutRef.current);
       }
     };
-  }, [localFilters.query, dispatch, sortBy, sortDirection]);
+  }, [localFilters.query, dispatch, sortBy, sortDirection, filters?.query]);
 
   const handleFilterChange = (key, value) => {
-    setLocalFilters(prev => ({
-      ...prev,
-      [key]: value
-    }));
+    setLocalFilters(prev => ({ ...prev, [key]: value }));
   };
 
   const handleSearch = () => {
@@ -103,8 +107,10 @@ const AdvancedSearch = () => {
     dispatch(performSearch({
       filters: localFilters,
       page: 0,
-      sortBy: sortBy,
-      sortDirection: sortDirection
+      size: 20,
+      sortBy,
+      sortDirection,
+      type: 'all'
     }));
   };
 
@@ -113,9 +119,11 @@ const AdvancedSearch = () => {
     dispatch(setSorting({ sortBy: newSortBy, sortDirection: newSortDirection }));
     dispatch(performSearch({
       filters: localFilters,
-      page: currentPage,
+      page: 0,
+      size: 20,
       sortBy: newSortBy,
-      sortDirection: newSortDirection
+      sortDirection: newSortDirection,
+      type: 'all'
     }));
   };
 
@@ -130,25 +138,17 @@ const AdvancedSearch = () => {
       isActive: true,
       searchPlaces: true,
       searchServices: true,
-      searchQueues: true
+      searchQueues: true,
     };
     setLocalFilters(defaultFilters);
     dispatch(setFilters(defaultFilters));
     dispatch(performSearch({
       filters: defaultFilters,
       page: 0,
-      sortBy: sortBy,
-      sortDirection: sortDirection
-    }));
-  };
-
-  const handlePageChange = (page) => {
-    dispatch(setPage(page));
-    dispatch(performSearch({
-      filters: localFilters,
-      page: page,
-      sortBy: sortBy || 'name',
-      sortDirection: sortDirection || 'asc'
+      size: 20,
+      sortBy,
+      sortDirection,
+      type: 'all'
     }));
   };
 
@@ -252,7 +252,7 @@ const AdvancedSearch = () => {
             </Row>
 
             <div className="filter-group-heading mt-4 mb-3">
-                <h6 className="mb-0"><FaFilter className="me-2" />Refine your search</h6>
+              <h6 className="mb-0"><FaFilter className="me-2" />Refine your search</h6>
             </div>
             <Row className="gx-5 gy-3">
               <Col md={4}>
@@ -348,7 +348,7 @@ const AdvancedSearch = () => {
         </Button>
       </div>
 
-      <SearchResults onPageChange={handlePageChange} />
+      <SearchResults />
     </Container>
   );
 };

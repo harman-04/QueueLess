@@ -73,4 +73,39 @@ public class EmailService {
             log.error("Failed to send upcoming token email to {}", toEmail, e);
         }
     }
+
+    // In EmailService.java
+    public void sendAlertEmail(String toEmail, String message) {
+        try {
+            MimeMessage mimeMessage = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, "utf-8");
+            helper.setTo(toEmail);
+            helper.setSubject("QueueLess Alert – Queue threshold exceeded");
+            helper.setText(message, false); // plain text
+            mailSender.send(mimeMessage);
+            log.info("Alert email sent to {}", toEmail);
+        } catch (MessagingException e) {
+            log.error("Failed to send alert email to {}", toEmail, e);
+        }
+    }
+
+    // In EmailService.java
+    public void sendVerificationOtpEmail(String toEmail, String otp) {
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+
+            helper.setTo(toEmail);
+            helper.setSubject("QueueLess – Verify Your Email");
+
+            String htmlTemplate = loadHtmlTemplate("templates/verification-template.html");
+            String processedHtml = htmlTemplate.replace("{{OTP}}", otp);
+
+            helper.setText(processedHtml, true);
+            mailSender.send(message);
+            log.info("Verification email sent to {}", toEmail);
+        } catch (Exception e) {
+            log.error("Failed to send verification email", e);
+        }
+    }
 }

@@ -1,12 +1,15 @@
-//src/pages/PricingPage.jsx
 import React, { useState } from 'react';
 import { Card, Button, Container, Row, Col, Form } from 'react-bootstrap';
-import axios from 'axios';
 import Swal from 'sweetalert2';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import { Link } from 'react-router-dom';
 import 'bootstrap-icons/font/bootstrap-icons.css';
+import './PricingPage.css';
+import { useSelector } from 'react-redux';
+import axiosInstance from '../utils/axiosInstance'; // Use your existing axiosInstance
+
+const RAZORPAY_KEY = import.meta.env.VITE_RAZORPAY_KEY_ID;
 
 const plans = [
   { name: "Basic Admin", tokenType: "1_MONTH", price: 100, description: "Ideal for foundational admin tasks." },
@@ -14,12 +17,38 @@ const plans = [
   { name: "Enterprise Admin", tokenType: "LIFETIME", price: 1000, description: "Comprehensive control for platform leadership." },
 ];
 
-// Define a list of trusted email domains for validation
 const TRUSTED_DOMAINS = ['gmail.com', 'yahoo.com', 'outlook.com', 'hotmail.com'];
 
 const PricingPage = () => {
   const [planLoading, setPlanLoading] = useState({});
   const [generatedToken, setGeneratedToken] = useState('');
+  const { id: adminId } = useSelector((state) => state.auth || {});
+
+  // Helper for theme-aware SweetAlert2
+  const customSwal = (options) => {
+    const isDark = document.body.classList.contains('dark-mode');
+    return Swal.fire({
+      background: isDark ? '#2d2d2d' : '#fff',
+      color: isDark ? '#f8f9fa' : '#212529',
+      confirmButtonColor: '#6610f2',
+      ...options
+    });
+  };
+
+  // Sleek Toast for Copy action
+  const showCopyToast = () => {
+    const isDark = document.body.classList.contains('dark-mode');
+    const Toast = Swal.mixin({
+      toast: true,
+      position: 'top-end',
+      showConfirmButton: false,
+      timer: 2000,
+      timerProgressBar: true,
+      background: isDark ? '#2d2d2d' : '#fff',
+      color: isDark ? '#f8f9fa' : '#212529',
+    });
+    Toast.fire({ icon: 'success', title: 'Admin Token copied!' });
+  };
 
   const formik = useFormik({
     initialValues: { email: '' },
@@ -27,103 +56,101 @@ const PricingPage = () => {
       email: Yup.string()
         .email('Invalid email address')
         .required('Required')
-        .test('is-trusted-domain', 'Only trusted email providers are allowed (e.g., gmail.com, yahoo.com).', (value) => {
+        .test('is-trusted-domain', 'Only trusted providers allowed (Gmail, Yahoo, etc).', (value) => {
           if (!value) return false;
           const domain = value.split('@')[1];
           return TRUSTED_DOMAINS.includes(domain);
         }),
     }),
-    onSubmit: () => {},
+    onSubmit: () => { },
   });
 
   const handleBuy = async (tokenType) => {
     formik.handleSubmit();
 
-    // Check if there are any validation errors before proceeding
-    if (!formik.isValid) {
-      Swal.fire('Error', 'Please enter a valid email from a trusted domain.', 'error');
+    if (!formik.isValid || !formik.values.email) {
+      customSwal({ icon: 'error', title: 'Error', text: 'Please enter a valid administrative email.' });
       return;
     }
 
-    setPlanLoading(prevState => ({ ...prevState, [tokenType]: true }));
+    setPlanLoading(prev => ({ ...prev, [tokenType]: true }));
 
     try {
-      const res = await axios.post('https://localhost:8443/api/payment/create-order', null, {
+      const res = await axiosInstance.post('/payment/create-order', null, {
         params: {
           email: formik.values.email,
           role: 'ADMIN',
           tokenType,
+          adminId // Passing adminId if available
         }
       });
 
       const { amount, orderId, currency } = res.data;
 
       const options = {
-        key: 'rzp_test_qye1jaTP5mlc26',
+        key: RAZORPAY_KEY,
         amount: amount.toString(),
         currency,
         name: "QueueLess Admin Access",
         description: "Purchase Admin Access Token",
         order_id: orderId,
         handler: async (response) => {
-          const confirmRes = await axios.post('https://localhost:8443/api/payment/confirm', null, {
-            params: {
-              orderId: orderId,
-              paymentId: response.razorpay_payment_id,
-              email: formik.values.email,
-              tokenType,
-            }
-          });
+          try {
+            const confirmRes = await axiosInstance.post('/payment/confirm', null, {
+              params: {
+                orderId: orderId,
+                paymentId: response.razorpay_payment_id,
+                email: formik.values.email,
+                tokenType,
+              }
+            });
 
-          setGeneratedToken(confirmRes.data.tokenValue);
-          Swal.fire('Success', 'Admin Access Granted! Token Generated.', 'success');
+            setGeneratedToken(confirmRes.data.tokenValue);
+            customSwal({ icon: 'success', title: 'Success', text: 'Admin Access Granted! Token Generated.' });
+          } catch (error) {
+            customSwal({ icon: 'error', title: 'Error', text: error?.response?.data?.message || 'Confirmation failed.' });
+          }
         },
-        prefill: {
-          email: formik.values.email,
-        },
-        theme: {
-          color: "#6610f2", // A more sophisticated purple
-        },
+        prefill: { email: formik.values.email },
+        theme: { color: "#6610f2" },
       };
 
       const rzp = new window.Razorpay(options);
       rzp.open();
-
     } catch (error) {
-      Swal.fire('Error', error?.response?.data?.message || 'Something went wrong!', 'error');
+      customSwal({ icon: 'error', title: 'Error', text: error?.response?.data?.message || 'Order creation failed.' });
     } finally {
-      setPlanLoading(prevState => ({ ...prevState, [tokenType]: false }));
+      setPlanLoading(prev => ({ ...prev, [tokenType]: false }));
     }
   };
 
   const handleCopy = () => {
     navigator.clipboard.writeText(generatedToken);
-    Swal.fire('Copied!', 'Admin Token copied to clipboard.', 'success');
+    showCopyToast();
   };
 
   return (
-    <Container className="py-5" style={{ backgroundColor: '#f0f8ff' }}> {/* Soft lavender background */}
-      <div className="text-center mb-5">
-        <h2 className="text-center mb-3 fw-bold" style={{ color: '#6610f2' }}>Elevate Your Control</h2> {/* Elegant title */}
-        <p className="lead text-muted">Choose the perfect admin access plan for seamless management.</p>
+    <Container className="py-5 pricing-page-container">
+      <div className="pricing-page-header">
+        <h2>Elevate Your Control</h2>
+        <p className="lead">Choose the perfect admin access plan for seamless management.</p>
       </div>
 
-      <Form className="mb-5" onSubmit={formik.handleSubmit}>
+      <Form className="mb-5 pricing-form" onSubmit={formik.handleSubmit}>
         <Row className="justify-content-center">
           <Col md={6}>
             <Form.Group className="mb-4" controlId="formAdminEmail">
-              <Form.Label className="fw-semibold" style={{ color: '#495057' }}>Enter your administrative email:</Form.Label>
+              <Form.Label className="fw-semibold">Administrative Email</Form.Label>
               <Form.Control
                 type="email"
                 name="email"
                 placeholder="admin@yourdomain.com"
                 value={formik.values.email}
                 onChange={formik.handleChange}
-                onBlur={formik.handleBlur} // Add onBlur to trigger validation on field exit
+                onBlur={formik.handleBlur}
                 isInvalid={formik.touched.email && formik.errors.email}
-                className="shadow-sm" // Subtle shadow on input
               />
-              <Form.Control.Feedback type="invalid" className="text-danger">{formik.errors.email}</Form.Control.Feedback>
+              <Form.Control.Feedback type="invalid">{formik.errors.email}</Form.Control.Feedback>
               <Form.Text className="text-muted small">This email will be associated with your admin privileges.</Form.Text>
             </Form.Group>
           </Col>
@@ -132,23 +159,25 @@ const PricingPage = () => {
 
       <Row className="justify-content-center">
         {plans.map((plan) => (
-          <Col md={4} key={plan.tokenType} className="mb-4">
-            <Card className="shadow-lg border-0 rounded-lg h-100 d-flex flex-column" style={{ backgroundColor: '#ffffff' }}> {/* White cards */}
-              <Card.Body className="text-center py-4 d-flex flex-column justify-content-between">
-                <div>
-                  <Card.Title className="h5 fw-bold mb-3" style={{ color: '#6610f2' }}>{plan.name}</Card.Title>
-                  <Card.Subtitle className="h6 mb-3 text-muted"><span className="fw-bold" style={{ color: '#6c757d' }}>₹{plan.price}</span></Card.Subtitle>
-                  <Card.Text className="mb-3 text-secondary">{plan.description}</Card.Text>
-                </div>
+          <Col lg={4} md={6} key={plan.tokenType} className="mb-4">
+            <Card className="pricing-card">
+              <Card.Body className="text-center">
+                <Card.Title className="h5 fw-bold">{plan.name}</Card.Title>
+                <Card.Subtitle className="h2 my-4">
+                  <span className="price-currency">₹</span>{plan.price}
+                </Card.Subtitle>
+                <Card.Text className="text-secondary">{plan.description}</Card.Text>
                 <Button
-                  variant="primary" // Using primary for a consistent feel
-                  disabled={planLoading[plan.tokenType] || !formik.isValid || !formik.values.email} // Disable if form is invalid or email is empty
+                  variant="primary"
+                  disabled={planLoading[plan.tokenType] || !formik.isValid || !formik.values.email}
                   onClick={() => handleBuy(plan.tokenType)}
-                  className="mt-3 rounded-pill shadow-sm"
-                  style={{ backgroundColor: '#6610f2', borderColor: '#6610f2' }}
+                  className="rounded-pill mt-3"
                 >
-                  {planLoading[plan.tokenType] ? <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> : <i className="bi bi-key-fill me-2"></i>} {/* Key icon for admin */}
-                  {planLoading[plan.tokenType] ? 'Processing...' : 'Get Admin Access'}
+                  {planLoading[plan.tokenType] ? (
+                    <span className="spinner-border spinner-border-sm" role="status"></span>
+                  ) : (
+                    <><i className="bi bi-key-fill me-2"></i> Get Admin Access</>
+                  )}
                 </Button>
               </Card.Body>
             </Card>
@@ -157,20 +186,23 @@ const PricingPage = () => {
       </Row>
 
       {generatedToken && (
-        <div className="text-center mt-5 p-4 bg-white rounded-lg shadow-sm border border-primary"> {/* White background for token */}
-          <h4 className="text-primary fw-bold mb-3"><i className="bi bi-check-circle-fill me-2"></i> Admin Access Token Ready!</h4> {/* Success icon */}
-          <p className="fw-bold text-primary mb-3 selectable" style={{ backgroundColor: '#e7f1ff', padding: '10px', borderRadius: '5px' }}>{generatedToken}</p> {/* Highlighted token */}
-          <Button variant="outline-primary" onClick={handleCopy} className="rounded-pill me-2 shadow-sm">
-            <i className="bi bi-clipboard-check me-2"></i> Copy Token
-          </Button>
-          <Link to="/register" className="ms-2">
-            <Button variant="primary" className="rounded-pill shadow-sm" style={{ backgroundColor: '#6610f2', borderColor: '#6610f2' }}>
-              <i className="bi bi-person-plus-fill me-2"></i> Proceed to Admin Registration
+        <div className="text-center mt-5 p-4 token-success-box">
+          <h4 className="fw-bold mb-3"><i className="bi bi-check-circle-fill me-2"></i> Admin Token Ready!</h4>
+          <div className="selectable token-display mb-4">{generatedToken}</div>
+          
+          <div className="d-flex flex-wrap justify-content-center gap-2">
+            <Button variant="outline-primary" onClick={handleCopy} className="rounded-pill">
+              <i className="bi bi-clipboard-check me-2"></i> Copy Token
             </Button>
-          </Link>
-          <p className="mt-3 text-muted small">
+            <Link to="/register">
+              <Button variant="primary" className="rounded-pill">
+                <i className="bi bi-person-plus-fill me-2"></i> Proceed to Registration
+              </Button>
+            </Link>
+          </div>
+          <p className="mt-4 text-muted small">
             <i className="bi bi-info-circle-fill me-2"></i>
-            Securely copy your admin token and proceed to the registration page.
+            Securely copy your admin token and proceed to registration.
           </p>
         </div>
       )}

@@ -8,6 +8,12 @@ import com.queueless.backend.service.QueueService;
 import com.queueless.backend.security.annotations.UserOnly;
 import com.queueless.backend.security.annotations.Authenticated;
 import com.queueless.backend.security.annotations.AdminOrProviderOnly;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -20,26 +26,34 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Slf4j
 @RestController
 @RequestMapping("/api/feedback")
 @RequiredArgsConstructor
+@Tag(name = "Feedback", description = "Endpoints for submitting and retrieving feedback")
 public class FeedbackController {
     private final FeedbackService feedbackService;
     private final QueueService queueService;
 
     @PostMapping
     @UserOnly
+    @Operation(summary = "Submit feedback", description = "Submits feedback for a completed token. Only the user who owned the token can submit.")
+    @ApiResponse(responseCode = "200", description = "Feedback submitted",
+            content = @Content(schema = @Schema(implementation = Feedback.class)))
+    @ApiResponse(responseCode = "409", description = "Feedback already exists for this token")
+    @ApiResponse(responseCode = "404", description = "Queue not found")
+    @ApiResponse(responseCode = "500", description = "Internal server error")
     public ResponseEntity<Feedback> submitFeedback(@RequestBody FeedbackDTO feedbackDTO, Authentication authentication) {
         String userId = authentication.getName();
         log.info("Received feedback submission request from user {} for token {}", userId, feedbackDTO.getTokenId());
 
         try {
             log.debug("Checking for existing feedback for token: {}", feedbackDTO.getTokenId());
-            Optional<Feedback> existingFeedback = feedbackService.getFeedbackByTokenId(feedbackDTO.getTokenId());
-            if (existingFeedback.isPresent()) {
-                log.warn("Feedback for token {} already exists. Request rejected.", feedbackDTO.getTokenId());
+            boolean alreadySubmitted = feedbackService.hasUserProvidedFeedbackForToken(userId, feedbackDTO.getTokenId());
+            if (alreadySubmitted) {
+                log.warn("User {} has already submitted feedback for token {}. Request rejected.", userId, feedbackDTO.getTokenId());
                 return ResponseEntity.status(HttpStatus.CONFLICT).body(null);
             }
             log.debug("No existing feedback found for token: {}", feedbackDTO.getTokenId());
@@ -78,6 +92,11 @@ public class FeedbackController {
 
     @GetMapping("/token/{tokenId}")
     @Authenticated
+    @Operation(summary = "Get feedback by token ID", description = "Returns feedback for a specific token. Accessible by the token owner, admin, or provider.")
+    @ApiResponse(responseCode = "200", description = "Feedback found",
+            content = @Content(schema = @Schema(implementation = Feedback.class)))
+    @ApiResponse(responseCode = "403", description = "Forbidden – not authorized to view this feedback")
+    @ApiResponse(responseCode = "404", description = "Feedback not found")
     public ResponseEntity<Feedback> getFeedbackByTokenId(@PathVariable String tokenId) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String userId = authentication.getName();
@@ -103,6 +122,8 @@ public class FeedbackController {
     }
 
     @GetMapping("/place/{placeId}")
+    @Operation(summary = "Get feedback by place ID", description = "Returns all feedback for a specific place. Public access.")
+    @ApiResponse(responseCode = "200", description = "List of feedback")
     public ResponseEntity<List<Feedback>> getFeedbackByPlaceId(@PathVariable String placeId) {
         log.info("Received request to get feedback for place ID: {}", placeId);
         List<Feedback> feedbacks = feedbackService.getFeedbackByPlaceId(placeId);
@@ -112,6 +133,9 @@ public class FeedbackController {
 
     @GetMapping("/provider/{providerId}")
     @AdminOrProviderOnly
+    @Operation(summary = "Get feedback by provider ID", description = "Returns all feedback for a specific provider. Providers can only access their own; admins can access any.")
+    @ApiResponse(responseCode = "200", description = "List of feedback")
+    @ApiResponse(responseCode = "403", description = "Forbidden – provider accessing another provider's data")
     public ResponseEntity<List<Feedback>> getFeedbackByProviderId(@PathVariable String providerId, Authentication authentication) {
         String requesterId = authentication.getName();
 
@@ -129,6 +153,8 @@ public class FeedbackController {
     }
 
     @GetMapping("/place/{placeId}/average-rating")
+    @Operation(summary = "Get average rating for place", description = "Returns the average overall rating for a place. Public access.")
+    @ApiResponse(responseCode = "200", description = "Average rating (0.0 if none)")
     public ResponseEntity<Double> getAverageRatingForPlace(@PathVariable String placeId) {
         log.info("Received request to get average rating for place ID: {}", placeId);
         try {
@@ -142,6 +168,8 @@ public class FeedbackController {
     }
 
     @GetMapping("/provider/{providerId}/average-rating")
+    @Operation(summary = "Get average rating for provider", description = "Returns the average overall rating for a provider. Public access.")
+    @ApiResponse(responseCode = "200", description = "Average rating (0.0 if none)")
     public ResponseEntity<Double> getAverageRatingForProvider(@PathVariable String providerId) {
         log.info("Received request to get average rating for provider ID: {}", providerId);
         try {
@@ -156,11 +184,12 @@ public class FeedbackController {
 
     @GetMapping("/user/{userId}/token/{tokenId}")
     @UserOnly
+    @Operation(summary = "Check if user provided feedback for a token", description = "Checks whether a specific user has already submitted feedback for a given token.")
+    @ApiResponse(responseCode = "200", description = "Boolean indicating if feedback exists")
+    @ApiResponse(responseCode = "403", description = "Forbidden – user mismatch")
     public ResponseEntity<Boolean> hasUserProvidedFeedback(@PathVariable String userId, @PathVariable String tokenId, Authentication authentication) {
         log.info("Received request to check if user {} provided feedback for token {}", userId, tokenId);
 
-        // This check is a good practice for defense-in-depth, ensuring a user can't check
-        // feedback status for another user. The @UserOnly annotation handles the role check.
         if (!authentication.getName().equals(userId)) {
             log.warn("Unauthorized attempt by user {} to check feedback status for user {}.", authentication.getName(), userId);
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
@@ -173,6 +202,8 @@ public class FeedbackController {
     }
 
     @GetMapping("/place/{placeId}/detailed-ratings")
+    @Operation(summary = "Get detailed ratings for place", description = "Returns overall, staff, service, and wait time average ratings for a place.")
+    @ApiResponse(responseCode = "200", description = "Map of rating categories to averages")
     public ResponseEntity<Map<String, Double>> getDetailedRatingsForPlace(@PathVariable String placeId) {
         log.info("Received request for detailed ratings for place ID: {}", placeId);
         try {
@@ -183,5 +214,26 @@ public class FeedbackController {
             log.error("Error getting detailed ratings for place {}: {}", placeId, e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
+    }
+
+    @GetMapping("/recent")
+    @Operation(summary = "Get recent feedback", description = "Returns a limited number of recent feedback entries for public display.")
+    public ResponseEntity<List<FeedbackDTO>> getRecentFeedback(@RequestParam(defaultValue = "5") int limit) {
+        log.info("Fetching {} recent feedback entries", limit);
+        List<Feedback> recent = feedbackService.getRecentFeedback(limit);
+        List<FeedbackDTO> dtos = recent.stream()
+                .map(this::convertToDTO)  // you may need a proper mapper
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(dtos);
+    }
+
+    private FeedbackDTO convertToDTO(Feedback feedback) {
+        FeedbackDTO dto = new FeedbackDTO();
+        dto.setTokenId(feedback.getTokenId());
+        dto.setQueueId(feedback.getQueueId());
+        dto.setRating(feedback.getRating());
+        dto.setComment(feedback.getComment());
+        // include user name if available (you may need to fetch user)
+        return dto;
     }
 }

@@ -1,0 +1,86 @@
+/* PlaceMap.css – Dark Mode Support for Map Card and Leaflet Popups */
+
+/* Card styling */
+.place-map-card {
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  box-shadow: var(--shadow-md);
+}
+
+.place-map-card .card-header {
+  background-color: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
+  color: var(--text-primary);
+  font-weight: 600;
+  padding: 1rem 1.25rem;
+}
+
+.place-map-card .card-body {
+  padding: 1rem;
+  background-color: var(--card-bg);
+}
+
+/* Leaflet container – adjust map background (areas without tiles) */
+.leaflet-container {
+  background-color: var(--bg-secondary) !important;
+}
+
+/* Leaflet popup styling */
+.leaflet-popup-content-wrapper {
+  background-color: var(--card-bg) !important;
+  color: var(--text-primary) !important;
+  border-radius: 12px !important;
+  box-shadow: var(--shadow-lg) !important;
+  border: 1px solid var(--border-color) !important;
+}
+
+.leaflet-popup-tip {
+  background-color: var(--card-bg) !important;
+  border: 1px solid var(--border-color) !important;
+}
+
+.leaflet-popup-content {
+  color: var(--text-primary);
+  margin: 12px 16px;
+  line-height: 1.5;
+}
+
+.leaflet-popup-content strong {
+  color: var(--text-primary);
+}
+
+.leaflet-popup-content span[style*="color: #27ae60"] {
+  color: var(--success-color) !important;
+}
+
+.leaflet-popup-content span[style*="color: #2980b9"] {
+  color: var(--search-primary) !important;
+}
+
+/* Close button */
+.leaflet-popup-close-button {
+  color: var(--text-secondary) !important;
+}
+
+.leaflet-popup-close-button:hover {
+  color: var(--text-primary) !important;
+}
+
+/* Spinner and alert – already use Bootstrap classes, but ensure they're visible */
+.place-map-card .spinner-border {
+  color: var(--search-primary);
+}
+
+.place-map-card .alert {
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .place-map-card .card-body {
+    height: 350px !important; /* override inline style if needed */
+  }
+}

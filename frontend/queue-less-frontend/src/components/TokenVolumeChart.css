@@ -1,0 +1,68 @@
+/* TokenVolumeChart.css – Dark Mode Support */
+
+.token-volume-chart-card {
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+  margin-bottom: 1.5rem;
+}
+
+.token-volume-chart-card .card-header {
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--border-color);
+  font-weight: 600;
+  padding: 1rem 1.25rem;
+}
+
+.token-volume-chart-card .card-body {
+  background-color: var(--card-bg);
+  color: var(--text-primary);
+  padding: 1rem;
+}
+
+/* Spinner */
+.token-volume-chart-card .spinner-border {
+  color: var(--search-primary);
+}
+
+/* Alert */
+.token-volume-chart-card .alert {
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  border-radius: 12px;
+}
+
+.token-volume-chart-card .alert-info {
+  background-color: rgba(var(--search-primary-rgb), 0.15);
+  border-left: 4px solid var(--search-primary);
+}
+
+.token-volume-chart-card .alert-danger {
+  background-color: rgba(var(--danger-color-rgb), 0.15);
+  border-left: 4px solid var(--danger-color);
+}
+
+/* Recharts container background – transparent to use card background */
+.recharts-responsive-container {
+  background-color: transparent;
+}
+
+/* Optional: style axis labels and tooltip if needed */
+.recharts-cartesian-axis-tick-value {
+  fill: var(--text-secondary) !important;
+}
+
+.recharts-tooltip-wrapper {
+  background-color: var(--card-bg) !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: 8px;
+  box-shadow: var(--shadow-md);
+}
+
+.recharts-tooltip-item {
+  color: var(--text-primary) !important;
+}

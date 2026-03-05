@@ -2,18 +2,22 @@ import { useFormik } from 'formik';
 import { loginSchema } from '../validation/authSchema';
 import { authService } from '../services/authService';
 import AuthFormWrapper from '../components/AuthFormWrapper';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { FaLock, FaEnvelope } from 'react-icons/fa';
 import { useDispatch } from 'react-redux';
 import { loginSuccess } from '../redux/authSlice';
 import './Login.css';
 import { useState } from 'react';
+import axiosInstance from '../utils/axiosInstance'; // <-- ADD THIS
 
 const Login = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const dispatch = useDispatch();
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const from = location.state?.from?.pathname || '/';
 
   const formik = useFormik({
     initialValues: {
@@ -62,27 +66,44 @@ const Login = () => {
 
           toast.success(`Welcome back, ${name}!`);
 
-          switch (role) {
-            case 'USER':
-              navigate('/user/dashboard');
-              break;
-            case 'PROVIDER':
-              navigate('/provider/queues');
-              break;
-            case 'ADMIN':
-              navigate('/admin/dashboard');
-              break;
-            default:
-              navigate('/');
+          // Check for qrData first
+          if (location.state?.qrData) {
+            const { queueId, tokenType } = location.state.qrData;
+            try {
+              await axiosInstance.post('/queues/join-by-qr', { queueId, tokenType });
+              toast.success('You have joined the queue!');
+              navigate(`/customer/queue/${queueId}`);
+              return; // stop further navigation
+            } catch (err) {
+              toast.error('Failed to join queue from QR');
+              // fall through to default dashboard
+            }
+          }
+
+          // Redirect to the page the user tried to access, or dashboard
+          if (from !== '/') {
+            navigate(from, { replace: true });
+          } else {
+            switch (role) {
+              case 'USER':
+                navigate('/user/dashboard');
+                break;
+              case 'PROVIDER':
+                navigate('/provider/queues');
+                break;
+              case 'ADMIN':
+                navigate('/admin/dashboard');
+                break;
+              default:
+                navigate('/');
+            }
           }
         } else {
           toast.error('Login failed: No response from server');
         }
       } catch (err) {
-        const errorMessage =
-          err.response?.data?.message || err.message || 'Login failed';
-        toast.error(errorMessage);
-        console.error('Login error:', errorMessage);
+        toast.error(err.message || 'Login failed');
+        console.error('Login error:', err);
       } finally {
         setIsSubmitting(false);
       }

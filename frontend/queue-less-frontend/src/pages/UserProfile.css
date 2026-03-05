@@ -1,13 +1,17 @@
-/* src/pages/UserProfile.css */
+/* UserProfile.css – Complete Dark Mode Support */
+
 .user-profile-container {
     max-width: 1000px;
+   
+    padding: 0 1rem;
 }
 
 .profile-title {
     font-weight: 700;
-    color: #2c3e50;
+    color: var(--text-primary);
     margin-bottom: 2rem !important;
     position: relative;
+    text-align: center;
 }
 
 .profile-title::after {
@@ -15,31 +19,35 @@
     display: block;
     width: 60px;
     height: 4px;
-    background: linear-gradient(90deg, #3498db, #2980b9);
+    background: linear-gradient(90deg, var(--search-primary), var(--accent-color));
     margin: 10px auto;
     border-radius: 2px;
 }
 
+/* Cards */
 .profile-card {
-    border: none;
+    background-color: var(--card-bg) !important;
+    border: 1px solid var(--border-color) !important;
     border-radius: 16px;
     overflow: hidden;
     transition: transform 0.3s ease, box-shadow 0.3s ease;
+    box-shadow: var(--shadow-sm);
 }
 
 .profile-card:hover {
     transform: translateY(-5px);
-    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15) !important;
+    box-shadow: var(--shadow-xl) !important;
 }
 
 .section-title {
-    color: #2c3e50;
+    color: var(--text-primary);
     font-weight: 600;
     margin-bottom: 1.5rem;
     padding-bottom: 0.5rem;
-    border-bottom: 2px solid #f8f9fa;
+    border-bottom: 2px solid var(--border-color);
 }
 
+/* Avatar Section */
 .avatar-preview-wrapper {
     position: relative;
     display: inline-block;
@@ -51,15 +59,15 @@
     height: 150px;
     object-fit: cover;
     border-radius: 50%;
-    border: 4px solid #fff;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    border: 4px solid var(--border-color);
+    box-shadow: var(--shadow-md);
 }
 
 .avatar-overlay {
     position: absolute;
     bottom: 5px;
     right: 5px;
-    background: #3498db;
+    background: var(--link-color);
     width: 40px;
     height: 40px;
     border-radius: 50%;
@@ -69,11 +77,11 @@
     color: white;
     cursor: pointer;
     transition: all 0.3s ease;
-    box-shadow: 0 2px 8px rgba(52, 152, 219, 0.4);
+    box-shadow: 0 2px 8px rgba(var(--link-color-rgb), 0.4);
 }
 
 .avatar-overlay:hover {
-    background: #2980b9;
+    background: var(--link-hover);
     transform: scale(1.1);
 }
 
@@ -82,12 +90,15 @@
     padding: 10px 20px;
     font-weight: 500;
     border-width: 2px;
+    border-color: var(--link-color);
+    color: var(--link-color);
+    background: transparent;
     transition: all 0.3s ease;
 }
 
 .avatar-select-btn:hover {
-    background-color: rgba(52, 152, 219, 0.1);
-    border-color: #3498db;
+    background-color: rgba(var(--link-color-rgb), 0.1);
+    border-color: var(--link-hover);
     transform: translateY(-2px);
 }
 
@@ -101,15 +112,16 @@
 .divider::after {
     content: "";
     flex: 1;
-    border-bottom: 1px solid #dee2e6;
+    border-bottom: 1px solid var(--border-color);
 }
 
 .divider span {
     padding: 0 1rem;
-    color: #6c757d;
+    color: var(--text-secondary);
     font-weight: 500;
 }
 
+/* Input groups */
 .input-with-icon {
     position: relative;
 }
@@ -119,65 +131,117 @@
     left: 15px;
     top: 50%;
     transform: translateY(-50%);
-    color: #6c757d;
+    color: var(--text-secondary);
     z-index: 5;
 }
 
 .input-with-icon .form-control {
     padding-left: 45px;
     border-radius: 10px;
-    border: 1px solid #e2e8f0;
+    border: 2px solid var(--border-color);
+    background-color: var(--input-bg) !important;
+    color: var(--input-text) !important;
     transition: all 0.3s ease;
     height: 50px;
 }
 
 .input-with-icon .form-control:focus {
-    border-color: #3498db;
-    box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
+    border-color: var(--link-color);
+    box-shadow: 0 0 0 0.2rem rgba(var(--link-color-rgb), 0.25);
+    outline: none;
 }
 
-.update-btn, .password-btn, .delete-btn {
+/* Buttons */
+.update-btn {
     border-radius: 30px;
     padding: 12px;
     font-weight: 600;
     transition: all 0.3s ease;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-}
-
-.update-btn {
-    background: linear-gradient(90deg, #3498db, #2980b9);
+    background: linear-gradient(90deg, var(--search-primary), var(--search-primary-hover));
     border: none;
+    color: white !important;
 }
 
 .update-btn:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 10px rgba(52, 152, 219, 0.4);
+    box-shadow: 0 4px 15px rgba(var(--search-primary-rgb), 0.4);
 }
 
 .password-btn {
+    border-radius: 30px;
+    padding: 12px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    background: linear-gradient(90deg, #ffc107, #ffb300);
     border: none;
+    color: #212529 !important;
 }
 
 .password-btn:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 10px rgba(255, 193, 7, 0.4);
+    box-shadow: 0 4px 15px rgba(255, 193, 7, 0.4);
 }
 
 .delete-btn {
     border-radius: 30px;
     padding: 12px;
+    font-weight: 600;
+    transition: all 0.3s ease;
 }
 
 .delete-btn:hover {
     transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(var(--danger-color-rgb), 0.4);
 }
 
+/* Account management card */
 .account-management {
-    border-left: 4px solid #e74c3c !important;
+    border-left: 4px solid var(--danger-color) !important;
 }
 
-/* Avatar Selection Modal */
+/* Text utilities */
+.text-muted {
+    color: var(--text-secondary) !important;
+}
+
+.text-danger {
+    color: var(--danger-color) !important;
+}
+
+/* Avatar Modal */
+.modal-content {
+    background-color: var(--card-bg) !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: 16px;
+    box-shadow: var(--shadow-xl);
+}
+
+.modal-header {
+    border-bottom-color: var(--border-color) !important;
+}
+
+.modal-header .btn-close {
+    filter: invert(var(--dark-mode-invert, 0));
+}
+
+.modal-title {
+    color: var(--text-primary) !important;
+    font-weight: 700;
+}
+
+.modal-body {
+    color: var(--text-primary) !important;
+}
+
+.modal-footer {
+    border-top-color: var(--border-color) !important;
+}
+
+/* Avatar options */
 .avatar-option {
     cursor: pointer;
     padding: 5px;
@@ -196,29 +260,16 @@
 }
 
 .avatar-option:hover img {
-    border-color: #3498db;
+    border-color: var(--link-color);
     transform: scale(1.1);
 }
 
 .avatar-option.selected img {
-    border-color: #2ecc71;
-    box-shadow: 0 0 15px rgba(46, 204, 113, 0.5);
+    border-color: var(--success-color);
+    box-shadow: 0 0 15px rgba(var(--success-color-rgb), 0.5);
 }
 
-/* Responsive adjustments */
-@media (max-width: 768px) {
-    .profile-img-preview {
-        width: 120px;
-        height: 120px;
-    }
-    
-    .avatar-option img {
-        width: 60px;
-        height: 60px;
-    }
-}
-
-/* Animation for form elements */
+/* Form group animation */
 .form-group {
     transition: transform 0.3s ease;
 }
@@ -227,13 +278,43 @@
     transform: translateX(5px);
 }
 
-/* Toast notification customization
-.Toastify__toast--success {
-    background: linear-gradient(90deg, #2ecc71, #27ae60) !important;
-    border-radius: 10px !important;
+/* Responsive */
+@media (max-width: 768px) {
+    .profile-img-preview {
+        width: 120px;
+        height: 120px;
+    }
+
+    .avatar-option img {
+        width: 60px;
+        height: 60px;
+    }
 }
 
-.Toastify__toast--error {
-    background: linear-gradient(90deg, #e74c3c, #c0392b) !important;
-    border-radius: 10px !important;
-} */
+/* Form labels - ensure they use primary text color */
+.profile-card .form-label {
+    color: var(--text-primary) !important;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+}
+
+/* Card titles (Profile Picture, Personal Information, etc.) */
+.profile-card .card-title {
+    color: var(--text-primary) !important;
+}
+
+/* Placeholders for all inputs */
+.profile-card .form-control::placeholder {
+    color: var(--text-secondary) !important;
+    opacity: 0.7;
+}
+
+/* Ensure the "OR" divider text is visible */
+.divider span {
+    color: var(--text-secondary) !important;
+}
+
+/* Force account management description text to use secondary color */
+.account-management .text-muted {
+    color: var(--text-secondary) !important;
+}

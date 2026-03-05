@@ -8,7 +8,11 @@ export const placeService = {
   update: (id, placeData) => axiosInstance.put(`/places/${id}`, placeData),
   delete: (id) => axiosInstance.delete(`/places/${id}`),
   getByAdmin: (adminId) => axiosInstance.get(`/places/admin/${adminId}`),
-  getNearby: (longitude, latitude, radius) => 
+  getNearby: (longitude, latitude, radius) =>
     axiosInstance.get(`/places/nearby?longitude=${longitude}&latitude=${latitude}&radius=${radius}`),
-  getByType: (type) => axiosInstance.get(`/places/type/${type}`)
+  getByType: (type) => axiosInstance.get(`/places/type/${type}`),
+
+
+  getAllPaginated: (page = 0, size = 20, sort = 'name,asc') =>
+    axiosInstance.get(`/places/paginated?page=${page}&size=${size}&sort=${sort}`),
 };

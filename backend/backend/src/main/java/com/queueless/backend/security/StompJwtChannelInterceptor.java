@@ -1,8 +1,7 @@
 package com.queueless.backend.security;
 
 import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.simp.stomp.StompCommand;
@@ -16,16 +15,15 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
-import java.security.Principal;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class StompJwtChannelInterceptor implements ChannelInterceptor {
 
-    private static final Logger log = LoggerFactory.getLogger(StompJwtChannelInterceptor.class);
     private final JwtTokenProvider jwtProvider;
 
     @Override
@@ -50,22 +48,17 @@ public class StompJwtChannelInterceptor implements ChannelInterceptor {
                 String email = jwtProvider.getEmailFromToken(token);
                 Collection<GrantedAuthority> authorities = jwtProvider.getAuthoritiesFromToken(token);
 
-                // Use userId as principal
                 UsernamePasswordAuthenticationToken authentication =
                         new UsernamePasswordAuthenticationToken(userId, null, authorities);
 
-                // Store additional details
-                authentication.setDetails(new HashMap<String, Object>() {{
-                    put("userId", userId);
-                    put("email", email);
-                }});
+                authentication.setDetails(Map.of("userId", userId, "email", email));
 
                 SecurityContextHolder.getContext().setAuthentication(authentication);
                 accessor.setUser(authentication);
 
                 log.info("STOMP CONNECT authenticated for: {} (userId: {})", email, userId);
             } catch (Exception e) {
-                log.error("WebSocket authentication failed", e);
+                log.error("WebSocket authentication failed: {}", e.getMessage());
                 throw new AuthenticationCredentialsNotFoundException("WebSocket authentication failed", e);
             }
         }

@@ -1,8 +1,21 @@
-//src/components/Footer.jsx
-import React from "react";
+import React, { useState, useEffect } from "react";
 import "./Footer.css";
 
 const Footer = () => {
+  const [showBackToTop, setShowBackToTop] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowBackToTop(window.scrollY > 400);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   return (
     <footer className="footer-section">
       <div className="footer-container">
@@ -30,7 +43,7 @@ const Footer = () => {
           <h4>Follow Us</h4>
           <div className="social-icons">
             <a href="#" className="social-icon"><i className="fab fa-twitter"></i></a>
-            <a href="#" className="social-icon"><i className="fab fa-linkedin-in"></i></a>
+            <a href="https://www.linkedin.com/in/harmandeep700"   className="social-icon"><i className="fab fa-linkedin-in"></i></a>
             <a href="#" className="social-icon"><i className="fab fa-instagram"></i></a>
           </div>
         </div>
@@ -41,6 +54,13 @@ const Footer = () => {
         <p>&copy; {new Date().getFullYear()} <strong>QueueLess</strong>. All rights reserved.</p>
         <small>Crafted with ❤️ for a smoother queuing experience.</small>
       </div>
+
+      {/* Back to Top Button */}
+      {showBackToTop && (
+        <button className="back-to-top" onClick={scrollToTop} aria-label="Back to top">
+          ↑
+        </button>
+      )}
     </footer>
   );
 };

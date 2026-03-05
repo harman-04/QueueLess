@@ -5,6 +5,7 @@ import AuthFormWrapper from '../components/AuthFormWrapper';
 import passwordAxios from '../utils/passwordAxios';
 import { toast } from 'react-toastify';
 import OtpInput from '../components/OtpInput';
+import './VerifyOtp.css';
 
 const VerifyOtp = () => {
   const location = useLocation();
@@ -43,7 +44,7 @@ const VerifyOtp = () => {
 
   const handleAutoSubmit = async (finalOtp) => {
     try {
-        await passwordAxios.post('/verify-otp', { email, otp: finalOtp });
+      await passwordAxios.post('/verify-otp', { email, otp: finalOtp });
       toast.success('OTP verified!');
       navigate('/reset-password', { state: { email } });
     } catch (err) {
@@ -53,16 +54,18 @@ const VerifyOtp = () => {
 
   return (
     <AuthFormWrapper title="Verify OTP">
-      <p className="text-center text-muted">Enter the OTP sent to your email</p>
-      <OtpInput otp={otp} setOtp={setOtp} autoSubmit={handleAutoSubmit} />
-      <div className="text-center mt-3">
-        {timer > 0 ? (
-          <span className="text-muted">Resend OTP in {timer}s</span>
-        ) : (
-          <button className="btn btn-link p-0" onClick={handleResend} disabled={resending}>
-            {resending ? 'Resending...' : 'Resend OTP'}
-          </button>
-        )}
+      <div className="verify-otp-container"> {/* <-- wrapper */}
+        <p className="text-center text-muted">Enter the OTP sent to your email</p>
+        <OtpInput otp={otp} setOtp={setOtp} autoSubmit={handleAutoSubmit} />
+        <div className="text-center mt-3">
+          {timer > 0 ? (
+            <span className="text-muted">Resend OTP in {timer}s</span>
+          ) : (
+            <button className="btn btn-link p-0" onClick={handleResend} disabled={resending}>
+              {resending ? 'Resending...' : 'Resend OTP'}
+            </button>
+          )}
+        </div>
       </div>
     </AuthFormWrapper>
   );

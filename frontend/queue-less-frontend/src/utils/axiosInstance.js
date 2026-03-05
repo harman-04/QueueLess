@@ -2,27 +2,25 @@ import axios from 'axios';
 import store from '../store/store';
 
 const axiosInstance = axios.create({
-  baseURL: 'https://localhost:8443/api',
+  baseURL: import.meta.env.VITE_API_BASE_URL || 'https://localhost:8443/api',
 });
 
-// Request interceptor
+// Request interceptor (unchanged)
 axiosInstance.interceptors.request.use(
   (config) => {
     const token = store.getState().auth.token;
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
-
     if (config.data && !config.headers['Content-Type']) {
       config.headers['Content-Type'] = 'application/json';
     }
-
     return config;
   },
   (error) => Promise.reject(error)
 );
 
-// Response interceptor
+// Response interceptor – updated
 axiosInstance.interceptors.response.use(
   (response) => response,
   (error) => {
@@ -30,23 +28,27 @@ axiosInstance.interceptors.response.use(
       const { status, data } = error.response;
 
       // Handle token expiry
-      if (status === 401 && data.message?.includes('JWT') && data.message?.includes('expired')) {
-        // Dispatch logout action
+      if (status === 401 && data?.message?.includes('JWT') && data?.message?.includes('expired')) {
         store.dispatch({ type: 'auth/logout' });
-        // Redirect to login page
         window.location.href = '/login';
         return Promise.reject(new Error('Token expired. Please login again.'));
       }
 
-      // Normalize backend ApiError
+      // Normalize error: data can be a string or an object
+      let errorMessage = 'An unexpected error occurred';
+      if (typeof data === 'string') {
+        errorMessage = data;
+      } else if (data?.message) {
+        errorMessage = data.message;
+      }
+
       const normalizedError = {
         status,
         error: data?.error || 'Error',
-        message: data?.message || 'An unexpected error occurred',
+        message: errorMessage,
         path: data?.path,
         timestamp: data?.timestamp,
       };
-
       return Promise.reject(normalizedError);
     }
 

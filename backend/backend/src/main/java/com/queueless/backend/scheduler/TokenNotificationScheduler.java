@@ -1,4 +1,3 @@
-// src/main/java/com/queueless/backend/scheduler/TokenNotificationScheduler.java
 package com.queueless.backend.scheduler;
 
 import com.queueless.backend.model.Queue;
@@ -8,13 +7,14 @@ import com.queueless.backend.model.User;
 import com.queueless.backend.repository.QueueRepository;
 import com.queueless.backend.repository.UserRepository;
 import com.queueless.backend.service.EmailService;
+import com.queueless.backend.service.FcmService;
 import com.queueless.backend.service.ServiceService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Slf4j
@@ -26,8 +26,10 @@ public class TokenNotificationScheduler {
     private final UserRepository userRepository;
     private final ServiceService serviceService;
     private final EmailService emailService;
+    private final FcmService fcmService;
 
-    private static final int NOTIFY_BEFORE_MINUTES = 5; // threshold in minutes
+    @Value("${token.notification.before-minutes:5}")
+    private int notifyBeforeMinutes;
 
     @Scheduled(fixedRate = 60000) // every minute
     public void checkUpcomingTokens() {
@@ -35,53 +37,78 @@ public class TokenNotificationScheduler {
         List<Queue> allQueues = queueRepository.findAll();
 
         for (Queue queue : allQueues) {
-            if (!queue.getIsActive()) continue; // skip inactive queues
+            try {
+                processQueue(queue);
+            } catch (Exception e) {
+                log.error("Error processing queue {}: {}", queue.getId(), e.getMessage(), e);
+            }
+        }
+    }
 
-            // Get service to know average service time
-            Service service = serviceService.getServiceById(queue.getServiceId());
-            int avgServiceTime = service != null && service.getAverageServiceTime() != null
-                    ? service.getAverageServiceTime() : 5;
+    private void processQueue(Queue queue) {
+        if (!queue.getIsActive()) return;
 
-            // Get list of waiting tokens in order (sorted by priority and then issue time)
-            List<QueueToken> waitingTokens = queue.getTokens().stream()
-                    .filter(t -> "WAITING".equals(t.getStatus()))
-                    .sorted((t1, t2) -> {
-                        // Higher priority first, then earlier issuedAt
-                        if (!t1.getPriority().equals(t2.getPriority())) {
-                            return t2.getPriority() - t1.getPriority();
-                        }
-                        return t1.getIssuedAt().compareTo(t2.getIssuedAt());
-                    })
-                    .toList();
+        Service service = serviceService.getServiceById(queue.getServiceId());
+        int avgServiceTime = service != null && service.getAverageServiceTime() != null
+                ? service.getAverageServiceTime() : 5;
 
-            for (int i = 0; i < waitingTokens.size(); i++) {
-                QueueToken token = waitingTokens.get(i);
-                // Skip if already notified
-                if (Boolean.TRUE.equals(token.getNotificationSent())) continue;
+        List<QueueToken> waitingTokens = queue.getTokens().stream()
+                .filter(t -> "WAITING".equals(t.getStatus()))
+                .sorted((t1, t2) -> {
+                    if (!t1.getPriority().equals(t2.getPriority())) {
+                        return t2.getPriority() - t1.getPriority();
+                    }
+                    return t1.getIssuedAt().compareTo(t2.getIssuedAt());
+                })
+                .toList();
 
-                // Estimate remaining wait time: (i) * avgServiceTime minutes
-                int estimatedMinutes = i * avgServiceTime;
+        // In TokenNotificationScheduler.processQueue()
 
-                if (estimatedMinutes <= NOTIFY_BEFORE_MINUTES) {
-                    // User is about to be served – send notification
-                    User user = userRepository.findById(token.getUserId()).orElse(null);
-                    if (user != null && user.getPreferences() != null
-                            && Boolean.TRUE.equals(user.getPreferences().getEmailNotifications())) {
+        boolean anyTokenNotified = false;
+        for (int i = 0; i < waitingTokens.size(); i++) {
+            QueueToken token = waitingTokens.get(i);
+            if (Boolean.TRUE.equals(token.getNotificationSent())) continue;
+
+            int estimatedMinutes = i * avgServiceTime;
+            if (estimatedMinutes <= notifyBeforeMinutes) {
+                User user = userRepository.findById(token.getUserId()).orElse(null);
+                if (user != null) {
+                    // Send email if enabled
+                    if (user.getPreferences() != null && Boolean.TRUE.equals(user.getPreferences().getEmailNotifications())) {
                         try {
-                            emailService.sendUpcomingTokenEmail(user.getEmail(), token.getTokenId(), queue.getServiceName(), estimatedMinutes);
-                            token.setNotificationSent(true);
-                            log.info("Sent upcoming notification for token {} to {}", token.getTokenId(), user.getEmail());
+                            emailService.sendUpcomingTokenEmail(
+                                    user.getEmail(),
+                                    token.getTokenId(),
+                                    queue.getServiceName(),
+                                    estimatedMinutes
+                            );
+                            log.info("Sent email notification for token {} to {}", token.getTokenId(), user.getEmail());
                         } catch (Exception e) {
                             log.error("Failed to send email for token {}: {}", token.getTokenId(), e.getMessage());
                         }
                     }
-                }
-            }
 
-            // Save queue only if any token was modified
-            if (waitingTokens.stream().anyMatch(t -> Boolean.TRUE.equals(t.getNotificationSent()))) {
-                queueRepository.save(queue);
+                    // Send push notifications to all registered devices
+                    if (user.getPreferences() != null && Boolean.TRUE.equals(user.getPreferences().getPushNotifications())
+                            && user.getFcmTokens() != null && !user.getFcmTokens().isEmpty()) {
+
+                        String title = "Your turn is coming up!";
+                        String body = String.format("Token %s for %s is about to be served (approx. %d min).",
+                                token.getTokenId(), queue.getServiceName(), estimatedMinutes);
+                        fcmService.sendMulticast(user.getFcmTokens(), title, body, queue.getId());
+                        log.info("Sent push notifications for token {} to {} devices", token.getTokenId(), user.getFcmTokens().size());
+                    }
+
+                    token.setNotificationSent(true);
+                    anyTokenNotified = true;
+                }
+
+
             }
+        }
+
+        if (anyTokenNotified) {
+            queueRepository.save(queue);
         }
     }
 }

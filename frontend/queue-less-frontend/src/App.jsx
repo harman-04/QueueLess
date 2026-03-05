@@ -28,59 +28,90 @@ import UserProfile from './pages/UserProfile';
 import AdvancedSearch from './components/AdvancedSearch';
 import FavoritesPage from './pages/FavoritesPage';
 import { logout } from './redux/authSlice';
+import ErrorBoundary from './components/ErrorBoundary';
+import VerifyEmail from './pages/VerifyEmail';
+import useFcmToken from './hooks/useFcmToken';
+import NotFound from './pages/NotFound';
 
 function App() {
   const { token, role } = useSelector((state) => state.auth);
+  const { darkMode } = useSelector((state) => state.auth.preferences);
   const dispatch = useDispatch();
 
+  const { token: authToken, id: userId , preferences} = useSelector((state) => state.auth);
+const isLoggedIn = !!authToken;
+const pushEnabled = preferences?.pushNotifications ?? true; // default true if undefined
+useFcmToken(userId, isLoggedIn, pushEnabled);
+
+
   useEffect(() => {
-    // Check if token exists and might be expired
+  if (darkMode) {
+    document.body.classList.add('dark-mode');
+  } else {
+    document.body.classList.remove('dark-mode');
+  }
+}, [darkMode]);
+
+  useEffect(() => {
+    // 1. Check Token Expiry
     const checkTokenExpiry = () => {
-      const token = localStorage.getItem('token');
-      if (token) {
+      const storedToken = localStorage.getItem('token');
+      if (storedToken) {
         try {
-          // Simple check for JWT expiry (this is a basic check, you might want to use a library like jwt-decode)
-          const payload = JSON.parse(atob(token.split('.')[1]));
-          const expiryTime = payload.exp * 1000; // Convert to milliseconds
+          const payload = JSON.parse(atob(storedToken.split('.')[1]));
+          const expiryTime = payload.exp * 1000;
           if (Date.now() > expiryTime) {
-            // Token has expired, log out user
             dispatch(logout());
-            return;
+            return false;
           }
+          return true;
         } catch (error) {
           console.error('Error checking token expiry:', error);
-          // If we can't parse the token, log out for safety
           dispatch(logout());
+          return false;
         }
       }
+      return false;
     };
 
-    checkTokenExpiry();
+    const isTokenValid = checkTokenExpiry();
 
-    // Initialize WebSocket connection if user is authenticated
-    if (token) {
+    // 2. Manage WebSocket Lifecycle
+    if (token && isTokenValid) {
+      // Set Handlers FIRST before connecting
+      WebSocketService.setEmergencyApprovalHandler((data) => {
+        window.dispatchEvent(new CustomEvent('emergency-approval', { detail: data }));
+      });
+
+      WebSocketService.setTokenCancelledHandler((data) => {
+        window.dispatchEvent(new CustomEvent('token-cancelled', { detail: data }));
+      });
+
       WebSocketService.connect();
-      
-      // Subscribe to user updates based on role
+
+      // Subscribe to role-specific updates
       if (role === 'PROVIDER' || role === 'ADMIN') {
         WebSocketService.subscribeToUserUpdates();
       }
     } else {
-      // Disconnect WebSocket if user logs out
       WebSocketService.disconnect();
     }
 
     return () => {
-      // Cleanup on component unmount
+      // Cleanup: Unset handlers and disconnect
+      WebSocketService.setEmergencyApprovalHandler(null);
+      WebSocketService.setTokenCancelledHandler(null);
       WebSocketService.disconnect();
     };
   }, [token, role, dispatch]);
 
   return (
     <BrowserRouter>
-      <Navbar/>
-      <Routes>
-        <Route path='/' element={<Home/>}/>
+      <Navbar />
+            <ErrorBoundary>
+               <main className="app-main">
+                      <Routes>
+        <Route path='/' element={<Home />} />
         <Route path="/register" element={<Register />} />
         <Route path="/login" element={<Login />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
@@ -90,51 +121,52 @@ function App() {
         <Route path="/customer/queue/:queueId" element={<CustomerQueue />} />
         <Route path="/search" element={<AdvancedSearch />} />
         <Route path="/favorites" element={<ProtectedRoute><FavoritesPage /></ProtectedRoute>} />
-        
+        <Route path="/verify-email" element={<VerifyEmail />} />
+
         <Route path='/profile' element={
           <ProtectedRoute allowedRoles={['USER', 'ADMIN', 'PROVIDER']}>
-            <UserProfile/>
+            <UserProfile />
           </ProtectedRoute>
-        }/>
-        
+        } />
+
         <Route path='/provider-pricing' element={
           <ProtectedRoute allowedRoles={['ADMIN']}>
-            <ProviderPricingPage/>
+            <ProviderPricingPage />
           </ProtectedRoute>
-        }/>
+        } />
 
         <Route path="/user/dashboard" element={
           <ProtectedRoute allowedRoles={['USER']}>
             <UserDashboard />
           </ProtectedRoute>
         } />
-        
+
         <Route path="/provider/queues" element={
           <ProtectedRoute allowedRoles={['PROVIDER', 'ADMIN']}>
             <ProviderQueueManagement />
           </ProtectedRoute>
         } />
-        
+
         <Route path="/provider/dashboard/:queueId" element={
           <ProtectedRoute allowedRoles={['PROVIDER', 'ADMIN']}>
             <ProviderDashboard />
           </ProtectedRoute>
         } />
-        
+
         <Route path="/provider/dashboard" element={<Navigate to="/provider/queues" />} />
-        
+
         <Route path="/admin/dashboard" element={
           <ProtectedRoute allowedRoles={['ADMIN']}>
             <AdminDashboard />
           </ProtectedRoute>
         } />
-        
+
         <Route path="/admin/places" element={
           <ProtectedRoute allowedRoles={['ADMIN']}>
             <AdminPlaces />
           </ProtectedRoute>
         } />
-        
+
         {/* Place routes */}
         <Route path="/places" element={<PlaceList />} />
         <Route path="/places/new" element={
@@ -148,7 +180,7 @@ function App() {
           </ProtectedRoute>
         } />
         <Route path="/places/:id" element={<PlaceDetail />} />
-        
+
         <Route path="/admin/places/:placeId/services" element={
           <ProtectedRoute allowedRoles={['ADMIN']}>
             <ServiceManagement />
@@ -156,9 +188,14 @@ function App() {
         } />
 
         {/* Catch all route */}
-        <Route path="*" element={<Navigate to="/" replace />} />
+        {/* <Route path="*" element={<Navigate to="/" replace />} /> */}
+        <Route path="*" element={<NotFound />} />
       </Routes>
-      <Footer/>
+      </main>
+
+            </ErrorBoundary>
+
+      <Footer />
     </BrowserRouter>
   );
 }

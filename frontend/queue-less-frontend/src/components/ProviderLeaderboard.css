@@ -1,0 +1,213 @@
+/* ProviderLeaderboard.css – Enhanced Leaderboard with Dark Mode */
+
+.provider-leaderboard-container {
+    background-color: var(--card-bg);
+    border-radius: 16px;
+    box-shadow: var(--shadow-lg);
+    padding: 1.5rem;
+    border: 1px solid var(--border-color);
+}
+
+/* Filter input */
+.provider-leaderboard-container .form-control {
+    background-color: var(--input-bg);
+    border: 2px solid var(--border-color);
+    color: var(--input-text);
+    border-radius: 30px;
+    padding: 0.6rem 1.2rem;
+    font-size: 0.95rem;
+    transition: all 0.2s;
+}
+
+.provider-leaderboard-container .form-control:focus {
+    border-color: var(--search-primary);
+    box-shadow: 0 0 0 3px rgba(var(--search-primary-rgb), 0.2);
+}
+
+.provider-leaderboard-container .form-control::placeholder {
+    color: var(--text-secondary);
+    opacity: 0.7;
+}
+
+/* Table styling */
+.provider-leaderboard-table {
+    margin-bottom: 0;
+    border-collapse: separate;
+    border-spacing: 0 0.5rem;
+     width: 100%;
+}
+
+.provider-leaderboard-table thead th {
+    background: linear-gradient(135deg, var(--search-primary) 0%, #4a6fdc 100%);
+    color: white;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    letter-spacing: 0.5px;
+    padding: 1rem;
+    border: none;
+    cursor: pointer;
+    transition: background 0.2s;
+    vertical-align: middle;
+}
+
+.provider-leaderboard-table thead th:hover {
+    background: linear-gradient(135deg, #4a6fdc 0%, var(--search-primary) 100%);
+}
+
+.provider-leaderboard-table thead th svg {
+    margin-left: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.provider-leaderboard-table tbody tr {
+    background-color: var(--bg-secondary);
+    border-radius: 12px;
+    transition: all 0.2s;
+    box-shadow: var(--shadow-sm);
+}
+
+.provider-leaderboard-table tbody tr:hover {
+    background-color: var(--border-color);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.provider-leaderboard-table tbody td {
+    padding: 1rem;
+    color: var(--text-primary);
+    border: none;
+    vertical-align: middle;
+    font-size: 0.95rem;
+}
+
+.provider-leaderboard-table tbody td:first-child {
+    border-top-left-radius: 12px;
+    border-bottom-left-radius: 12px;
+}
+
+.provider-leaderboard-table tbody td:last-child {
+    border-top-right-radius: 12px;
+    border-bottom-right-radius: 12px;
+}
+
+/* Badges */
+.provider-leaderboard-table .badge {
+    padding: 0.5rem 0.8rem;
+    border-radius: 30px;
+    font-weight: 500;
+    font-size: 0.8rem;
+}
+
+.provider-leaderboard-table .badge.bg-success {
+    background: linear-gradient(135deg, var(--success-color), #27ae60) !important;
+    color: white;
+}
+
+.provider-leaderboard-table .badge.bg-secondary {
+    background: var(--text-secondary) !important;
+    color: white;
+}
+
+/* Progress bars inside cells */
+.provider-leaderboard-table .progress {
+    height: 6px;
+    border-radius: 10px;
+    background-color: var(--border-color);
+    margin-top: 0.3rem;
+    width: 100%;
+    max-width: 100px;
+}
+
+.provider-leaderboard-table .progress-bar.bg-warning {
+    background: linear-gradient(90deg, #ffc107, #ffb300) !important;
+}
+
+.provider-leaderboard-table .progress-bar.bg-danger {
+    background: linear-gradient(90deg, var(--danger-color), #c0392b) !important;
+}
+
+/* Action buttons */
+.provider-leaderboard-table .btn-outline-primary,
+.provider-leaderboard-table .btn-outline-secondary {
+    border-radius: 30px;
+    padding: 0.3rem 0.8rem;
+    font-size: 0.85rem;
+    transition: all 0.2s;
+    border-width: 2px;
+}
+
+.provider-leaderboard-table .btn-outline-primary {
+    border-color: var(--search-primary);
+    color: var(--search-primary);
+}
+
+.provider-leaderboard-table .btn-outline-primary:hover {
+    background-color: var(--search-primary);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(var(--search-primary-rgb), 0.3);
+}
+
+.provider-leaderboard-table .btn-outline-secondary {
+    border-color: var(--text-secondary);
+    color: var(--text-secondary);
+}
+
+.provider-leaderboard-table .btn-outline-secondary:hover {
+    background-color: var(--text-secondary);
+    color: var(--bg-primary);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(108, 117, 125, 0.3);
+}
+
+/* Loading and error states */
+.provider-leaderboard-container .spinner-border {
+    color: var(--search-primary);
+}
+
+.provider-leaderboard-container .alert {
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    border-radius: 12px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .provider-leaderboard-container {
+        padding: 1rem;
+    }
+
+    .provider-leaderboard-table thead th {
+        font-size: 0.7rem;
+        padding: 0.75rem 0.5rem;
+    }
+
+    .provider-leaderboard-table tbody td {
+        padding: 0.75rem 0.5rem;
+        font-size: 0.8rem;
+    }
+
+    .provider-leaderboard-table .btn {
+        padding: 0.2rem 0.5rem;
+        font-size: 0.7rem;
+    }
+}
+
+.provider-leaderboard-table tbody td {
+    color: var(--text-primary) !important;
+}
+
+.provider-leaderboard-container .form-control {
+    color: var(--input-text) !important;
+}
+
+/* Ultimate provider leaderboard row fix */
+.provider-leaderboard-container .provider-leaderboard-table tbody tr,
+.provider-leaderboard-container .provider-leaderboard-table tbody td {
+    background-color: var(--bg-secondary) !important;
+}
+.provider-leaderboard-container .provider-leaderboard-table tbody tr:hover {
+    background-color: var(--border-color) !important;
+}

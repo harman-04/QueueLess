@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
 import { toast } from "react-toastify";
 import {
     FaList,
@@ -16,32 +15,29 @@ import {
     FaCheckCircle,
     FaUsers,
     FaAmbulance,
-    FaTrophy,
     FaRegSmileBeam,
     FaHeart
 } from "react-icons/fa";
+import { getShortTokenId } from '../utils/tokenUtils';
 import { logout } from "../redux/authSlice";
 import { fetchPlaces } from "../redux/placeSlice";
 import { fetchServices } from "../redux/serviceSlice";
 import { fetchFavoritePlacesWithDetails } from "../redux/userSlice";
+import { fetchUserTokenHistory } from "../redux/userAnalyticsSlice";
 import { Spinner, Card, Row, Col, Button, Alert } from "react-bootstrap";
 import "animate.css/animate.min.css";
 import axiosInstance from "../utils/axiosInstance";
-
+import UserDashboardSkeleton from "../components/UserDashboardSkeleton";
+import UserTokenHistoryChart from "../components/UserTokenHistoryChart";
+import './UserDashboard.css';
 const UserDashboard = () => {
     const dispatch = useDispatch();
     const navigate = useNavigate();
     const { token, name, id: userId } = useSelector((state) => state.auth);
-    const { items: places, loading: placesLoading } = useSelector(
-        (state) => state.places
-    );
-    const { items: services, loading: servicesLoading } = useSelector(
-        (state) => state.services
-    );
-    // 1. Access favorite places from the user slice
-    const { favoritePlaces, loading: favoritesLoading } = useSelector(
-        (state) => state.user
-    );
+    const { items: places, loading: placesLoading } = useSelector((state) => state.places);
+    const { items: services, loading: servicesLoading } = useSelector((state) => state.services);
+    const { favoritePlaces, loading: favoritesLoading } = useSelector((state) => state.user);
+    const { tokenHistory, loading: tokenHistoryLoading, error: tokenHistoryError } = useSelector((state) => state.userAnalytics);
 
     const [userQueues, setUserQueues] = useState([]);
     const [queuesLoading, setQueuesLoading] = useState(false);
@@ -49,13 +45,17 @@ const UserDashboard = () => {
     const [filteredPlaces, setFilteredPlaces] = useState([]);
     const [filteredServices, setFilteredServices] = useState([]);
     const [refreshCount, setRefreshCount] = useState(0);
+    const [visiblePlaces, setVisiblePlaces] = useState(6);
+    const [visibleServices, setVisibleServices] = useState(6);
+    const [cancelling, setCancelling] = useState(null);
+    const isLoading = placesLoading || servicesLoading || favoritesLoading;
 
     useEffect(() => {
         if (token) {
             dispatch(fetchPlaces());
             dispatch(fetchServices());
-            // 2. Dispatch the action to fetch favorite places with details
             dispatch(fetchFavoritePlacesWithDetails());
+            dispatch(fetchUserTokenHistory(30));
         }
     }, [dispatch, token]);
 
@@ -78,6 +78,8 @@ const UserDashboard = () => {
             setFilteredPlaces(places);
             setFilteredServices(services);
         }
+        setVisiblePlaces(6);
+        setVisibleServices(6);
     }, [searchTerm, places, services]);
 
     useEffect(() => {
@@ -85,14 +87,14 @@ const UserDashboard = () => {
             setQueuesLoading(true);
             try {
                 const response = await axiosInstance.get(`/queues/by-user/${userId}`);
-                
+
                 if (Array.isArray(response.data)) {
                     const queuesWithUserTokens = response.data.map(queue => {
                         const userToken = queue.tokens.find(token => token.userId === userId);
                         return {
                             ...queue,
                             userToken: userToken || null,
-                            position: userToken && userToken.status === 'WAITING' 
+                            position: userToken && userToken.status === 'WAITING'
                                 ? queue.tokens.filter(t => t.status === 'WAITING').findIndex(t => t.tokenId === userToken.tokenId) + 1
                                 : null
                         };
@@ -114,12 +116,12 @@ const UserDashboard = () => {
 
         if (userId && token) {
             fetchUserQueues();
-            
+
             const interval = setInterval(() => {
                 setRefreshCount(prev => prev + 1);
                 fetchUserQueues();
             }, 15000);
-            
+
             return () => clearInterval(interval);
         }
     }, [userId, token, refreshCount]);
@@ -134,8 +136,37 @@ const UserDashboard = () => {
         dispatch(fetchPlaces());
         dispatch(fetchServices());
         dispatch(fetchFavoritePlacesWithDetails());
+        dispatch(fetchUserTokenHistory(30));
         setRefreshCount(prev => prev + 1);
         toast.info("Refreshing data...");
+    };
+
+    const handleCancelQueue = async (queueId, tokenId) => {
+        if (!window.confirm('Are you sure you want to leave this queue?')) return;
+        setCancelling(queueId);
+        try {
+            await axiosInstance.delete(`/queues/${queueId}/cancel-token/${tokenId}`);
+            toast.success('You have left the queue.');
+            // Refresh user queues
+            const response = await axiosInstance.get(`/queues/by-user/${userId}`);
+            if (Array.isArray(response.data)) {
+                const queuesWithUserTokens = response.data.map(queue => {
+                    const userToken = queue.tokens.find(token => token.userId === userId);
+                    return {
+                        ...queue,
+                        userToken: userToken || null,
+                        position: userToken && userToken.status === 'WAITING'
+                            ? queue.tokens.filter(t => t.status === 'WAITING').findIndex(t => t.tokenId === userToken.tokenId) + 1
+                            : null
+                    };
+                });
+                setUserQueues(queuesWithUserTokens);
+            }
+        } catch (error) {
+            toast.error('Failed to leave queue.');
+        } finally {
+            setCancelling(null);
+        }
     };
 
     const getStatusBadge = (status) => {
@@ -161,11 +192,15 @@ const UserDashboard = () => {
         return <span className="badge bg-primary me-1">Regular</span>;
     };
 
+    if (isLoading) {
+        return <UserDashboardSkeleton />;
+    }
+
     return (
-        <div className="container py-5 animate__animated animate__fadeIn">
+        <div className="user-dashboard-container animate__animated animate__fadeIn">
             {/* Header Section */}
-            <div className="d-flex justify-content-between align-items-center mb-5 animate__animated animate__fadeInDown">
-                <h1 className="fw-bold text-dark">
+            <div className="user-dashboard-header animate__animated animate__fadeInDown">
+                <h1 className="user-dashboard-title">
                     <FaBuilding className="me-2 text-primary" />
                     {name ? `${name}'s Dashboard` : "Explore Places & Services"}
                 </h1>
@@ -187,10 +222,10 @@ const UserDashboard = () => {
             </div>
 
             {/* Your Active Queues Section */}
-            <div className="card shadow-lg border-0 mb-5 animate__animated animate__fadeInUp">
+            <div className="user-dashboard-card animate__animated animate__fadeInUp">
                 <div className="card-body p-4">
                     <div className="d-flex justify-content-between align-items-center mb-4">
-                        <h4 className="fw-semibold text-secondary mb-0">
+                        <h4 className="user-dashboard-section-title">
                             <FaList className="me-2 text-info" /> Your Queues
                         </h4>
                         <small className="text-muted">Auto-updates every 15 seconds</small>
@@ -201,8 +236,8 @@ const UserDashboard = () => {
                             <Spinner animation="border" variant="primary" />
                         </div>
                     ) : userQueues.length === 0 ? (
-                        <div className="alert alert-info text-center py-4">
-                            <FaRegSmileBeam className="display-4 text-info mb-3" />
+                        <div className="user-dashboard-empty-alert text-center py-4">
+                            <FaRegSmileBeam className="display-4 mb-3" />
                             <h5>No Active Queues</h5>
                             <p className="mb-0">You haven't joined any queues yet. Explore places and services to get started!</p>
                         </div>
@@ -210,25 +245,30 @@ const UserDashboard = () => {
                         <div className="row">
                             {userQueues.map((queue) => (
                                 <div key={queue.id} className="col-md-6 col-lg-4 mb-4">
-                                    <div className="card h-100 shadow-sm border-0">
+                                    <div className="user-queue-card h-100">
                                         <div className="card-body">
                                             <div className="d-flex justify-content-between align-items-start mb-3">
                                                 <h5 className="card-title text-truncate">{queue.serviceName}</h5>
                                                 {queue.userToken && getStatusBadge(queue.userToken.status)}
                                             </div>
-                                            
+
                                             <div className="mb-3">
                                                 <p className="text-muted mb-1">
                                                     <FaBuilding className="me-1" />
-                                                    <strong>Place:</strong> {queue.placeName || 'Unknown'}
+                                                    <strong>Place:</strong> {
+                                                        // Find the place in the Redux 'places' array that matches this queue's placeId
+                                                        places.find(p => p.id === queue.placeId)?.name || 'Unknown'
+                                                    }
                                                 </p>
                                                 {queue.userToken && (
                                                     <>
-                                                        <p className="mb-1">
-                                                            <strong>Token:</strong> {queue.userToken.tokenId}
-                                                            {getTokenTypeBadge(queue.userToken)}
+                                                        <p className="mb-2">
+                                                            <strong>Token:</strong> {getShortTokenId(queue.userToken.tokenId)}
+                                                            <span className="ms-2 ">
+                                                                {getTokenTypeBadge(queue.userToken)} </span>
+
                                                         </p>
-                                                        
+
                                                         {queue.userToken.status === 'WAITING' && queue.position && (
                                                             <div className="alert alert-warning py-2 mb-2">
                                                                 <FaClock className="me-2" />
@@ -238,14 +278,14 @@ const UserDashboard = () => {
                                                                 )}
                                                             </div>
                                                         )}
-                                                        
+
                                                         {queue.userToken.status === 'IN_SERVICE' && (
                                                             <div className="alert alert-success py-2 mb-2">
                                                                 <FaUserCheck className="me-2" />
                                                                 <strong>You're being served!</strong>
                                                             </div>
                                                         )}
-                                                        
+
                                                         {queue.userToken.status === 'COMPLETED' && (
                                                             <div className="alert alert-info py-2 mb-2">
                                                                 <FaCheckCircle className="me-2" />
@@ -257,7 +297,7 @@ const UserDashboard = () => {
                                                                 )}
                                                             </div>
                                                         )}
-                                                        
+
                                                         {queue.userToken.isGroup && queue.userToken.groupMembers && (
                                                             <div className="mt-2">
                                                                 <h6 className="small fw-bold">Group Members:</h6>
@@ -270,7 +310,7 @@ const UserDashboard = () => {
                                                                 </ul>
                                                             </div>
                                                         )}
-                                                        
+
                                                         {queue.userToken.isEmergency && queue.userToken.emergencyDetails && (
                                                             <div className="mt-2">
                                                                 <h6 className="small fw-bold">Emergency Details:</h6>
@@ -280,18 +320,30 @@ const UserDashboard = () => {
                                                     </>
                                                 )}
                                             </div>
-                                            
+
                                             <button
                                                 onClick={() => navigate(`/customer/queue/${queue.id}`)}
                                                 className="btn btn-outline-primary w-100 mt-auto"
                                             >
                                                 View Queue <FaArrowRight className="ms-2" />
                                             </button>
+
+                                            {queue.userToken && queue.userToken.status === 'WAITING' && (
+                                                <Button
+                                                    variant="outline-danger"
+                                                    size="sm"
+                                                    className="mt-2"
+                                                    onClick={() => handleCancelQueue(queue.id, queue.userToken.tokenId)}
+                                                    disabled={cancelling === queue.id}
+                                                >
+                                                    {cancelling === queue.id ? <Spinner animation="border" size="sm" /> : 'Leave Queue'}
+                                                </Button>
+                                            )}
                                         </div>
-                                        
+
                                         {/* Queue Statistics Footer */}
-                                        <div className="card-footer bg-transparent">
-                                            <div className="d-flex justify-content-between small text-muted">
+                                        <div className="card-footer">
+                                            <div className="d-flex justify-content-between small">
                                                 <span>
                                                     <FaUsers className="me-1" />
                                                     {queue.tokens.filter(t => t.status === 'WAITING').length} waiting
@@ -314,19 +366,18 @@ const UserDashboard = () => {
                 </div>
             </div>
 
-
             {/* Favorite Places Section */}
-            <Card className="shadow-lg mb-5 animate__animated animate__fadeInUp">
-                <Card.Body className="p-4">
+            <div className="user-dashboard-card animate__animated animate__fadeInUp">
+                <div className="card-body p-4">
                     <div className="d-flex justify-content-between align-items-center mb-4">
-                        <h4 className="fw-semibold text-secondary mb-0">
+                        <h4 className="user-dashboard-section-title">
                             <FaHeart className="me-2 text-danger" /> Favorite Places
                         </h4>
                         <Button variant="outline-primary" size="sm" onClick={() => navigate('/favorites')}>
                             View All
                         </Button>
                     </div>
-                    
+
                     {favoritesLoading ? (
                         <div className="d-flex justify-content-center py-3">
                             <Spinner animation="border" variant="primary" />
@@ -340,7 +391,7 @@ const UserDashboard = () => {
                         <Row>
                             {favoritePlaces.slice(0, 3).map((place) => (
                                 <Col md={4} key={place.id} className="mb-3">
-                                    <Card className="h-100">
+                                    <div className="user-favorite-card h-100">
                                         {place.imageUrls && place.imageUrls.length > 0 && (
                                             <Card.Img
                                                 variant="top"
@@ -349,7 +400,7 @@ const UserDashboard = () => {
                                                 onError={(e) => { e.target.src = 'https://via.placeholder.com/300x200?text=No+Image'; }}
                                             />
                                         )}
-                                        <Card.Body>
+                                        <div className="card-body">
                                             <Card.Title className="h6">{place.name}</Card.Title>
                                             <Button
                                                 variant="outline-primary"
@@ -358,26 +409,29 @@ const UserDashboard = () => {
                                             >
                                                 View Details
                                             </Button>
-                                        </Card.Body>
-                                    </Card>
+                                        </div>
+                                    </div>
                                 </Col>
                             ))}
                         </Row>
                     )}
-                </Card.Body>
-            </Card>
+                </div>
+            </div>
+
+            {/* Token Usage Chart */}
+            <UserTokenHistoryChart data={tokenHistory} loading={tokenHistoryLoading} error={tokenHistoryError} />
 
             {/* Search Section */}
-            <div className="card shadow-lg border-0 mb-5 animate__animated animate__fadeInUp">
-                <div className="card-body p-4">
-                    <h4 className="fw-semibold text-secondary mb-4">
+            <div className="user-dashboard-search animate__animated animate__fadeInUp">
+                <div className="p-4">
+                    <h4 className="user-dashboard-section-title mb-4">
                         <FaSearch className="me-2 text-info" />
                         Search Places & Services
                     </h4>
                     <div className="input-group">
                         <input
                             type="text"
-                            className="form-control form-control-lg"
+                            className="form-control"
                             placeholder="Search for places or services..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
@@ -387,9 +441,9 @@ const UserDashboard = () => {
             </div>
 
             {/* Places Section */}
-            <div className="card shadow-lg border-0 mb-5 animate__animated animate__fadeInUp">
+            <div className="user-dashboard-card animate__animated animate__fadeInUp">
                 <div className="card-body p-4">
-                    <h4 className="fw-semibold text-secondary mb-4">
+                    <h4 className="user-dashboard-section-title mb-4">
                         <FaBuilding className="me-2 text-info" /> Places
                     </h4>
                     {placesLoading ? (
@@ -397,49 +451,63 @@ const UserDashboard = () => {
                             <Spinner animation="border" variant="primary" />
                         </div>
                     ) : filteredPlaces.length === 0 ? (
-                        <div className="alert alert-info">No places found.</div>
+                        <div className="user-dashboard-empty-alert text-center py-4">
+                            <p className="mb-0">No places found.</p>
+                        </div>
                     ) : (
-                        <div className="row">
-                            {filteredPlaces.map((place) => (
-                                <div key={place.id} className="col-md-4 mb-4">
-                                    <div className="card h-100 shadow-sm">
-                                        {place.imageUrls && place.imageUrls.length > 0 && (
-                                            <img
-                                                src={place.imageUrls[0]}
-                                                className="card-img-top"
-                                                alt={place.name}
-                                                style={{ height: "200px", objectFit: "cover" }}
-                                                onError={(e) => { e.target.src = 'https://via.placeholder.com/300x200?text=No+Image'; }}
-                                            />
-                                        )}
-                                        <div className="card-body d-flex flex-column">
-                                            <h5 className="card-title">{place.name}</h5>
-                                            <p className="card-text text-muted">
-                                                <FaBuilding className="me-1" />
-                                                {place.address}
-                                            </p>
-                                            <p className="card-text">{place.description}</p>
-                                            <div className="mt-auto">
-                                                <button
-                                                    className="btn btn-primary w-100"
-                                                    onClick={() => navigate(`/places/${place.id}`)}
-                                                >
-                                                    View Details
-                                                </button>
+                        <>
+                            <div className="row">
+                                {filteredPlaces.slice(0, visiblePlaces).map((place) => (
+                                    <div key={place.id} className="col-md-4 mb-4">
+                                        <div className="user-place-card h-100">
+                                            {place.imageUrls && place.imageUrls.length > 0 && (
+                                                <img
+                                                    src={place.imageUrls[0]}
+                                                    className="card-img-top"
+                                                    alt={place.name}
+                                                    style={{ height: "200px", objectFit: "cover" }}
+                                                    onError={(e) => { e.target.src = 'https://via.placeholder.com/300x200?text=No+Image'; }}
+                                                />
+                                            )}
+                                            <div className="card-body d-flex flex-column">
+                                                <h5 className="card-title">{place.name}</h5>
+                                                <p className="card-text">
+                                                    <FaBuilding className="me-1" />
+                                                    {place.address}
+                                                </p>
+                                                <p className="card-text">{place.description}</p>
+                                                <div className="mt-auto">
+                                                    <button
+                                                        className="btn btn-primary w-100"
+                                                        onClick={() => navigate(`/places/${place.id}`)}
+                                                    >
+                                                        View Details
+                                                    </button>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
+                                ))}
+                            </div>
+                            {visiblePlaces < filteredPlaces.length && (
+                                <div className="user-dashboard-load-more mt-4">
+                                    <Button
+                                        variant="outline-primary"
+                                        onClick={() => setVisiblePlaces(prev => prev + 6)}
+                                    >
+                                        Load More Places
+                                    </Button>
                                 </div>
-                            ))}
-                        </div>
+                            )}
+                        </>
                     )}
                 </div>
             </div>
-            
+
             {/* Services Section */}
-            <div className="card shadow-lg border-0 animate__animated animate__fadeInUp">
+            <div className="user-dashboard-card animate__animated animate__fadeInUp">
                 <div className="card-body p-4">
-                    <h4 className="fw-semibold text-secondary mb-4">
+                    <h4 className="user-dashboard-section-title mb-4">
                         <FaList className="me-2 text-info" /> Services
                     </h4>
                     {servicesLoading ? (
@@ -447,31 +515,45 @@ const UserDashboard = () => {
                             <Spinner animation="border" variant="primary" />
                         </div>
                     ) : filteredServices.length === 0 ? (
-                        <div className="alert alert-info">No services found.</div>
+                        <div className="user-dashboard-empty-alert text-center py-4">
+                            <p className="mb-0">No services found.</p>
+                        </div>
                     ) : (
-                        <div className="row">
-                            {filteredServices.map((service) => (
-                                <div key={service.id} className="col-md-6 mb-3">
-                                    <div className="card h-100">
-                                        <div className="card-body">
-                                            <h5 className="card-title">{service.name}</h5>
-                                            <p className="card-text">{service.description}</p>
-                                            <div className="d-flex justify-content-between align-items-center">
-                                                <span className="badge bg-info">
-                                                    {service.averageServiceTime} mins
-                                                </span>
-                                                <button
-                                                    className="btn btn-sm btn-primary"
-                                                    onClick={() => navigate(`/places/${service.placeId}`)}
-                                                >
-                                                    View Place
-                                                </button>
+                        <>
+                            <div className="row">
+                                {filteredServices.slice(0, visibleServices).map((service) => (
+                                    <div key={service.id} className="col-md-6 mb-3">
+                                        <div className="user-service-card h-100">
+                                            <div className="card-body">
+                                                <h5 className="card-title">{service.name}</h5>
+                                                <p className="card-text">{service.description}</p>
+                                                <div className="d-flex justify-content-between align-items-center">
+                                                    <span className="badge bg-info">
+                                                        {service.averageServiceTime} mins
+                                                    </span>
+                                                    <button
+                                                        className="btn btn-sm btn-primary"
+                                                        onClick={() => navigate(`/places/${service.placeId}`)}
+                                                    >
+                                                        View Place
+                                                    </button>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
+                                ))}
+                            </div>
+                            {visibleServices < filteredServices.length && (
+                                <div className="user-dashboard-load-more mt-4">
+                                    <Button
+                                        variant="outline-primary"
+                                        onClick={() => setVisibleServices(prev => prev + 6)}
+                                    >
+                                        Load More Services
+                                    </Button>
                                 </div>
-                            ))}
-                        </div>
+                            )}
+                        </>
                     )}
                 </div>
             </div>

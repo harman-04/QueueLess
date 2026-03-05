@@ -1,0 +1,90 @@
+/* CancelTokenModal.css */
+.cancel-token-modal .modal-content {
+    border-radius: 16px;
+    border: none;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    background-color: var(--card-bg);
+}
+
+.cancel-token-modal .modal-header {
+    border-bottom: none;
+    padding: 1.5rem 2rem 0.5rem;
+}
+
+.cancel-token-modal .modal-title {
+    display: flex;
+    align-items: center;
+    color: var(--danger-color) !important;
+    font-weight: 600;
+}
+
+.cancel-token-modal .modal-body {
+    padding: 0 2rem 1rem;
+    color: var(--text-primary);
+}
+
+.cancel-token-modal .modal-body p {
+    color: var(--text-secondary);
+}
+
+.cancel-token-modal .modal-body strong {
+    color: var(--text-primary);
+}
+
+.cancel-token-modal .modal-footer {
+    border-top: none;
+    padding: 0.5rem 2rem 1.5rem;
+}
+
+.cancel-token-modal .btn {
+    border-radius: 30px;
+    padding: 0.5rem 1.5rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.cancel-token-modal .btn-outline-secondary {
+    color: var(--text-secondary);
+    border-color: var(--border-color);
+}
+
+.cancel-token-modal .btn-outline-secondary:hover {
+    background-color: var(--dropdown-hover-bg);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+}
+
+.cancel-token-modal .btn-danger {
+    background-color: var(--danger-color);
+    border-color: var(--danger-color);
+}
+
+.cancel-token-modal .btn-danger:hover:not(:disabled) {
+    background-color: var(--danger-color);
+    filter: brightness(0.9);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(var(--danger-color), 0.3);
+}
+
+.cancel-token-modal .btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.cancel-token-modal .form-label {
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+.cancel-token-modal .form-control {
+    background-color: var(--input-bg);
+    border-color: var(--border-color);
+    color: var(--input-text);
+    border-radius: 10px;
+    transition: all 0.2s ease;
+}
+
+.cancel-token-modal .form-control:focus {
+    border-color: var(--link-color);
+    box-shadow: 0 0 0 0.2rem rgba(var(--link-color-rgb), 0.25);
+}

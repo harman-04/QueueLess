@@ -14,13 +14,13 @@ const PlaceRatingSummary = ({ placeId }) => {
       try {
         setLoading(true);
         const response = await axios.get(`https://localhost:8443/api/feedback/place/${placeId}/detailed-ratings`);
-        
+
         // Check if the ratings data is empty or all ratings are 0
-        const hasRatings = response.data && 
-                          (response.data.overall > 0 || 
-                           response.data.staff > 0 || 
-                           response.data.service > 0 || 
-                           response.data.waitTime > 0);
+        const hasRatings = response.data &&
+          (response.data.overall > 0 ||
+            response.data.staff > 0 ||
+            response.data.service > 0 ||
+            response.data.waitTime > 0);
 
         if (hasRatings) {
           setRatings(response.data);
@@ -59,7 +59,7 @@ const PlaceRatingSummary = ({ placeId }) => {
     const fullStars = Math.floor(roundedRating);
     const hasHalfStar = roundedRating % 1 !== 0;
     const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
-    
+
     return (
       <div className="prs-star-display">
         {[...Array(fullStars)].map((_, i) => (
@@ -72,11 +72,11 @@ const PlaceRatingSummary = ({ placeId }) => {
       </div>
     );
   };
-  
+
   if (loading) {
     return <div className="prs-loading">Loading ratings...</div>;
   }
-  
+
   // This is the new conditional render for no ratings
   if (!ratings) {
     return (
@@ -104,7 +104,7 @@ const PlaceRatingSummary = ({ placeId }) => {
               <div className="prs-rating-label">Overall</div>
             </div>
           </Col>
-          
+
           <Col md={9} className="prs-detail-ratings-col">
             <Row className="prs-detail-row">
               <Col xs={6} md={4} className="prs-rating-category">
@@ -114,7 +114,7 @@ const PlaceRatingSummary = ({ placeId }) => {
                   <div className="prs-category-label">Staff</div>
                 </div>
               </Col>
-              
+
               <Col xs={6} md={4} className="prs-rating-category">
                 <div className="prs-category-rating">
                   <StarDisplay rating={ratings.service} />
@@ -122,7 +122,7 @@ const PlaceRatingSummary = ({ placeId }) => {
                   <div className="prs-category-label">Service</div>
                 </div>
               </Col>
-              
+
               <Col xs={6} md={4} className="prs-rating-category">
                 <div className="prs-category-rating">
                   <StarDisplay rating={ratings.waitTime} />

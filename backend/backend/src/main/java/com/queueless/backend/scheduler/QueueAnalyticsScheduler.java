@@ -1,9 +1,7 @@
-// src/main/java/com/queueless/backend/scheduler/QueueAnalyticsScheduler.java
 package com.queueless.backend.scheduler;
 
 import com.queueless.backend.model.Queue;
 import com.queueless.backend.model.QueueHourlyStats;
-import com.queueless.backend.model.QueueToken;
 import com.queueless.backend.repository.QueueHourlyStatsRepository;
 import com.queueless.backend.repository.QueueRepository;
 import lombok.RequiredArgsConstructor;
@@ -29,20 +27,25 @@ public class QueueAnalyticsScheduler {
         List<Queue> allQueues = queueRepository.findAll();
 
         for (Queue queue : allQueues) {
-            long waitingCount = queue.getTokens().stream()
-                    .filter(token -> "WAITING".equals(token.getStatus()))
-                    .count();
+            try {
+                long waitingCount = queue.getTokens().stream()
+                        .filter(token -> "WAITING".equals(token.getStatus()))
+                        .count();
 
-            QueueHourlyStats stats = new QueueHourlyStats();
-            stats.setQueueId(queue.getId());
-            stats.setHour(hourStart);
-            stats.setWaitingCount((int) waitingCount);
-            statsRepository.save(stats);
+                QueueHourlyStats stats = new QueueHourlyStats();
+                stats.setQueueId(queue.getId());
+                stats.setHour(hourStart);
+                stats.setWaitingCount((int) waitingCount);
+                statsRepository.save(stats);
+                log.debug("Snapshot saved for queue {}: {} waiting", queue.getId(), waitingCount);
+            } catch (Exception e) {
+                log.error("Failed to snapshot queue {}: {}", queue.getId(), e.getMessage(), e);
+            }
         }
 
-        // Delete stats older than 60 days to keep database size manageable
+        // Delete stats older than 60 days
         LocalDateTime cutoff = LocalDateTime.now().minusDays(60);
         statsRepository.deleteByHourBefore(cutoff);
-        log.info("Hourly snapshot completed");
+        log.info("Hourly snapshot completed. Deleted old records.");
     }
 }

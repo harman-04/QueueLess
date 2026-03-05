@@ -2,11 +2,13 @@ package com.queueless.backend.service;
 
 import com.itextpdf.text.*;
 import com.itextpdf.text.pdf.*;
+import com.queueless.backend.dto.AdminReportDTO;
 import com.queueless.backend.model.Queue;
 import com.queueless.backend.model.QueueToken;
 import com.queueless.backend.enums.TokenStatus;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.ss.usermodel.Font;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.stereotype.Service;
@@ -18,6 +20,18 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import com.queueless.backend.dto.AdminReportDTO;
+import com.queueless.backend.dto.AdminReportDTO.PlaceSummaryDTO;
+import com.queueless.backend.dto.AdminReportDTO.GlobalSummaryDTO;
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.ss.util.CellRangeAddress;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import com.itextpdf.text.*;
+import com.itextpdf.text.pdf.*;
+import java.io.ByteArrayOutputStream;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
 
 /**
  * Enhanced service class for exporting queue data to PDF and Excel formats.
@@ -540,6 +554,190 @@ public class ExportService {
             } catch (Exception e) {
                 log.error("Error adding header/footer to PDF", e);
             }
+        }
+    }
+    public byte[] exportAdminReportToPdf(AdminReportDTO report) throws DocumentException {
+        log.info("Generating admin report PDF for admin: {}", report.getAdminEmail());
+        Document document = new Document(PageSize.A4.rotate()); // Landscape
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        PdfWriter writer = PdfWriter.getInstance(document, outputStream);
+
+        document.open();
+
+        // Title
+        Paragraph title = new Paragraph("ADMIN REPORT – " + report.getAdminName(), PDF_TITLE_FONT);
+        title.setAlignment(Element.ALIGN_CENTER);
+        title.setSpacingAfter(20);
+        document.add(title);
+
+        // Generation info
+        Paragraph info = new Paragraph("Generated: " + report.getGeneratedAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")), PDF_NORMAL_FONT);
+        info.setAlignment(Element.ALIGN_CENTER);
+        info.setSpacingAfter(20);
+        document.add(info);
+
+        // Global summary table
+        Paragraph globalHeader = new Paragraph("Overall Summary", PDF_SUBHEADER_FONT);
+        globalHeader.setSpacingAfter(10);
+        document.add(globalHeader);
+
+        PdfPTable globalTable = new PdfPTable(4);
+        globalTable.setWidthPercentage(100);
+        globalTable.setWidths(new float[]{1, 1, 1, 1});
+        addGlobalRow(globalTable, "Total Places", String.valueOf(report.getSummary().getTotalPlaces()));
+        addGlobalRow(globalTable, "Total Queues", String.valueOf(report.getSummary().getTotalQueues()));
+        addGlobalRow(globalTable, "Tokens Today", String.valueOf(report.getSummary().getTotalTokensServedToday()));
+        addGlobalRow(globalTable, "Tokens Total", String.valueOf(report.getSummary().getTotalTokensServedAllTime()));
+        addGlobalRow(globalTable, "Avg Rating", String.format("%.1f", report.getSummary().getAverageRatingOverall()));
+        addGlobalRow(globalTable, "Avg Wait Time", String.format("%.0f min", report.getSummary().getAverageWaitTimeOverall()));
+        document.add(globalTable);
+        document.add(Chunk.NEWLINE);
+
+        // Per‑place table
+        Paragraph placeHeader = new Paragraph("Place Details", PDF_SUBHEADER_FONT);
+        placeHeader.setSpacingAfter(10);
+        document.add(placeHeader);
+
+        PdfPTable placeTable = new PdfPTable(8);
+        placeTable.setWidthPercentage(100);
+        placeTable.setWidths(new float[]{2, 1, 1, 1, 1, 1, 1, 1});
+        // Headers
+        String[] headers = {"Place", "Queues", "Active", "Today", "Total", "Avg Wait", "Avg Rating", "Active Tokens"};
+        for (String h : headers) {
+            PdfPCell cell = new PdfPCell(new Phrase(h, PDF_HEADER_FONT));
+            cell.setBackgroundColor(HEADER_BG_COLOR);
+            cell.setHorizontalAlignment(Element.ALIGN_CENTER);
+            cell.setPadding(5);
+            placeTable.addCell(cell);
+        }
+        // Data rows
+        for (PlaceSummaryDTO p : report.getPlaces()) {
+            placeTable.addCell(createCell(p.getPlaceName()));
+            placeTable.addCell(createCell(String.valueOf(p.getTotalQueues())));
+            placeTable.addCell(createCell(String.valueOf(p.getActiveQueues())));
+            placeTable.addCell(createCell(String.valueOf(p.getTokensServedToday())));
+            placeTable.addCell(createCell(String.valueOf(p.getTokensServedTotal())));
+            placeTable.addCell(createCell(String.format("%.0f min", p.getAverageWaitTime())));
+            placeTable.addCell(createCell(String.format("%.1f", p.getAverageRating())));
+            placeTable.addCell(createCell(String.valueOf(p.getActiveTokens())));
+        }
+        document.add(placeTable);
+        document.close();
+        return outputStream.toByteArray();
+    }
+
+    private void addGlobalRow(PdfPTable table, String label, String value) {
+        PdfPCell labelCell = new PdfPCell(new Phrase(label, PDF_BOLD_FONT));
+        labelCell.setBackgroundColor(SUBHEADER_BG_COLOR);
+        labelCell.setBorder(Rectangle.NO_BORDER);
+        labelCell.setPadding(5);
+        PdfPCell valueCell = new PdfPCell(new Phrase(value, PDF_NORMAL_FONT));
+        valueCell.setBorder(Rectangle.NO_BORDER);
+        valueCell.setPadding(5);
+        table.addCell(labelCell);
+        table.addCell(valueCell);
+    }
+
+    public byte[] exportAdminReportToExcel(AdminReportDTO report) throws IOException {
+        log.info("Generating admin report Excel for admin: {}", report.getAdminEmail());
+        try (Workbook workbook = new XSSFWorkbook(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+            Sheet sheet = workbook.createSheet("Admin Report");
+
+            // Title style
+            CellStyle titleStyle = workbook.createCellStyle();
+            Font titleFont = workbook.createFont();
+            titleFont.setBold(true);
+            titleFont.setFontHeightInPoints((short) 16);
+            titleStyle.setFont(titleFont);
+            titleStyle.setAlignment(HorizontalAlignment.CENTER);
+
+            // Header style
+            CellStyle headerStyle = workbook.createCellStyle();
+            Font headerFont = workbook.createFont();
+            headerFont.setBold(true);
+            headerFont.setColor(IndexedColors.WHITE.getIndex());
+            headerStyle.setFont(headerFont);
+            headerStyle.setFillForegroundColor(IndexedColors.DARK_BLUE.getIndex());
+            headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+            headerStyle.setAlignment(HorizontalAlignment.CENTER);
+
+            // Bold style for labels
+            CellStyle boldStyle = workbook.createCellStyle();
+            Font boldFont = workbook.createFont();
+            boldFont.setBold(true);
+            boldStyle.setFont(boldFont);
+
+            // Title row
+            Row titleRow = sheet.createRow(0);
+            Cell titleCell = titleRow.createCell(0);
+            titleCell.setCellValue("ADMIN REPORT – " + report.getAdminName());
+            titleCell.setCellStyle(titleStyle);
+            sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 7));
+
+            // Generation info
+            Row infoRow = sheet.createRow(1);
+            Cell infoCell = infoRow.createCell(0);
+            infoCell.setCellValue("Generated: " + report.getGeneratedAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")));
+            infoCell.setCellStyle(titleStyle);
+            sheet.addMergedRegion(new CellRangeAddress(1, 1, 0, 7));
+
+            // Global summary
+            Row globalHeaderRow = sheet.createRow(3);
+            globalHeaderRow.createCell(0).setCellValue("Overall Summary");
+            globalHeaderRow.getCell(0).setCellStyle(boldStyle);
+            sheet.addMergedRegion(new CellRangeAddress(3, 3, 0, 1));
+
+            int rowNum = 4;
+            Row globalRow1 = sheet.createRow(rowNum++);
+            globalRow1.createCell(0).setCellValue("Total Places:");
+            globalRow1.createCell(1).setCellValue(report.getSummary().getTotalPlaces());
+            Row globalRow2 = sheet.createRow(rowNum++);
+            globalRow2.createCell(0).setCellValue("Total Queues:");
+            globalRow2.createCell(1).setCellValue(report.getSummary().getTotalQueues());
+            Row globalRow3 = sheet.createRow(rowNum++);
+            globalRow3.createCell(0).setCellValue("Tokens Today:");
+            globalRow3.createCell(1).setCellValue(report.getSummary().getTotalTokensServedToday());
+            Row globalRow4 = sheet.createRow(rowNum++);
+            globalRow4.createCell(0).setCellValue("Tokens Total:");
+            globalRow4.createCell(1).setCellValue(report.getSummary().getTotalTokensServedAllTime());
+            Row globalRow5 = sheet.createRow(rowNum++);
+            globalRow5.createCell(0).setCellValue("Avg Rating:");
+            globalRow5.createCell(1).setCellValue(report.getSummary().getAverageRatingOverall());
+            Row globalRow6 = sheet.createRow(rowNum++);
+            globalRow6.createCell(0).setCellValue("Avg Wait Time (min):");
+            globalRow6.createCell(1).setCellValue(report.getSummary().getAverageWaitTimeOverall());
+
+            rowNum++; // spacer
+
+            // Place details header
+            Row placeHeaderRow = sheet.createRow(rowNum++);
+            String[] headers = {"Place", "Queues", "Active", "Today", "Total", "Avg Wait", "Avg Rating", "Active Tokens"};
+            for (int i = 0; i < headers.length; i++) {
+                Cell cell = placeHeaderRow.createCell(i);
+                cell.setCellValue(headers[i]);
+                cell.setCellStyle(headerStyle);
+            }
+
+            // Place data rows
+            for (PlaceSummaryDTO p : report.getPlaces()) {
+                Row row = sheet.createRow(rowNum++);
+                row.createCell(0).setCellValue(p.getPlaceName());
+                row.createCell(1).setCellValue(p.getTotalQueues());
+                row.createCell(2).setCellValue(p.getActiveQueues());
+                row.createCell(3).setCellValue(p.getTokensServedToday());
+                row.createCell(4).setCellValue(p.getTokensServedTotal());
+                row.createCell(5).setCellValue(p.getAverageWaitTime());
+                row.createCell(6).setCellValue(p.getAverageRating());
+                row.createCell(7).setCellValue(p.getActiveTokens());
+            }
+
+            // Auto‑size columns
+            for (int i = 0; i < headers.length; i++) {
+                sheet.autoSizeColumn(i);
+            }
+
+            workbook.write(out);
+            return out.toByteArray();
         }
     }
 }

@@ -1,0 +1,107 @@
+.not-found-container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  padding: 2rem;
+}
+
+.not-found-content {
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 32px;
+  box-shadow: var(--shadow-xl);
+  padding: 4rem 3rem;
+  animation: float 6s ease-in-out infinite;
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+.not-found-icon-wrapper {
+  width: 140px;
+  height: 140px;
+  margin: 0 auto 2rem;
+  background: linear-gradient(135deg, var(--danger-color), #c0392b);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 10px 30px rgba(231, 76, 60, 0.3);
+}
+
+.not-found-icon {
+  font-size: 5rem;
+  color: white;
+}
+
+.not-found-title {
+  font-size: 7rem;
+  font-weight: 800;
+  color: var(--danger-color);
+  line-height: 1;
+  margin-bottom: 0.5rem;
+  text-shadow: 0 4px 10px rgba(231, 76, 60, 0.3);
+}
+
+.not-found-subtitle {
+  font-size: 2.5rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 1rem;
+}
+
+.not-found-text {
+  font-size: 1.2rem;
+  color: var(--text-secondary);
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.not-found-button {
+  border-radius: 50px;
+  padding: 1rem 3rem;
+  font-weight: 600;
+  background: linear-gradient(145deg, var(--link-color), var(--link-hover));
+  border: none;
+  box-shadow: var(--shadow-md);
+  transition: all 0.3s;
+  font-size: 1.2rem;
+}
+
+.not-found-button:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-lg);
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+@media (max-width: 768px) {
+  .not-found-content {
+    padding: 3rem 1.5rem;
+  }
+  .not-found-icon-wrapper {
+    width: 100px;
+    height: 100px;
+  }
+  .not-found-icon {
+    font-size: 3.5rem;
+  }
+  .not-found-title {
+    font-size: 5rem;
+  }
+  .not-found-subtitle {
+    font-size: 2rem;
+  }
+  .not-found-text {
+    font-size: 1rem;
+  }
+  .not-found-button {
+    padding: 0.75rem 2rem;
+    font-size: 1rem;
+  }
+}

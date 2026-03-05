@@ -2,15 +2,23 @@ package com.queueless.backend.service;
 
 import com.queueless.backend.dto.PasswordChangeRequest;
 import com.queueless.backend.dto.UserProfileUpdateRequest;
+import com.queueless.backend.enums.TokenStatus;
+import com.queueless.backend.model.Queue;
 import com.queueless.backend.model.User;
+import com.queueless.backend.repository.QueueRepository;
 import com.queueless.backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -19,6 +27,7 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final QueueRepository queueRepository;
 
     public void updateUserProfile(String userId, UserProfileUpdateRequest request) {
         log.info("Attempting to update user profile for user ID: {}", userId);
@@ -150,6 +159,64 @@ public class UserService {
         } catch (Exception e) {
             log.error("Failed to remove favorite place {} for user {}. Error: {}", placeId, userId, e.getMessage());
             throw e;
+        }
+    }
+
+    public Map<String, Object> getUserTokenHistory(String userId, int days) {
+        log.info("Fetching token history for last {} days for user: {}", days, userId);
+        LocalDateTime start = LocalDateTime.now().minusDays(days).withHour(0).withMinute(0).withSecond(0);
+
+        List<Queue> allQueues = queueRepository.findAll(); // inject QueueRepository
+
+        Map<LocalDate, Long> dailyCounts = allQueues.stream()
+                .flatMap(q -> q.getTokens().stream())
+                .filter(t -> userId.equals(t.getUserId()))
+                .filter(t -> TokenStatus.COMPLETED.toString().equals(t.getStatus()))
+                .filter(t -> t.getCompletedAt() != null && t.getCompletedAt().isAfter(start))
+                .collect(Collectors.groupingBy(
+                        t -> t.getCompletedAt().toLocalDate(),
+                        Collectors.counting()
+                ));
+
+        List<String> dates = new ArrayList<>();
+        List<Long> counts = new ArrayList<>();
+        for (int i = days - 1; i >= 0; i--) {
+            LocalDate date = LocalDate.now().minusDays(i);
+            dates.add(date.toString());
+            counts.add(dailyCounts.getOrDefault(date, 0L));
+        }
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("dates", dates);
+        result.put("counts", counts);
+        return result;
+    }
+
+// In UserService.java
+
+    private User getUserOrThrow(String userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
+    }
+
+    public void addFcmToken(String userId, String fcmToken) {
+        User user = getUserOrThrow(userId);
+        if (user.getFcmTokens() == null) {
+            user.setFcmTokens(new ArrayList<>());
+        }
+        if (!user.getFcmTokens().contains(fcmToken)) {
+            user.getFcmTokens().add(fcmToken);
+            userRepository.save(user);
+            log.info("FCM token added for user {}", userId);
+        }
+    }
+
+    public void removeFcmToken(String userId, String fcmToken) {
+        User user = getUserOrThrow(userId);
+        if (user.getFcmTokens() != null) {
+            user.getFcmTokens().remove(fcmToken);
+            userRepository.save(user);
+            log.info("FCM token removed for user {}", userId);
         }
     }
 }

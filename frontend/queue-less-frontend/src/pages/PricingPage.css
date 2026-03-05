@@ -1,0 +1,324 @@
+/* PricingPage.css – Premium UI/UX with Dark Mode Support */
+
+/* ===== Container ===== */
+.pricing-page-container {
+  background-color: var(--bg-primary);
+  min-height: 100vh;
+  padding: 3rem 0;
+  transition: background-color 0.3s;
+}
+
+/* ===== Header ===== */
+.pricing-page-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.pricing-page-header h2 {
+  font-weight: 800;
+  font-size: 2.5rem;
+  background: linear-gradient(135deg, var(--search-primary), var(--accent-color));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 0.5rem;
+}
+
+.pricing-page-header .lead {
+  color: var(--text-secondary);
+  font-size: 1.2rem;
+}
+
+/* ===== Form ===== */
+.pricing-form {
+  max-width: 500px;
+  margin: 0 auto 3rem;
+}
+
+.pricing-form .form-label {
+  color: var(--text-primary);
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.pricing-form .form-control {
+  background-color: var(--input-bg);
+  border: 2px solid var(--border-color);
+  color: var(--input-text);
+  border-radius: 12px;
+  padding: 0.75rem 1rem;
+  transition: all 0.2s;
+}
+
+.pricing-form .form-control:focus {
+  border-color: var(--search-primary);
+  box-shadow: 0 0 0 3px rgba(var(--search-primary-rgb), 0.2);
+  outline: none;
+}
+
+.pricing-form .form-control.is-invalid {
+  border-color: var(--danger-color);
+}
+
+.pricing-form .invalid-feedback {
+  color: var(--danger-color);
+  font-size: 0.85rem;
+  margin-top: 0.3rem;
+}
+
+.pricing-form .form-text {
+  color: var(--text-secondary) !important;
+  font-size: 0.8rem;
+  margin-top: 0.3rem;
+}
+
+/* ===== Pricing Cards ===== */
+.pricing-card {
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 20px;
+  box-shadow: var(--shadow-md);
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+}
+
+.pricing-card:hover {
+  transform: translateY(-10px);
+  box-shadow: var(--shadow-xl);
+  border-color: var(--search-primary);
+}
+
+.pricing-card .card-body {
+  padding: 2rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  color: var(--text-primary);
+}
+
+.pricing-card .card-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 1rem;
+  position: relative;
+  padding-bottom: 0.5rem;
+}
+
+.pricing-card .card-title::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 50px;
+  height: 3px;
+  background: linear-gradient(90deg, var(--search-primary), var(--accent-color));
+  border-radius: 2px;
+}
+
+.pricing-card .card-subtitle {
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--search-primary);
+  margin-bottom: 1rem;
+}
+
+.pricing-card .card-subtitle span {
+  font-size: 1rem;
+  color: var(--text-secondary);
+  font-weight: 400;
+}
+
+.pricing-card .card-text {
+  color: var(--text-secondary);
+  flex-grow: 1;
+  margin-bottom: 1.5rem;
+  line-height: 1.6;
+}
+
+.pricing-card .btn {
+  border-radius: 40px;
+  padding: 0.75rem 1.5rem;
+  font-weight: 600;
+  background: linear-gradient(145deg, var(--search-primary), #4a6fdc);
+  border: none;
+  color: white;
+  box-shadow: var(--shadow-sm);
+  transition: all 0.2s;
+  width: 100%;
+}
+
+.pricing-card .btn:hover:not(:disabled) {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 24px rgba(var(--search-primary-rgb), 0.4);
+}
+
+.pricing-card .btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.pricing-card .spinner-border {
+  width: 1rem;
+  height: 1rem;
+  border-width: 2px;
+  margin-right: 0.5rem;
+}
+
+/* ===== Token Success Box ===== */
+.token-success-box {
+  max-width: 700px;
+  margin: 3rem auto 0;
+  padding: 2rem;
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 20px;
+  box-shadow: var(--shadow-lg);
+  text-align: center;
+}
+
+.token-success-box h4 {
+  color: var(--text-primary);
+  font-weight: 700;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.token-success-box h4 svg {
+  color: var(--success-color);
+}
+
+.token-display {
+  background: linear-gradient(135deg, var(--bg-secondary), var(--border-color));
+  padding: 1rem;
+  border-radius: 12px;
+  font-family: 'Courier New', monospace;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 1.5rem;
+  word-break: break-all;
+  border: 1px solid var(--border-color);
+  box-shadow: inset var(--shadow-sm);
+}
+
+.token-success-box .btn-outline-primary {
+  border: 2px solid var(--search-primary);
+  color: var(--search-primary);
+  background: transparent;
+  border-radius: 40px;
+  padding: 0.6rem 1.5rem;
+  font-weight: 600;
+  transition: all 0.2s;
+  margin-right: 0.5rem;
+}
+
+.token-success-box .btn-outline-primary:hover {
+  background: var(--search-primary);
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 15px rgba(var(--search-primary-rgb), 0.3);
+}
+
+.token-success-box .btn-primary {
+  background: linear-gradient(145deg, var(--search-primary), #4a6fdc);
+  border: none;
+  border-radius: 40px;
+  padding: 0.6rem 1.5rem;
+  font-weight: 600;
+  box-shadow: var(--shadow-sm);
+  transition: all 0.2s;
+  color: white;
+}
+
+.token-success-box .btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(var(--search-primary-rgb), 0.4);
+}
+
+.token-success-box .text-muted {
+  color: var(--text-secondary) !important;
+  font-size: 0.9rem;
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 768px) {
+  .pricing-page-header h2 {
+    font-size: 2rem;
+  }
+
+  .pricing-card .card-body {
+    padding: 1.5rem;
+  }
+
+  .token-success-box {
+    margin-left: 1rem;
+    margin-right: 1rem;
+    padding: 1.5rem;
+  }
+}
+/* PricingPage.css Overrides */
+
+/* --- Dark Mode Support --- */
+.dark-mode .pricing-page-container {
+    background-color: var(--bg-primary);
+}
+
+.dark-mode .pricing-card {
+    background-color: var(--card-bg);
+    border-color: var(--border-color);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+}
+
+/* Ensure Price and Title are bright in Dark Mode */
+.dark-mode .pricing-card .card-subtitle,
+.dark-mode .pricing-card .card-title {
+    color: var(--text-primary) !important;
+}
+
+.dark-mode .pricing-card .text-secondary {
+    color: var(--text-secondary) !important;
+}
+
+/* Fix for Token Display box */
+.dark-mode .token-success-box {
+    background-color: var(--card-bg);
+    border-color: var(--search-primary);
+}
+
+.dark-mode .token-display {
+    background: #121212; /* Darker background for the token value */
+    color: var(--accent-color);
+    border-color: var(--border-color);
+}
+
+/* Form Styling */
+.dark-mode .pricing-form .form-label {
+    color: var(--text-primary);
+}
+
+.dark-mode .pricing-form .form-control {
+    background-color: var(--input-bg);
+    color: var(--input-text);
+    border-color: var(--input-border);
+}
+
+.dark-mode .pricing-form .form-control:focus {
+    border-color: var(--search-primary);
+    background-color: var(--input-bg);
+    color: var(--input-text);
+}
+
+/* Currency symbol color */
+.price-currency {
+    font-size: 1.5rem;
+    vertical-align: super;
+    margin-right: 2px;
+}

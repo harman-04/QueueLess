@@ -184,6 +184,7 @@ const PlaceForm = () => {
                                         name="name"
                                         value={formData.name}
                                         onChange={handleChange}
+                                        placeholder='Enter Your Place Name Here'
                                         required
                                         className="ql-pf-form-control"
                                     />
@@ -216,6 +217,7 @@ const PlaceForm = () => {
                                 name="address"
                                 value={formData.address}
                                 onChange={handleChange}
+                                placeholder='Enter The Address of Place Here'
                                 required
                                 className="ql-pf-form-control"
                             />
@@ -227,6 +229,7 @@ const PlaceForm = () => {
                                 rows={3}
                                 name="description"
                                 value={formData.description}
+                                placeholder='Add The More Description About The place'
                                 onChange={handleChange}
                                 className="ql-pf-form-control"
                             />
@@ -282,6 +285,7 @@ const PlaceForm = () => {
                                             type="tel"
                                             name="phone"
                                             value={formData.contactInfo.phone}
+                                            placeholder='Add Your Phone Number Here'
                                             onChange={handleContactChange}
                                             className="ql-pf-form-control"
                                         />
@@ -297,6 +301,7 @@ const PlaceForm = () => {
                                             type="email"
                                             name="email"
                                             value={formData.contactInfo.email}
+                                            placeholder='Add Your Email Here'
                                             onChange={handleContactChange}
                                             className="ql-pf-form-control"
                                         />
@@ -312,6 +317,7 @@ const PlaceForm = () => {
                                             type="url"
                                             name="website"
                                             value={formData.contactInfo.website}
+                                            placeholder='Add Your Website Here (Optional)'
                                             onChange={handleContactChange}
                                             className="ql-pf-form-control"
                                         />

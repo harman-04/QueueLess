@@ -1,8 +1,9 @@
 .footer-section {
-  background: linear-gradient(90deg, #2563eb, #4f46e5);
-  color: #f1f1f1;
+  background: var(--navbar-bg);
+  color: var(--navbar-text);
   padding: 50px 20px 20px;
   font-family: "Poppins", sans-serif;
+  position: relative;
 }
 
 .footer-container {
@@ -21,17 +22,20 @@
 .footer-brand .brand-name {
   font-size: 1.8rem;
   font-weight: 700;
-  color: #fff;
+  color: var(--navbar-text);
+  transition: transform 0.3s ease;
 }
-
+.footer-brand .brand-name:hover {
+  transform: translateY(-2px);
+}
 .footer-brand .brand-name span {
-  color: #00d4ff;
+  color: var(--accent-color);
 }
 
 .footer-brand .brand-tagline {
   margin-top: 8px;
   font-size: 0.95rem;
-  color: #ccc;
+  color: var(--navbar-text);
   line-height: 1.5;
 }
 
@@ -44,7 +48,24 @@
 .footer-contact h4 {
   font-size: 1.2rem;
   margin-bottom: 15px;
-  color: #00d4ff;
+  color: var(--accent-color);
+  position: relative;
+  display: inline-block;
+}
+.footer-links h4::after,
+.footer-contact h4::after {
+  content: '';
+  position: absolute;
+  bottom: -5px;
+  left: 0;
+  width: 30px;
+  height: 2px;
+  background: var(--accent-color);
+  transition: width 0.3s ease;
+}
+.footer-links:hover h4::after,
+.footer-contact:hover h4::after {
+  width: 50px;
 }
 
 .footer-links ul {
@@ -58,12 +79,13 @@
 
 .footer-links ul li a {
   text-decoration: none;
-  color: #f1f1f1;
-  transition: color 0.3s ease;
+  color: var(--navbar-text);
+  transition: color 0.3s ease, transform 0.2s ease;
+  display: inline-block;
 }
-
 .footer-links ul li a:hover {
-  color: #00d4ff;
+  color: var(--accent-color);
+  transform: translateX(5px);
 }
 
 .social-icons {
@@ -73,43 +95,99 @@
 
 .social-icon {
   font-size: 1.3rem;
-  color: #f1f1f1;
+  color: var(--navbar-text);
   transition: transform 0.3s ease, color 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.1);
 }
-
 .social-icon:hover {
-  transform: scale(1.2);
-  color: #00d4ff;
+  transform: scale(1.2) translateY(-3px);
+  color: var(--accent-color);
+  background: rgba(255,255,255,0.2);
 }
 
 .footer-bottom {
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-top: 1px solid var(--border-color);
   margin-top: 30px;
   padding-top: 15px;
   text-align: center;
   font-size: 0.9rem;
-  color: #bbb;
+  color: var(--navbar-text);
 }
 
-/* 📱 Responsive Design */
+/* Back to Top Button */
+.back-to-top {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: var(--accent-color);
+  color: white;
+  border: none;
+  cursor: pointer;
+  font-size: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-lg);
+  transition: transform 0.3s ease, background 0.3s ease;
+  z-index: 100;
+  animation: fadeInUp 0.3s ease;
+}
+.back-to-top:hover {
+  transform: translateY(-5px) scale(1.1);
+  background: var(--link-hover);
+}
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsive Design */
 @media (max-width: 768px) {
   .footer-container {
     flex-direction: column;
     align-items: center;
     text-align: center;
   }
-
   .footer-brand {
     margin-bottom: 20px;
   }
-
   .footer-links,
   .footer-contact {
     margin-bottom: 20px;
   }
-
   .social-icons {
     justify-content: center;
+  }
+  .footer-links h4::after,
+  .footer-contact h4::after {
+    left: 50%;
+    transform: translateX(-50%);
+  }
+  .footer-links:hover h4::after,
+  .footer-contact:hover h4::after {
+    width: 50px;
+  }
+  .back-to-top {
+    bottom: 20px;
+    right: 20px;
+    width: 45px;
+    height: 45px;
+    font-size: 1.2rem;
   }
 }
 
@@ -117,13 +195,13 @@
   .footer-brand .brand-name {
     font-size: 1.5rem;
   }
-
   .footer-links h4,
   .footer-contact h4 {
     font-size: 1rem;
   }
-
   .social-icon {
     font-size: 1.1rem;
+    width: 35px;
+    height: 35px;
   }
 }

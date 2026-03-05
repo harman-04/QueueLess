@@ -60,7 +60,7 @@ const FavoritesPage = () => {
   }
 
   return (
-    <div className="container py-5 ql-fav-main-container">
+    <div className="container py-5 ql-fav-main-container ">
       <header className="d-flex flex-column flex-md-row justify-content-between align-items-center mb-4 ql-fav-header">
         <h1 className="ql-fav-heading">
           <FaHeart className="me-3 ql-fav-heading-icon" />

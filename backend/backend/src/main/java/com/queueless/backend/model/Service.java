@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
 
@@ -18,6 +19,7 @@ public class Service {
     private String id;
 
     @Field("placeId")
+    @Indexed   // <-- added
     private String placeId;
 
     @Field("name")
@@ -27,7 +29,7 @@ public class Service {
     private String description;
 
     @Field("averageServiceTime")
-    private Integer averageServiceTime; // in minutes
+    private Integer averageServiceTime;
 
     @Field("supportsGroupToken")
     private Boolean supportsGroupToken = false;

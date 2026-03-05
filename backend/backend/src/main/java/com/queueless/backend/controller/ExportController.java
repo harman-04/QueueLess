@@ -3,6 +3,15 @@ package com.queueless.backend.controller;
 import com.queueless.backend.service.ExportCacheService;
 import com.queueless.backend.service.ExportService;
 import com.queueless.backend.service.QueueService;
+import com.queueless.backend.exception.ResourceNotFoundException;
+import com.queueless.backend.security.annotations.AdminOrProviderOnly;
+import com.itextpdf.text.DocumentException;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.ByteArrayResource;
@@ -12,9 +21,6 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
-import com.queueless.backend.exception.ResourceNotFoundException;
-import com.itextpdf.text.DocumentException;
-import com.queueless.backend.security.annotations.AdminOrProviderOnly; // New import
 
 import java.io.IOException;
 import java.util.Date;
@@ -23,34 +29,29 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-/**
- * REST controller for handling export requests for queue data.
- * It provides endpoints to export queue information to PDF and Excel formats.
- * Robust logging is added to track request lifecycles, and exception handling is improved.
- */
 @Slf4j
 @RestController
 @RequestMapping("/api/export")
 @RequiredArgsConstructor
+@Tag(name = "Export", description = "Endpoints for exporting queue data (PDF/Excel)")
 public class ExportController {
 
     private final ExportService exportService;
     private final QueueService queueService;
     private final ExportCacheService exportCacheService;
 
-    /**
-     * Exports queue data to a PDF file.
-     *
-     * @param queueId The ID of the queue to export.
-     * @param reportType The type of report to generate (e.g., "tokens", "statistics", "full").
-     * @return A ResponseEntity containing the PDF file as a byte array.
-     */
     @GetMapping("/queue/{queueId}/pdf")
     @AdminOrProviderOnly
+    @Operation(summary = "Export queue to PDF", description = "Generates a PDF report for a queue. Report type can be 'tokens', 'statistics', or 'full'.")
+    @ApiResponse(responseCode = "200", description = "PDF generated",
+            content = @Content(mediaType = "application/pdf"))
+    @ApiResponse(responseCode = "400", description = "Invalid report type")
+    @ApiResponse(responseCode = "404", description = "Queue not found")
+    @ApiResponse(responseCode = "500", description = "Internal server error")
     public ResponseEntity<ByteArrayResource> exportQueueToPdf(
-            @PathVariable String queueId,
-            @RequestParam(defaultValue = "tokens") String reportType,
-            @RequestParam(defaultValue = "false") Boolean includeUserDetails) {
+            @Parameter(description = "Queue ID") @PathVariable String queueId,
+            @Parameter(description = "Report type: tokens, statistics, full") @RequestParam(defaultValue = "tokens") String reportType,
+            @Parameter(description = "Include user details in the report") @RequestParam(defaultValue = "false") Boolean includeUserDetails) {
 
         log.info("Received PDF export request for queueId: {} with reportType: {}", queueId, reportType);
 
@@ -83,19 +84,18 @@ public class ExportController {
         }
     }
 
-    /**
-     * Exports queue data to an Excel file.
-     *
-     * @param queueId The ID of the queue to export.
-     * @param reportType The type of report to generate (e.g., "tokens", "statistics", "full").
-     * @return A ResponseEntity containing the Excel file as a byte array.
-     */
     @GetMapping("/queue/{queueId}/excel")
     @AdminOrProviderOnly
+    @Operation(summary = "Export queue to Excel", description = "Generates an Excel report for a queue. Report type can be 'tokens', 'statistics', or 'full'.")
+    @ApiResponse(responseCode = "200", description = "Excel generated",
+            content = @Content(mediaType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+    @ApiResponse(responseCode = "400", description = "Invalid report type")
+    @ApiResponse(responseCode = "404", description = "Queue not found")
+    @ApiResponse(responseCode = "500", description = "Internal server error")
     public ResponseEntity<ByteArrayResource> exportQueueToExcel(
-            @PathVariable String queueId,
-            @RequestParam(defaultValue = "tokens") String reportType,
-            @RequestParam(defaultValue = "false") Boolean includeUserDetails) {
+            @Parameter(description = "Queue ID") @PathVariable String queueId,
+            @Parameter(description = "Report type: tokens, statistics, full") @RequestParam(defaultValue = "tokens") String reportType,
+            @Parameter(description = "Include user details in the report") @RequestParam(defaultValue = "false") Boolean includeUserDetails) {
 
         log.info("Received Excel export request for queueId: {} with reportType: {}", queueId, reportType);
 
@@ -128,9 +128,11 @@ public class ExportController {
         }
     }
 
-
     @GetMapping("/exports/{exportId}")
     @AdminOrProviderOnly
+    @Operation(summary = "Download a previously exported file", description = "Retrieves a cached export file by its ID.")
+    @ApiResponse(responseCode = "200", description = "File downloaded")
+    @ApiResponse(responseCode = "404", description = "Export not found")
     public ResponseEntity<ByteArrayResource> downloadExport(@PathVariable String exportId) {
         ExportCacheService.ExportEntry entry = exportCacheService.getExport(exportId);
         if (entry == null) {
@@ -145,9 +147,10 @@ public class ExportController {
 
     @GetMapping("/exports")
     @AdminOrProviderOnly
+    @Operation(summary = "List all cached exports", description = "Returns metadata of all exports stored in the cache.")
+    @ApiResponse(responseCode = "200", description = "List of exports")
     public ResponseEntity<List<Map<String, Object>>> listExports(Authentication authentication) {
         String userId = authentication.getName();
-        // For now, return all exports – later we can filter by providerId if needed
         Map<String, ExportCacheService.ExportEntry> all = exportCacheService.getAllExports();
         List<Map<String, Object>> list = all.entrySet().stream()
                 .map(entry -> {
@@ -163,18 +166,4 @@ public class ExportController {
                 .collect(Collectors.toList());
         return ResponseEntity.ok(list);
     }
-
-//    @GetMapping("/exports/{exportId}/download")
-//    @AdminOrProviderOnly
-//    public ResponseEntity<ByteArrayResource> downloadExport(@PathVariable String exportId) {
-//        ExportCacheService.ExportEntry entry = exportCacheService.getExport(exportId);
-//        if (entry == null) {
-//            return ResponseEntity.notFound().build();
-//        }
-//        return ResponseEntity.ok()
-//                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + entry.getFilename())
-//                .contentType(entry.getFormat().equals("pdf") ? MediaType.APPLICATION_PDF : MediaType.APPLICATION_OCTET_STREAM)
-//                .contentLength(entry.getData().length)
-//                .body(new ByteArrayResource(entry.getData()));
-//    }
 }

@@ -1,74 +1,191 @@
-/* src/components/ExportReportModal.css */
-.modal-content {
-    border-radius: 15px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-    border: none;
+/* ExportReportModal.css – Premium Export Modal with Dark Mode */
+
+.export-report-modal .modal-content {
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    box-shadow: var(--shadow-xl);
+    color: var(--text-primary);
 }
 
-.modal-header {
+.export-report-modal .modal-header {
     border-bottom: none;
-    padding: 1.5rem 2rem 0.5rem;
+    padding: 1.5rem 1.5rem 0.5rem;
 }
 
-.modal-title.export-modal-title {
+.export-report-modal .modal-title.export-modal-title {
     font-weight: 700;
-    color: var(--primary-color, #007bff);
+    font-size: 1.5rem;
+    color: var(--text-primary);
     display: flex;
     align-items: center;
 }
 
-.modal-body.export-modal-body {
-    padding: 1rem 2rem 2rem;
+.export-report-modal .modal-title svg {
+    color: var(--search-primary);
+    margin-right: 0.5rem;
 }
 
-.export-card {
+.export-report-modal .modal-header .btn-close {
+    filter: invert(var(--dark-mode-invert, 0));
+}
+
+.export-report-modal .modal-body.export-modal-body {
+    padding: 1rem 1.5rem 2rem;
+    color: var(--text-primary);
+}
+
+.export-report-modal .modal-body p.text-center {
+    color: var(--text-secondary);
+    font-size: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+/* ===== Checkbox Section ===== */
+.export-report-modal .form-group {
+    margin-bottom: 1.5rem;
+}
+
+.export-report-modal .form-check {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.export-report-modal .form-check-input {
+    background-color: var(--input-bg);
+    border: 2px solid var(--border-color);
+    width: 1.2rem;
+    height: 1.2rem;
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+
+.export-report-modal .form-check-input:checked {
+    background-color: var(--search-primary);
+    border-color: var(--search-primary);
+}
+
+.export-report-modal .form-check-label {
+    color: var(--text-primary);
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.export-report-modal .form-text.text-muted {
+    color: var(--text-secondary) !important;
+    font-size: 0.85rem;
+    display: block;
+    text-align: center;
+    margin-top: 0.3rem;
+}
+
+/* ===== Export Cards Grid ===== */
+.export-report-modal .row.g-3 {
+    --bs-gutter-y: 1rem;
+}
+
+.export-report-modal .export-card {
     cursor: pointer;
     text-align: center;
     transition: all 0.3s ease;
-    border: 1px solid var(--border-color, #e0e0e0);
-    border-radius: 10px;
-    padding: 1rem;
+    border: 2px solid var(--border-color);
+    border-radius: 16px;
+    padding: 1.25rem 0.5rem;
     height: 100%;
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
+    background-color: var(--card-bg);
+    box-shadow: var(--shadow-sm);
 }
 
-.export-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-    background-color: var(--hover-bg, #f8f9fa);
+.export-report-modal .export-card:hover {
+    transform: translateY(-6px);
+    box-shadow: var(--shadow-lg);
+    border-color: var(--search-primary);
+    background-color: var(--bg-secondary);
 }
 
-.export-card.exporting {
+.export-report-modal .export-card.exporting {
     opacity: 0.7;
     cursor: not-allowed;
+    pointer-events: none;
+    border-color: var(--border-color);
 }
 
-.card-icon {
-    font-size: 2.5rem;
+.export-report-modal .card-icon {
+    font-size: 3rem;
+    margin-bottom: 0.75rem;
+    filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1));
+}
+
+.export-report-modal .card-icon.pdf-icon {
+    color: var(--danger-color);
+}
+
+.export-report-modal .card-icon.excel-icon {
+    color: var(--success-color);
+}
+
+.export-report-modal .export-card .card-title {
+    font-weight: 700;
+    font-size: 1.2rem;
     margin-bottom: 0.5rem;
+    color: var(--text-primary);
 }
 
-.card-icon.pdf-icon {
-    color: #dc3545; /* Red for PDF */
+.export-report-modal .export-card .card-text {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.75rem;
+    padding: 0 0.5rem;
 }
 
-.card-icon.excel-icon {
-    color: #28a745; /* Green for Excel */
-}
-
-.export-card .spinner-border {
+.export-report-modal .export-card .spinner-border {
+    width: 1.5rem;
+    height: 1.5rem;
+    border-width: 2px;
+    color: var(--search-primary);
     margin-top: 0.5rem;
-    color: var(--primary-color, #007bff);
 }
 
-.modal-footer {
+/* ===== Modal Footer ===== */
+.export-report-modal .modal-footer {
     border-top: none;
-    padding: 0.5rem 2rem 1.5rem;
+    padding: 0.5rem 1.5rem 1.5rem;
 }
 
-.btn-secondary {
-    border-radius: 20px;
+.export-report-modal .btn-secondary {
+    background: var(--bg-tertiary, #e9ecef);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 40px;
+    padding: 0.6rem 2rem;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+
+.dark-mode .export-report-modal .btn-secondary {
+    background: #404040;
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+.export-report-modal .btn-secondary:hover {
+    background: var(--border-color);
+    transform: translateY(-2px);
+}
+
+/* ===== Responsive Adjustments ===== */
+@media (max-width: 576px) {
+    .export-report-modal .modal-body.export-modal-body {
+        padding: 1rem 1rem 1.5rem;
+    }
+
+    .export-report-modal .export-card {
+        padding: 1rem 0.25rem;
+    }
 }

@@ -95,6 +95,8 @@ class PasswordResetServiceTest {
 
     // ================= VERIFY OTP =================
 
+    // src/test/java/com/queueless/backend/service/PasswordResetServiceTest.java
+
     @Test
     void verifyOtpSuccess() {
         VerifyOtpRequest request = new VerifyOtpRequest(email, otp);
@@ -105,12 +107,12 @@ class PasswordResetServiceTest {
                 .build();
 
         when(otpRepository.findByEmail(email)).thenReturn(Optional.of(otpDoc));
-        doNothing().when(otpVerificationStore).markVerified(email);
+        when(otpVerificationStore.markVerified(email)).thenReturn(true); // stub returns true
 
         String result = passwordResetService.verifyOtp(request);
 
         assertEquals("OTP verified", result);
-        verify(otpVerificationStore).markVerified(email);
+        verify(otpVerificationStore).markVerified(email); // verify it was called
     }
 
     @Test

@@ -10,6 +10,7 @@ import com.queueless.backend.repository.QueueRepository;
 import com.queueless.backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -227,5 +228,9 @@ public class FeedbackService {
                 "service", service,
                 "waitTime", waitTime
         );
+    }
+
+    public List<Feedback> getRecentFeedback(int limit) {
+        return feedbackRepository.findTopByOrderByCreatedAtDesc(PageRequest.of(0, limit));
     }
 }

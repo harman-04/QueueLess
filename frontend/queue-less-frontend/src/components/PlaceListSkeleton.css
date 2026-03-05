@@ -1,0 +1,43 @@
+/* PlaceListSkeleton.css – Skeleton Loading with Dark Mode */
+
+/* Card styling to match PlaceList cards */
+.ql-places-skeleton-card {
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  box-shadow: var(--shadow-sm);
+  transition: background-color 0.3s, border-color 0.3s;
+  height: 100%;
+}
+
+/* Image placeholder */
+.ql-places-skeleton-img {
+  height: 200px;
+  background-color: var(--bg-secondary) !important; /* override inline style */
+  border-top-left-radius: 16px;
+  border-top-right-radius: 16px;
+}
+
+/* Placeholder text – Bootstrap overrides */
+.ql-places-skeleton-card .placeholder {
+  background-color: var(--bg-tertiary, #404040); /* fallback */
+  opacity: 0.7;
+}
+
+/* Glow animation in dark mode uses the same base color but with adjusted opacity */
+.ql-places-skeleton-card .placeholder-glow .placeholder {
+  animation: placeholder-glow 2s ease-in-out infinite;
+}
+
+@keyframes placeholder-glow {
+  50% {
+    opacity: 0.4;
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .ql-places-skeleton-img {
+    height: 150px;
+  }
+}

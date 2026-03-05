@@ -2,7 +2,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { placeService } from '../services/placeService';
 import axiosInstance from '../utils/axiosInstance';
-// In the fetchPlaces async thunk
+
 export const fetchPlaces = createAsyncThunk(
   'places/fetchAll',
   async (_, { rejectWithValue }) => {
@@ -10,11 +10,10 @@ export const fetchPlaces = createAsyncThunk(
       const response = await placeService.getAll();
       return response.data;
     } catch (error) {
-      return rejectWithValue(error); // ✅ normalized
+      return rejectWithValue(error);
     }
   }
 );
-
 
 export const fetchPlaceById = createAsyncThunk(
   'places/fetchById',
@@ -56,9 +55,8 @@ export const fetchPlacesByAdmin = createAsyncThunk(
   'places/fetchByAdmin',
   async (adminId, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.get(`/places/admin/${adminId}`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-      });
+      // axiosInstance already includes auth token via interceptor
+      const response = await axiosInstance.get(`/places/admin/${adminId}`);
       return response.data;
     } catch (error) {
       return rejectWithValue(error);
@@ -66,16 +64,11 @@ export const fetchPlacesByAdmin = createAsyncThunk(
   }
 );
 
-
-// Add this to your placeSlice.js
 export const fetchMyPlaces = createAsyncThunk(
   'places/fetchMy',
   async (_, { rejectWithValue, getState }) => {
     try {
-      const { auth } = getState();
-      const response = await axiosInstance.get('/places/admin/my-places', {
-        headers: { Authorization: `Bearer ${auth.token}` }
-      });
+      const response = await axiosInstance.get('/places/admin/my-places');
       return response.data;
     } catch (error) {
       return rejectWithValue(error);
@@ -83,6 +76,17 @@ export const fetchMyPlaces = createAsyncThunk(
   }
 );
 
+export const fetchPlacesPaginated = createAsyncThunk(
+  'places/fetchPaginated',
+  async ({ page = 0, size = 20, sort = 'name,asc' }, { rejectWithValue }) => {
+    try {
+      const response = await placeService.getAllPaginated(page, size, sort);
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error);
+    }
+  }
+);
 
 export const deletePlace = createAsyncThunk(
   'places/delete',
@@ -96,14 +100,21 @@ export const deletePlace = createAsyncThunk(
   }
 );
 
-
 const placeSlice = createSlice({
   name: 'places',
   initialState: {
     items: [],
     currentPlace: null,
     loading: false,
-    error: null
+    error: null,
+    paginated: {
+      items: [],
+      currentPage: 0,
+      totalPages: 0,
+      totalElements: 0,
+      loading: false,
+      error: null
+    }
   },
   reducers: {
     clearCurrentPlace: (state) => {
@@ -112,8 +123,27 @@ const placeSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-
-    .addCase(fetchMyPlaces.pending, (state) => {
+      .addCase(fetchPlacesPaginated.pending, (state) => {
+        state.paginated.loading = true;
+        state.paginated.error = null;
+      })
+      .addCase(fetchPlacesPaginated.fulfilled, (state, action) => {
+        state.paginated.loading = false;
+        const { content, pageable, totalPages, totalElements } = action.payload;
+        if (pageable.pageNumber === 0) {
+          state.paginated.items = content;
+        } else {
+          state.paginated.items = [...state.paginated.items, ...content];
+        }
+        state.paginated.currentPage = pageable.pageNumber;
+        state.paginated.totalPages = totalPages;
+        state.paginated.totalElements = totalElements;
+      })
+      .addCase(fetchPlacesPaginated.rejected, (state, action) => {
+        state.paginated.loading = false;
+        state.paginated.error = action.payload;
+      })
+      .addCase(fetchMyPlaces.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
@@ -165,18 +195,17 @@ const placeSlice = createSlice({
         state.items = state.items.filter(item => item.id !== action.payload);
       })
       .addCase(fetchPlacesByAdmin.pending, (state) => {
-  state.loading = true;
-  state.error = null;
-})
-.addCase(fetchPlacesByAdmin.fulfilled, (state, action) => {
-  state.loading = false;
-  state.items = action.payload;
-})
-.addCase(fetchPlacesByAdmin.rejected, (state, action) => {
-  state.loading = false;
-  state.error = action.payload;
-})
-;
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchPlacesByAdmin.fulfilled, (state, action) => {
+        state.loading = false;
+        state.items = action.payload;
+      })
+      .addCase(fetchPlacesByAdmin.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      });
   }
 });
 

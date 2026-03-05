@@ -1,8 +1,7 @@
-// src/services/WebSocketService.js
 import { Client } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
-import { updateQueue } from '../redux/queue/queueSlice';
 import store from '../store/store';
+import { updateQueue, connectionSuccess, connectionFailure } from '../redux/queue/queueSlice';
 
 class WebSocketService {
   constructor() {
@@ -10,51 +9,93 @@ class WebSocketService {
     this.subscriptions = new Map();
     this.reconnectAttempts = 0;
     this.maxReconnectAttempts = 5;
+    this.emergencyApprovalHandler = null;
+    this.tokenCancelledHandler = null;
   }
 
-  // In WebSocketService.js - Update the connect method
-connect() {
+  setEmergencyApprovalHandler(handler) {
+    this.emergencyApprovalHandler = handler;
+  }
+
+  setTokenCancelledHandler(handler) {
+    this.tokenCancelledHandler = handler;
+  }
+
+  connect() {
     if (this.client && this.client.connected) {
-        return;
+      return;
     }
 
     const token = localStorage.getItem('token');
     if (!token) {
-        console.error('No token available for WebSocket connection');
-        return;
+      console.error('No token available for WebSocket connection');
+      return;
     }
 
     this.client = new Client({
-        webSocketFactory: () => new SockJS('https://localhost:8443/ws'),
-        connectHeaders: {
-            Authorization: `Bearer ${token}`,
-        },
-        reconnectDelay: 5000,
-        heartbeatIncoming: 4000,
-        heartbeatOutgoing: 4000,
-        
-        onConnect: () => {
-            console.log('✅ WebSocket connected');
-            this.reconnectAttempts = 0;
-            this.resubscribeToAll();
-        },
+      webSocketFactory: () => new SockJS('https://localhost:8443/ws'),
+      connectHeaders: {
+        Authorization: `Bearer ${token}`,
+      },
+      reconnectDelay: 5000,
+      heartbeatIncoming: 4000,
+      heartbeatOutgoing: 4000,
 
-        onStompError: (frame) => {
-            console.error('WebSocket STOMP error:', frame.headers['message']);
-            if (frame.headers['message'].includes('JWT') || frame.headers['message'].includes('token')) {
-                console.error('Token-related WebSocket error');
-                this.handleDisconnection();
-            }
-        },
+      onConnect: () => {
+        console.log('✅ WebSocket connected');
+        store.dispatch(connectionSuccess());
+        this.reconnectAttempts = 0;
 
-        onDisconnect: () => {
-            console.log('❌ WebSocket disconnected');
-            this.handleDisconnection();
+        this.subscribeToUserNotifications();
+        this.resubscribeToAll();
+      },
+
+      onStompError: (frame) => {
+        console.error('WebSocket STOMP error:', frame.headers['message']);
+        store.dispatch(connectionFailure());
+        if (frame.headers['message']?.includes('JWT') || frame.headers['message']?.includes('token')) {
+          console.error('Token-related WebSocket error');
+          this.handleDisconnection();
         }
+      },
+
+      onDisconnect: () => {
+        console.log('❌ WebSocket disconnected');
+        store.dispatch(connectionFailure());
+        this.handleDisconnection();
+      }
     });
 
     this.client.activate();
-}
+  }
+
+  subscribeToUserNotifications() {
+    if (!this.client || !this.client.connected) return;
+
+    if (this.emergencyApprovalHandler) {
+      const sub = this.client.subscribe('/user/queue/emergency-approved', (message) => {
+        try {
+          const data = JSON.parse(message.body);
+          this.emergencyApprovalHandler(data);
+        } catch (error) {
+          console.error('Error parsing emergency approval:', error);
+        }
+      });
+      this.subscriptions.set('emergency-approvals', sub);
+    }
+
+    if (this.tokenCancelledHandler) {
+      const sub = this.client.subscribe('/user/queue/token-cancelled', (message) => {
+        try {
+          const data = JSON.parse(message.body);
+          this.tokenCancelledHandler(data);
+        } catch (error) {
+          console.error('Error parsing cancellation message:', error);
+        }
+      });
+      this.subscriptions.set('token-cancellations', sub);
+    }
+  }
 
   subscribeToQueue(queueId) {
     if (!this.client || !this.client.connected) {
@@ -77,9 +118,7 @@ connect() {
   }
 
   subscribeToUserUpdates() {
-    if (!this.client || !this.client.connected) {
-      return;
-    }
+    if (!this.client || !this.client.connected) return;
 
     const user = store.getState().auth;
     if (!user || !user.id) {
@@ -135,11 +174,11 @@ connect() {
       this.subscriptions.clear();
       this.client.deactivate();
       console.log('WebSocket disconnected');
+      store.dispatch(connectionFailure());
     }
   }
 
   queueSubscription(type, id) {
-    // Store subscription requests to resubscribe after reconnection
     setTimeout(() => {
       if (type === 'queue') {
         this.subscribeToQueue(id);
@@ -148,7 +187,6 @@ connect() {
   }
 
   resubscribeToAll() {
-    // Unsubscribe old subscriptions before resubscribing
     this.subscriptions.forEach((subscription) => {
       subscription.unsubscribe();
     });
@@ -156,35 +194,22 @@ connect() {
 
     const state = store.getState();
 
-    // Subscribe to user updates
     this.subscribeToUserUpdates();
+    this.subscribeToUserNotifications();
 
-    // If already viewing a queue, resubscribe
-    if (state.queue.data) {
+    if (state.queue.data && state.queue.data.id) {
       this.subscribeToQueue(state.queue.data.id);
-    }
-  }
-
-  handleError(errorMessage) {
-    console.error('WebSocket error:', errorMessage);
-
-    if (errorMessage.includes('Invalid token') || errorMessage.includes('JWT')) {
-      store.dispatch({ type: 'auth/logout' });
-      this.disconnect();
     }
   }
 
   handleDisconnection() {
     this.reconnectAttempts++;
-
     if (this.reconnectAttempts > this.maxReconnectAttempts) {
       console.error('Max reconnection attempts reached');
       this.disconnect();
       return;
     }
-
     console.log(`🔄 Attempting to reconnect (${this.reconnectAttempts}/${this.maxReconnectAttempts})`);
-
     setTimeout(() => {
       this.connect();
     }, 5000);

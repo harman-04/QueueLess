@@ -1,0 +1,79 @@
+/* NotificationModal.css – Enhanced Notification Modal with Dark Mode */
+
+.notification-modal .modal-content {
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    box-shadow: var(--shadow-lg);
+    color: var(--text-primary);
+}
+
+.notification-modal .modal-header {
+    border-top-left-radius: 20px;
+    border-top-right-radius: 20px;
+    border-bottom: 1px solid var(--border-color);
+    padding: 1rem 1.5rem;
+}
+
+.notification-modal .modal-header.bg-danger {
+    background: linear-gradient(135deg, var(--danger-color), #c0392b) !important;
+}
+
+.notification-modal .modal-header.bg-success {
+    background: linear-gradient(135deg, var(--success-color), #27ae60) !important;
+}
+
+.notification-modal .modal-header svg {
+    font-size: 1.8rem;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+}
+
+.notification-modal .modal-header .btn-close {
+    filter: invert(var(--dark-mode-invert, 0));
+}
+
+.notification-modal .modal-body {
+    padding: 1.5rem;
+    color: var(--text-primary);
+}
+
+.notification-modal .modal-body p.lead {
+    font-size: 1.2rem;
+    color: var(--text-primary);
+    margin-bottom: 0;
+}
+
+.notification-modal .modal-footer {
+    border-top: 1px solid var(--border-color);
+    padding: 1rem 1.5rem;
+}
+
+.notification-modal .btn {
+    border-radius: 30px;
+    padding: 0.5rem 2rem;
+    font-weight: 600;
+    transition: all 0.2s;
+    border: none;
+}
+
+.notification-modal .btn-danger {
+    background: linear-gradient(145deg, var(--danger-color), #c0392b);
+    color: white;
+    box-shadow: var(--shadow-sm);
+}
+
+.notification-modal .btn-danger:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 15px rgba(231, 76, 60, 0.4);
+}
+
+.notification-modal .btn-success {
+    background: linear-gradient(145deg, var(--success-color), #27ae60);
+    color: white;
+    box-shadow: var(--shadow-sm);
+}
+
+.notification-modal .btn-success:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 15px rgba(var(--success-color-rgb), 0.4);
+}

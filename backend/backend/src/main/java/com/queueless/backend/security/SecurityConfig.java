@@ -20,7 +20,6 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-
 import java.util.Arrays;
 
 @Configuration
@@ -49,7 +48,8 @@ public class SecurityConfig {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(Arrays.asList("https://localhost:5173", "https://localhost:3000"));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
-        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Requested-With", "Accept", "X-Requested-With", "Origin", "Access-Control-Request-Method", "Access-Control-Request-Headers"));
+        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Requested-With", "Accept",
+                "Origin", "Access-Control-Request-Method", "Access-Control-Request-Headers"));
         configuration.setExposedHeaders(Arrays.asList("Authorization"));
         configuration.setAllowCredentials(true);
         configuration.setMaxAge(3600L);
@@ -68,7 +68,6 @@ public class SecurityConfig {
                         .authenticationEntryPoint(jwtAuthenticationEntryPoint)
                         .accessDeniedHandler(jwtAccessDeniedHandler)
                 )
-                // 🆕 Update headers configuration with the new policies
                 .headers(headers -> headers
                         .httpStrictTransportSecurity(hsts -> hsts
                                 .includeSubDomains(true)
@@ -89,14 +88,12 @@ public class SecurityConfig {
                         .xssProtection(xss -> xss
                                 .headerValue(XXssProtectionHeaderWriter.HeaderValue.ENABLED_MODE_BLOCK)
                         )
-                        .contentTypeOptions(HeadersConfigurer.ContentTypeOptionsConfig::disable)
+                        .contentTypeOptions(HeadersConfigurer.ContentTypeOptionsConfig::disable) // Keep if needed, else enable
                 )
-
-                // 🟢 Place the rate limit filter at the very start of the chain
                 .addFilterBefore(rateLimitFilter, SecurityContextHolderFilter.class)
-
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        // Swagger UI
                         .requestMatchers(
                                 "/v3/api-docs/**",
                                 "/swagger-ui/**",
@@ -112,7 +109,8 @@ public class SecurityConfig {
                                 "/api/payment/confirm",
                                 "/api/payment/confirm-provider",
                                 "/api/payment/confirm-provider-bulk",
-                                "/api/search/**"
+                                "/api/search/**",
+                                "/api/public/**"
                         ).permitAll()
                         .requestMatchers(
                                 HttpMethod.POST,
@@ -149,17 +147,18 @@ public class SecurityConfig {
                         ).hasRole("USER")
                         .requestMatchers("/api/export/**").hasAnyRole("PROVIDER", "ADMIN")
                         .requestMatchers(HttpMethod.GET, "/api/exports/**").hasAnyRole("PROVIDER", "ADMIN")
-                        // Public read-only endpoints
+                        // Public read-only endpoints (FIXED typo)
                         .requestMatchers(
                                 HttpMethod.GET,
                                 "/api/places",
                                 "/api/places/{id}",
                                 "/api/places/type/**",
                                 "/api/places/nearby",
+                                "/api/places/paginated",  // new paginated endpoint
                                 "/api/services",
                                 "/api/services/{id}",
                                 "/api/services/place/**",
-                                "/abapi/queues/all",
+                                "/api/queues/all",        // FIXED: was /abapi/queues/all
                                 "/api/queues/by-place/**",
                                 "/api/queues/by-service/**",
                                 "/api/queues/{queueId}"
@@ -173,9 +172,9 @@ public class SecurityConfig {
                         .requestMatchers("/api/queues/by-provider").hasRole("PROVIDER")
                         .requestMatchers("/api/queues/*/serve-next").hasRole("PROVIDER")
                         .requestMatchers("/api/queues/*/complete-token").hasRole("PROVIDER")
-                        .requestMatchers("/api/queues/*/activate").hasAnyRole("PROVIDER","ADMIN")
+                        .requestMatchers("/api/queues/*/activate").hasAnyRole("PROVIDER", "ADMIN")
                         .requestMatchers("/api/queues/*/deactivate").hasAnyRole("PROVIDER", "ADMIN")
-                        // Admin endpoints - ensure proper authorization
+                        // Admin endpoints
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/places").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/api/places/**").hasRole("ADMIN")

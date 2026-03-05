@@ -1,0 +1,304 @@
+/* EmergencyApprovalModal.css – Premium UI with Dark Mode Support */
+
+/* ===== Modal Overrides ===== */
+.emergency-modal .modal-content {
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 20px;
+  box-shadow: var(--shadow-xl);
+  color: var(--text-primary);
+}
+
+.emergency-modal .modal-header {
+  border-bottom-color: var(--border-color);
+  padding: 1.5rem 1.5rem 0.5rem;
+}
+
+.emergency-modal .modal-title {
+  font-weight: 700;
+  font-size: 1.5rem;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+}
+
+.emergency-modal .modal-title svg {
+  color: var(--danger-color);
+  filter: drop-shadow(0 2px 4px rgba(231, 76, 60, 0.3));
+}
+
+.emergency-modal .modal-header .btn-close {
+  filter: invert(var(--dark-mode-invert, 0));
+}
+.dark-mode .emergency-modal .modal-header .btn-close {
+  filter: invert(1) grayscale(100%) brightness(200%);
+}
+
+.emergency-modal .modal-body {
+  padding: 1.5rem;
+  color: var(--text-primary);
+}
+
+.emergency-modal .modal-footer {
+  border-top-color: var(--border-color);
+  padding: 1rem 1.5rem 1.5rem;
+}
+
+/* ===== Alerts ===== */
+.emergency-modal .alert {
+  border-radius: 12px;
+  border: none;
+  font-weight: 500;
+}
+
+.emergency-modal .alert-danger {
+  background: rgba(var(--danger-color-rgb, 231, 76, 60), 0.15);
+  color: var(--danger-color);
+  border-left: 4px solid var(--danger-color);
+}
+
+.emergency-modal .alert-info {
+  background: rgba(var(--search-primary-rgb), 0.15);
+  color: var(--text-primary);
+  border-left: 4px solid var(--search-primary);
+}
+
+/* ===== Loading Spinner ===== */
+.emergency-modal .spinner-border {
+  color: var(--search-primary);
+  width: 3rem;
+  height: 3rem;
+}
+
+.emergency-modal .text-center p {
+  color: var(--text-secondary);
+  margin-top: 0.5rem;
+}
+
+/* ===== List Group ===== */
+.emergency-modal .list-group {
+  border-radius: 15px;
+  overflow: hidden;
+}
+
+.emergency-modal .list-group-item {
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  padding: 1.25rem;
+  transition: background-color 0.2s;
+}
+
+.emergency-modal .list-group-item:not(:last-child) {
+  border-bottom: 1px solid var(--border-color);
+}
+
+.emergency-modal .list-group-item:hover {
+  background-color: var(--border-color);
+}
+
+/* Token ID and badge */
+.emergency-modal .list-group-item h6 {
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: var(--text-primary);
+}
+
+.emergency-modal .badge.bg-danger {
+  background: linear-gradient(135deg, var(--danger-color), #c0392b) !important;
+  padding: 0.4rem 0.8rem;
+  border-radius: 30px;
+  font-weight: 600;
+  font-size: 0.75rem;
+  box-shadow: 0 2px 5px rgba(231, 76, 60, 0.3);
+}
+
+/* User info */
+.emergency-modal .list-group-item .text-muted {
+  color: var(--text-secondary) !important;
+}
+
+.emergency-modal .list-group-item p {
+  color: var(--text-primary);
+}
+
+.emergency-modal .list-group-item strong {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+/* Timestamp */
+.emergency-modal .list-group-item small {
+  color: var(--text-secondary) !important;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin-top: 0.25rem;
+}
+
+/* ===== Buttons ===== */
+.emergency-modal .btn {
+  border-radius: 30px;
+  font-weight: 600;
+  padding: 0.4rem 1.2rem;
+  transition: all 0.2s;
+  border: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.emergency-modal .btn-sm {
+  font-size: 0.85rem;
+  padding: 0.3rem 1rem;
+}
+
+/* Approve button */
+.emergency-modal .btn-success {
+  background: linear-gradient(145deg, var(--success-color), #27ae60);
+  color: white;
+  box-shadow: 0 4px 10px rgba(var(--success-color-rgb), 0.3);
+}
+
+.emergency-modal .btn-success:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 15px rgba(var(--success-color-rgb), 0.4);
+}
+
+.emergency-modal .btn-success:disabled {
+  opacity: 0.6;
+  filter: grayscale(30%);
+}
+
+/* Outline Reject button */
+.emergency-modal .btn-outline-danger {
+  background: transparent;
+  border: 2px solid var(--danger-color);
+  color: var(--danger-color);
+  padding: 0.3rem 1.1rem;
+}
+
+.emergency-modal .btn-outline-danger:hover:not(:disabled) {
+  background: var(--danger-color);
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 15px rgba(231, 76, 60, 0.3);
+}
+
+/* Secondary button (Close, Cancel) */
+.emergency-modal .btn-secondary {
+  background: var(--bg-tertiary, #e9ecef);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+}
+
+.dark-mode .emergency-modal .btn-secondary {
+  background: #404040;
+  color: var(--text-primary);
+  border-color: var(--border-color);
+}
+
+.emergency-modal .btn-secondary:hover {
+  background: var(--border-color);
+}
+
+/* Primary button (Refresh) */
+.emergency-modal .btn-primary {
+  background: linear-gradient(145deg, var(--search-primary), #4a6fdc);
+  border: none;
+  color: white;
+  box-shadow: 0 4px 10px rgba(var(--search-primary-rgb), 0.3);
+}
+
+.emergency-modal .btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 15px rgba(var(--search-primary-rgb), 0.4);
+}
+
+/* Danger button (Confirm Reject) */
+.emergency-modal .btn-danger {
+  background: linear-gradient(145deg, var(--danger-color), #c0392b);
+  border: none;
+  color: white;
+  box-shadow: 0 4px 10px rgba(231, 76, 60, 0.3);
+}
+
+.emergency-modal .btn-danger:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 15px rgba(231, 76, 60, 0.4);
+}
+
+/* ===== Rejection Reason Form ===== */
+.emergency-modal .mt-3 {
+  margin-top: 1rem !important;
+  padding-top: 1rem;
+  border-top: 1px dashed var(--border-color);
+}
+
+.emergency-modal .form-group {
+  margin-bottom: 0.5rem;
+}
+
+.emergency-modal .form-label {
+  color: var(--text-primary);
+  font-weight: 600;
+  font-size: 0.9rem;
+  margin-bottom: 0.3rem;
+}
+
+.emergency-modal .form-control {
+  background-color: var(--input-bg);
+  border: 2px solid var(--border-color);
+  color: var(--input-text);
+  border-radius: 15px;
+  padding: 0.75rem 1rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.emergency-modal .form-control:focus {
+  border-color: var(--search-primary);
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(var(--search-primary-rgb), 0.2);
+}
+
+.emergency-modal .form-control::placeholder {
+  color: var(--text-secondary);
+  opacity: 0.7;
+}
+
+/* Ensure textarea is styled consistently */
+.emergency-modal textarea.form-control {
+  min-height: 80px;
+  resize: vertical;
+}
+
+/* Button group inside reason */
+.emergency-modal .d-flex.gap-2.mt-2 {
+  gap: 0.75rem !important;
+}
+
+.emergency-modal .d-flex.gap-2.mt-2 .btn {
+  flex: 1;
+}
+
+/* ===== Responsive Adjustments ===== */
+@media (max-width: 576px) {
+  .emergency-modal .modal-dialog {
+    margin: 0.5rem;
+  }
+
+  .emergency-modal .list-group-item {
+    flex-direction: column;
+    align-items: flex-start !important;
+  }
+
+  .emergency-modal .list-group-item > div:first-child {
+    margin-bottom: 1rem;
+    width: 100%;
+  }
+
+  .emergency-modal .d-flex.gap-2 {
+    width: 100%;
+    justify-content: flex-end;
+  }
+}

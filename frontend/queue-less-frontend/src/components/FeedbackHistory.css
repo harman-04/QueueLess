@@ -1,62 +1,116 @@
-/* General container and card styling */
+/* FeedbackHistory.css – Enhanced Feedback History with Dark Mode */
+
 .feedback-history-container {
   padding: 1rem;
 }
 
+/* Main Card */
 .feedback-history-card {
-  border: none;
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  box-shadow: var(--shadow-md);
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   overflow: hidden;
+  transition: background-color 0.3s, border-color 0.3s;
 }
 
 .card-title {
   font-weight: 600;
-  color: #333;
+  color: var(--text-primary);
 }
 
-/* Filter Section */
+/* Filter Toggle Button */
 .filter-toggle-btn {
   font-weight: 500;
-  border-radius: 20px;
-  padding: 0.25rem 0.75rem;
+  border-radius: 30px;
+  padding: 0.3rem 1rem;
+  background: transparent;
+  border: 2px solid var(--border-color);
+  color: var(--text-secondary);
+  transition: all 0.2s;
 }
 
+.filter-toggle-btn:hover {
+  background: var(--border-color);
+  color: var(--text-primary);
+}
+
+/* Filter Panel */
 .filter-panel {
-  background-color: #f8f9fa;
-  border-radius: 10px;
+  background-color: var(--bg-secondary);
+  border-radius: 12px;
   padding: 1rem;
+  border: 1px solid var(--border-color);
   transition: all 0.3s ease;
-  border: 1px solid #e9ecef;
 }
 
 .filter-label {
   font-weight: 600;
-  color: #555;
+  color: var(--text-primary);
   margin-bottom: 0.25rem;
 }
 
-.filter-select, .filter-checkbox {
+.filter-select {
+  background-color: var(--input-bg);
+  border: 2px solid var(--border-color);
+  color: var(--input-text);
+  border-radius: 10px;
+  font-size: 0.9rem;
+  padding: 0.4rem 0.75rem;
+  transition: border-color 0.2s;
+}
+
+.filter-select:focus {
+  border-color: var(--search-primary);
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(var(--search-primary-rgb), 0.2);
+}
+
+.filter-checkbox {
+  color: var(--text-primary);
   font-size: 0.9rem;
 }
 
-.clear-filters-btn {
-  font-size: 0.85rem;
-  padding: 0;
+.filter-checkbox .form-check-input {
+  background-color: var(--input-bg);
+  border: 2px solid var(--border-color);
+  width: 1.2rem;
+  height: 1.2rem;
+  margin-right: 0.5rem;
 }
 
-/* Rating Distribution */
+.filter-checkbox .form-check-input:checked {
+  background-color: var(--search-primary);
+  border-color: var(--search-primary);
+}
+
+.clear-filters-btn {
+  color: var(--link-color);
+  font-size: 0.85rem;
+  padding: 0;
+  text-decoration: none;
+  border: none;
+  background: transparent;
+  font-weight: 500;
+}
+
+.clear-filters-btn:hover {
+  color: var(--link-hover);
+  text-decoration: underline;
+}
+
+/* Rating Distribution Section */
 .rating-summary-section {
-  background-color: #fdfdfd;
+  background-color: var(--bg-secondary);
   padding: 1rem;
-  border-radius: 10px;
-  border: 1px solid #eee;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
 }
 
 .section-title {
   font-weight: 600;
-  color: #333;
+  color: var(--text-primary);
   margin-bottom: 1rem;
 }
 
@@ -70,29 +124,39 @@
   align-items: center;
   margin-bottom: 0.25rem;
   font-size: 0.9rem;
-  color: #555;
+  color: var(--text-secondary);
+}
+
+.rating-bar-label .text-warning {
+  color: #ffc107 !important; /* Keep gold for stars */
 }
 
 .progress {
   height: 8px;
-  background-color: #e9ecef;
+  background-color: var(--border-color);
+  border-radius: 4px;
+  overflow: hidden;
 }
 
 .progress-bar {
-  background-color: #ffc107 !important; /* Tailwind's yellow-500 equivalent */
+  background-color: #ffc107 !important; /* Gold for rating bars */
+  transition: width 0.3s;
 }
 
 /* Feedback List & Individual Items */
 .feedback-item {
-  border: 1px solid #e9ecef;
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-color);
   border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s;
+  margin-bottom: 1rem;
 }
 
 .feedback-item:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+  box-shadow: var(--shadow-lg);
+  border-color: var(--search-primary);
 }
 
 .feedback-header {
@@ -115,29 +179,31 @@
   justify-content: center;
   width: 40px;
   height: 40px;
-  background-color: #e9ecef;
-  color: #888;
+  background-color: var(--border-color);
+  color: var(--text-secondary);
   border-radius: 50%;
   font-size: 1.2rem;
   margin-right: 1rem;
+  transition: background-color 0.3s;
 }
 
 .user-name {
   font-weight: 600;
-  color: #333;
+  color: var(--text-primary);
   font-size: 1rem;
 }
 
 .feedback-date {
   font-size: 0.85rem;
-  color: #888;
+  color: var(--text-secondary);
   display: flex;
   align-items: center;
+  gap: 0.3rem;
 }
 
 .feedback-comment {
-  border-left: 4px solid #0d6efd;
-  background-color: #f8f9fa;
+  border-left: 4px solid var(--link-color);
+  background-color: var(--bg-primary);
   padding: 1rem;
   border-radius: 8px;
   margin-top: 1rem;
@@ -145,12 +211,12 @@
   align-items: flex-start;
   gap: 0.75rem;
   font-size: 0.9rem;
-  color: #444;
+  color: var(--text-primary);
   line-height: 1.4;
 }
 
 .comment-icon {
-  color: #0d6efd;
+  color: var(--link-color);
   font-size: 1.1rem;
   flex-shrink: 0;
   margin-top: 2px;
@@ -159,13 +225,13 @@
 .detailed-ratings-summary {
   margin-top: 1.5rem;
   padding-top: 1rem;
-  border-top: 1px solid #e9ecef;
+  border-top: 1px solid var(--border-color);
 }
 
 .detailed-ratings-title {
   font-size: 0.9rem;
   font-weight: 600;
-  color: #666;
+  color: var(--text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.5px;
   margin-bottom: 0.75rem;
@@ -182,19 +248,40 @@
   align-items: center;
   justify-content: space-between;
   font-size: 0.9rem;
+  color: var(--text-primary);
 }
 
-/* "Show More" button */
+.rating-item span:first-child {
+  color: var(--text-secondary);
+}
+
+/* Show More Button */
 .show-more-btn {
-  border-radius: 25px;
+  border-radius: 30px;
   padding: 0.5rem 1.5rem;
+  background: transparent;
+  border: 2px solid var(--search-primary);
+  color: var(--search-primary);
+  font-weight: 600;
+  transition: all 0.2s;
 }
 
-/* Responsive adjustments */
+.show-more-btn:hover {
+  background: var(--search-primary);
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 15px rgba(var(--search-primary-rgb), 0.3);
+}
+
+/* Responsive Adjustments */
 @media (max-width: 768px) {
   .filter-panel .row {
     flex-direction: column;
     align-items: stretch;
     gap: 1rem;
+  }
+
+  .filter-panel .col-md-4 {
+    width: 100%;
   }
 }

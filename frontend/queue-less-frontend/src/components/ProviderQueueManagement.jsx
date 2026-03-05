@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
 import { toast } from "react-toastify";
 import {
   FaPlusCircle,
@@ -16,10 +15,10 @@ import {
   FaAmbulance,
 } from "react-icons/fa";
 import { normalizeQueues, normalizeQueue } from "../utils/normalizeQueue";
+import { logout } from "../redux/authSlice"; // 👈 missing import
+import axiosInstance from "../utils/axiosInstance"; // 👈 use shared instance
 import "animate.css";
-
-const QUEUE_API_BASE_URL = "https://localhost:8443/api/queues";
-const PROVIDER_API_BASE_URL = "https://localhost:8443/api/providers"; // New base URL for provider endpoints
+import './ProviderQueueManagement.css';
 
 const ProviderQueueManagement = () => {
   const dispatch = useDispatch();
@@ -49,10 +48,7 @@ const ProviderQueueManagement = () => {
 
   const fetchManagedPlaces = async () => {
     try {
-      const response = await axios.get(`${PROVIDER_API_BASE_URL}/my-places`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      // Defensive check to ensure the response data is an array
+      const response = await axiosInstance.get('/providers/my-places');
       if (Array.isArray(response.data)) {
         setManagedPlaces(response.data);
       } else {
@@ -69,10 +65,7 @@ const ProviderQueueManagement = () => {
 
   const fetchManagedServices = async () => {
     try {
-      const response = await axios.get(`${PROVIDER_API_BASE_URL}/my-services`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      // Defensive check to ensure the response data is an array
+      const response = await axiosInstance.get('/providers/my-services');
       if (Array.isArray(response.data)) {
         setManagedServices(response.data);
       } else {
@@ -89,9 +82,7 @@ const ProviderQueueManagement = () => {
 
   const fetchQueues = async () => {
     try {
-      const response = await axios.get(`${QUEUE_API_BASE_URL}/by-provider`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await axiosInstance.get('/queues/by-provider');
 
       if (response.status === 204) {
         setQueues([]);
@@ -139,20 +130,16 @@ const ProviderQueueManagement = () => {
     }
 
     try {
-      const response = await axios.post(
-        `${QUEUE_API_BASE_URL}/create`,
-        {
-          providerId,
-          serviceName: newQueueName,
-          placeId: selectedPlaceId,
-          serviceId: selectedServiceId,
-          supportsGroupToken,
-          emergencySupport,
-          emergencyPriorityWeight,
-          maxCapacity: maxCapacity > 0 ? maxCapacity : null,
-        },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      const response = await axiosInstance.post('/queues/create', {
+        providerId,
+        serviceName: newQueueName,
+        placeId: selectedPlaceId,
+        serviceId: selectedServiceId,
+        supportsGroupToken,
+        emergencySupport,
+        emergencyPriorityWeight,
+        maxCapacity: maxCapacity > 0 ? maxCapacity : null,
+      });
 
       toast.success(`${response.data.serviceName} queue created!`);
       setNewQueueName("");
@@ -173,16 +160,10 @@ const ProviderQueueManagement = () => {
     setUpdatingStatus((prev) => ({ ...prev, [queueId]: true }));
     try {
       const endpoint = currentStatus
-        ? `${QUEUE_API_BASE_URL}/${queueId}/deactivate`
-        : `${QUEUE_API_BASE_URL}/${queueId}/activate`;
+        ? `/queues/${queueId}/deactivate`
+        : `/queues/${queueId}/activate`;
 
-      const response = await axios.put(
-        endpoint,
-        {},
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+      const response = await axiosInstance.put(endpoint, {});
 
       setQueues((prevQueues) =>
         prevQueues.map((queue) =>
@@ -224,10 +205,10 @@ const ProviderQueueManagement = () => {
   }
 
   return (
-    <div className="container py-5 animate__animated animate__fadeIn">
-      <div className="d-flex justify-content-between align-items-center mb-5 animate__animated animate__fadeInDown">
-        <h1 className="fw-bold text-dark">
-          <FaListAlt className="me-2 text-primary" />
+    <div className="container py-5 animate__animated animate__fadeIn provider-queue-container p-4 ">
+      <div className="d-flex justify-content-between align-items-center mb-5 animate__animated animate__fadeInDown provider-queue-header">
+        <h1 className="fw-bold">
+          <FaListAlt className="me-2 text-primary-icon" />
           {name ? `${name}'s Queues` : "My Queues"}
         </h1>
         <button
@@ -238,7 +219,7 @@ const ProviderQueueManagement = () => {
         </button>
       </div>
 
-      <div className="card shadow-lg border-0 mb-5 animate__animated animate__fadeInUp">
+      <div className="card shadow-lg border-0 mb-5 animate__animated animate__fadeInUp provider-queue-card">
         <div className="card-body p-4">
           <h4 className="fw-semibold text-secondary mb-4">
             <FaPlusCircle className="me-2 text-success" />
@@ -271,8 +252,9 @@ const ProviderQueueManagement = () => {
                 onChange={(e) => setSelectedServiceId(e.target.value)}
                 disabled={!selectedPlaceId}
                 required
+                
               >
-                <option value="">Select Service</option>
+                <option value="" >Select Service</option>
                 {servicesForSelectedPlace.map((service) => (
                   <option key={service.id} value={service.id}>
                     {service.name}
@@ -359,7 +341,7 @@ const ProviderQueueManagement = () => {
         </div>
       </div>
 
-      <div className="card shadow-lg border-0 animate__animated animate__fadeInUp">
+      <div className="card shadow-lg border-0 animate__animated animate__fadeInUp provider-queue-card">
         <div className="card-body p-4">
           <h4 className="fw-semibold text-secondary mb-4">
             <FaTasks className="me-2 text-info" /> Your Queues
@@ -373,78 +355,67 @@ const ProviderQueueManagement = () => {
                   style={{ animationDelay: `${index * 0.2}s` }}
                   key={queue.id}
                 >
-                  <div className="card border-0 shadow-sm h-100 queue-card transition-all hover-shadow">
-                    <div className="card-body d-flex flex-column justify-content-between">
-                      <div>
-                        <div className="d-flex justify-content-between align-items-start mb-2">
-                          <h5 className="card-title text-dark fw-bold">
-                            {queue.serviceName}
-                          </h5>
-                          <span
-                            className={`badge ${
-                              queue.isActive ? "bg-success" : "bg-warning"
-                            }`}
-                          >
-                            {queue.isActive ? "Active" : "Paused"}
-                          </span>
-                        </div>
-                        <p className="card-text text-muted mb-1">
-                          <strong>Queue ID:</strong> {queue.id}
-                        </p>
-                        <p className="card-text text-muted">
-                          <strong>Current Tokens:</strong>{" "}
-                          {queue.tokens.length} /{" "}
-                          {queue.maxCapacity || "∞"}
-                        </p>
-                        {queue.placeId && (
-                          <p className="card-text text-muted">
-                            <FaBuilding className="me-1" />
-                            <strong>Place:</strong>{" "}
-                            {managedPlaces.find((p) => p.id === queue.placeId)?.name ||
-                              queue.placeId}
-                          </p>
-                        )}
-                        <div className="mt-2">
-                          {queue.supportsGroupToken && (
-                            <span className="badge bg-info me-1">
-                              <FaUsers className="me-1" /> Group Tokens
-                            </span>
-                          )}
-                          {queue.emergencySupport && (
-                            <span className="badge bg-danger">
-                              <FaAmbulance className="me-1" /> Emergency
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                      <div className="mt-3 d-grid gap-2">
-                        <button
-                          onClick={() => handleManageQueue(queue.id)}
-                          className="btn btn-outline-primary btn-sm transition-all"
-                        >
-                          Manage Queue
-                        </button>
-                        <button
-                          onClick={() =>
-                            handleToggleQueueStatus(queue.id, queue.isActive)
-                          }
-                          className={`btn btn-sm ${
-                            queue.isActive ? "btn-warning" : "btn-success"
-                          }`}
-                          disabled={updatingStatus[queue.id]}
-                        >
-                          {updatingStatus[queue.id] ? (
-                            <FaSpinner className="fa-spin me-1" />
-                          ) : queue.isActive ? (
-                            <FaPauseCircle className="me-1" />
-                          ) : (
-                            <FaPlayCircle className="me-1" />
-                          )}
-                          {queue.isActive ? "Pause Queue" : "Resume Queue"}
-                        </button>
-                      </div>
-                    </div>
-                  </div>
+                 <div className="card border-0 shadow-sm h-100 queue-card transition-all hover-shadow">
+  <div className="card-body d-flex flex-column justify-content-between">
+    <div>
+      <div className="d-flex justify-content-between align-items-start mb-2">
+        <h5 className="card-title fw-bold">
+          {queue.serviceName}
+        </h5>
+        <span className={`badge ${queue.isActive ? "bg-success" : "bg-warning"}`}>
+          {queue.isActive ? "Active" : "Paused"}
+        </span>
+      </div>
+      <p className="card-text mb-1">
+        <strong>Queue ID:</strong> {queue.id}
+      </p>
+      <p className="card-text">
+        <strong>Current Tokens:</strong> {queue.tokens.length} / {queue.maxCapacity || "∞"}
+      </p>
+      {queue.placeId && (
+        <p className="card-text">
+          <FaBuilding className="me-1" />
+          <strong>Place:</strong>{" "}
+          {managedPlaces.find((p) => p.id === queue.placeId)?.name || queue.placeId}
+        </p>
+      )}
+      <div className="mt-2">
+        {queue.supportsGroupToken && (
+          <span className="badge bg-info me-1">
+            <FaUsers className="me-1" /> Group Tokens
+          </span>
+        )}
+        {queue.emergencySupport && (
+          <span className="badge bg-danger">
+            <FaAmbulance className="me-1" /> Emergency
+          </span>
+        )}
+      </div>
+    </div>
+    <div className="mt-3 d-grid gap-2">
+      <button
+        onClick={() => handleManageQueue(queue.id)}
+        className="btn btn-outline-primary btn-sm transition-all"
+      >
+        Manage Queue
+      </button>
+      <button
+        onClick={() => handleToggleQueueStatus(queue.id, queue.isActive)}
+        className={`btn btn-sm ${queue.isActive ? "btn-warning" : "btn-success"}`}
+        disabled={updatingStatus[queue.id]}
+      >
+        {updatingStatus[queue.id] ? (
+          <FaSpinner className="fa-spin me-1" />
+        ) : queue.isActive ? (
+          <FaPauseCircle className="me-1" />
+        ) : (
+          <FaPlayCircle className="me-1" />
+        )}
+        {queue.isActive ? "Pause Queue" : "Resume Queue"}
+      </button>
+    </div>
+  </div>
+</div>
                 </div>
               ))}
             </div>
@@ -456,21 +427,7 @@ const ProviderQueueManagement = () => {
         </div>
       </div>
 
-      <style>{`
-        .queue-card {
-          transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
-        .queue-card:hover {
-          transform: translateY(-5px);
-          box-shadow: 0px 6px 18px rgba(0, 0, 0, 0.15);
-        }
-        .transition-all {
-          transition: all 0.3s ease;
-        }
-        .hover-shadow:hover {
-          box-shadow: 0px 8px 20px rgba(0,0,0,0.2) !important;
-        }
-      `}</style>
+
     </div>
   );
 };

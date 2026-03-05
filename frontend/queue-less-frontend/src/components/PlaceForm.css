@@ -1,9 +1,10 @@
 /*
-    Advanced UI/UX for PlaceForm Component
+    Advanced UI/UX for PlaceForm Component – Dark Mode Enhanced
     - Clean, spacious layout
     - Consistent iconography
     - Custom styles for input fields and buttons
     - Enhanced user feedback and visual hierarchy
+    - Full dark mode support via CSS variables
 */
 
 /* --- General & Container Styles --- */
@@ -14,19 +15,21 @@
 .ql-pf-card {
     border: none;
     border-radius: 1rem;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+    box-shadow: var(--shadow-lg);
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
 }
 
 .ql-pf-card-header {
-    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-    border-bottom: 2px solid #e0e0e0;
+    background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--border-color) 100%);
+    border-bottom: 2px solid var(--border-color);
     border-radius: 1rem 1rem 0 0;
     padding: 2rem;
 }
 
 .ql-pf-heading {
     font-weight: 700;
-    color: #2c3e50;
+    color: var(--text-primary);
 }
 
 .ql-pf-card-body {
@@ -35,7 +38,7 @@
 
 /* --- Form Elements --- */
 .ql-pf-section-heading {
-    border-bottom: 1px solid #e0e0e0;
+    border-bottom: 1px solid var(--border-color);
     padding-bottom: 0.5rem;
     margin-bottom: 1.5rem;
     display: flex;
@@ -44,78 +47,121 @@
 
 .ql-pf-section-heading h5 {
     font-weight: 600;
-    color: #34495e;
+    color: var(--text-primary);
+}
+
+.ql-pf-section-heading .text-primary {
+    color: var(--search-primary) !important;
 }
 
 .ql-pf-form-control {
     border-radius: 0.5rem;
     padding: 0.75rem 1rem;
-    border-color: #dcdfe6;
+    border: 2px solid var(--border-color);
+    background-color: var(--input-bg);
+    color: var(--input-text);
     transition: all 0.3s ease;
 }
 
 .ql-pf-form-control:focus {
-    box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
-    border-color: #3498db;
+    box-shadow: 0 0 0 0.2rem rgba(var(--search-primary-rgb), 0.25);
+    border-color: var(--search-primary);
+    outline: none;
+}
+
+/* Input group text */
+.ql-pf-card .input-group-text {
+    background-color: var(--bg-tertiary);
+    border: 2px solid var(--border-color);
+    color: var(--text-secondary);
+    border-right: none;
+}
+
+.ql-pf-card .input-group .form-control {
+    border-left: none;
 }
 
 /* --- Business Hours --- */
 .ql-pf-hours-row {
-    background-color: #f8f9fa;
+    background-color: var(--bg-secondary);
     border-radius: 0.75rem;
     padding: 0.5rem 1rem;
-    border: 1px solid #e9ecef;
+    border: 1px solid var(--border-color);
+}
+
+.ql-pf-switch-control .form-check-input {
+    background-color: var(--input-bg);
+    border-color: var(--border-color);
 }
 
 .ql-pf-switch-control .form-check-input:checked {
-    background-color: #2ecc71;
-    border-color: #2ecc71;
+    background-color: var(--success-color);
+    border-color: var(--success-color);
 }
 
 .ql-pf-time-control {
     border-radius: 0.5rem;
     padding: 0.5rem;
+    background-color: var(--input-bg);
+    border: 2px solid var(--border-color);
+    color: var(--input-text);
+}
+
+.ql-pf-time-control:focus {
+    border-color: var(--search-primary);
+    box-shadow: 0 0 0 0.2rem rgba(var(--search-primary-rgb), 0.25);
+}
+
+.ql-pf-time-control:disabled {
+    background-color: var(--bg-secondary);
+    opacity: 0.6;
 }
 
 /* --- Image Upload Section --- */
 .ql-pf-btn-add-img {
-    background: #3498db;
+    background: var(--search-primary);
     border: none;
     border-radius: 0.5rem;
     font-weight: 500;
     transition: all 0.3s ease;
+    color: white;
+    display: inline-flex;
+    align-items: center;
 }
 
 .ql-pf-btn-add-img:hover {
+    background: var(--search-primary-hover);
     transform: translateY(-2px);
-    box-shadow: 0 4px 10px rgba(52, 152, 219, 0.2);
+    box-shadow: 0 4px 10px rgba(var(--search-primary-rgb), 0.3);
 }
 
 .ql-pf-image-preview-container {
     max-height: 250px;
     overflow-y: auto;
     padding: 1rem;
-    background: #fafafa;
+    background: var(--bg-secondary);
     border-radius: 0.75rem;
-    border: 1px solid #e0e0e0;
+    border: 1px solid var(--border-color);
 }
 
 .ql-pf-image-card {
     position: relative;
     border-radius: 0.75rem;
     overflow: hidden;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--shadow-sm);
     transition: transform 0.3s ease;
 }
 
 .ql-pf-image-card:hover {
     transform: scale(1.05);
+    box-shadow: var(--shadow-md);
 }
 
 .ql-pf-image-preview {
     width: 100%;
     height: 120px;
     object-fit: cover;
+    background-color: var(--bg-secondary);
 }
 
 .ql-pf-image-remove-btn {
@@ -124,10 +170,21 @@
     right: 5px;
     opacity: 0.8;
     transition: opacity 0.3s ease;
+    background-color: var(--danger-color);
+    border: none;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
 }
 
 .ql-pf-image-remove-btn:hover {
     opacity: 1;
+    background-color: var(--danger-color);
+    transform: scale(1.1);
 }
 
 /* --- Action Buttons --- */
@@ -135,27 +192,40 @@
     font-weight: 600;
     padding: 0.75rem 2rem;
     border-radius: 50px;
-    background: linear-gradient(45deg, #2ecc71, #27ae60);
+    background: linear-gradient(45deg, var(--success-color), var(--success-hover));
     border: none;
-    box-shadow: 0 4px 15px rgba(46, 204, 113, 0.3);
+    box-shadow: 0 4px 15px rgba(var(--success-color-rgb), 0.3);
     transition: all 0.3s ease;
+    color: white;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
 }
 
 .ql-pf-btn-submit:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(46, 204, 113, 0.4);
+    box-shadow: 0 6px 20px rgba(var(--success-color-rgb), 0.4);
+}
+
+.ql-pf-btn-submit:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
 }
 
 .ql-pf-btn-cancel {
     font-weight: 600;
     padding: 0.75rem 2rem;
     border-radius: 50px;
-    border: 1px solid #bdc3c7;
+    border: 2px solid var(--border-color);
+    background: transparent;
+    color: var(--text-primary);
     transition: all 0.3s ease;
 }
 
 .ql-pf-btn-cancel:hover {
     transform: translateY(-2px);
+    background: var(--border-color);
+    color: var(--text-primary);
 }
 
 /* --- Loader and Alert --- */
@@ -165,7 +235,7 @@
     align-items: center;
     justify-content: center;
     height: 50vh;
-    color: #3498db;
+    color: var(--search-primary);
     text-align: center;
 }
 
@@ -173,11 +243,24 @@
     width: 3rem;
     height: 3rem;
     margin-bottom: 1rem;
+    color: var(--search-primary);
 }
 
 .ql-pf-alert {
-    border-left: 5px solid #e74c3c;
+    border-left: 5px solid var(--danger-color);
     border-radius: 0.5rem;
+    background-color: rgba(var(--danger-color-rgb), 0.15);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+}
+
+/* --- Text utilities --- */
+.text-muted {
+    color: var(--text-secondary) !important;
+}
+
+.text-danger {
+    color: var(--danger-color) !important;
 }
 
 /* --- Responsive adjustments --- */
@@ -185,4 +268,282 @@
     .ql-pf-card-body {
         padding: 1.5rem;
     }
+}
+
+/* ===== Additional Dark Mode Fixes for PlaceForm ===== */
+
+/* Force form labels to use primary text color */
+.ql-pf-card .form-label {
+    color: var(--text-primary) !important;
+    font-weight: 500;
+}
+
+/* Ensure placeholder text uses secondary color */
+.ql-pf-card .form-control::placeholder,
+.ql-pf-card .form-select::placeholder {
+    color: var(--text-secondary) !important;
+    opacity: 0.7;
+}
+
+/* Override input group text background and text */
+.ql-pf-card .input-group-text {
+    background-color: var(--bg-tertiary) !important;
+    border-color: var(--border-color) !important;
+    color: var(--text-secondary) !important;
+}
+
+/* Make disabled inputs use correct background */
+.ql-pf-card .form-control:disabled,
+.ql-pf-card .form-select:disabled {
+    background-color: var(--bg-secondary) !important;
+    color: var(--text-secondary) !important;
+}
+
+/* Switch control label */
+.ql-pf-switch-control .form-check-label {
+    color: var(--text-primary) !important;
+}
+
+/* Ensure business hours row text uses theme */
+.ql-pf-hours-row .form-label {
+    color: var(--text-primary) !important;
+}
+
+.ql-pf-hours-row .text-muted {
+    color: var(--text-secondary) !important;
+}
+
+/* Image preview container background (already set) */
+.ql-pf-image-preview-container {
+    background-color: var(--bg-secondary) !important;
+}
+
+/* Alert customization */
+.ql-pf-alert {
+    color: var(--text-primary) !important;
+}
+.ql-pf-alert .text-danger {
+    color: var(--danger-color) !important;
+}
+
+/* Cancel button hover state (already handled) */
+.ql-pf-btn-cancel {
+    color: var(--text-primary) !important;
+    border-color: var(--border-color) !important;
+}
+.ql-pf-btn-cancel:hover {
+    background-color: var(--border-color) !important;
+    color: var(--text-primary) !important;
+}
+
+/* ===== Additional Dark Mode Fixes for PlaceForm ===== */
+
+/* Force header description text to use secondary color */
+.ql-pf-card-header p.text-muted {
+    color: var(--text-secondary) !important;
+}
+
+/* Ensure all muted text inside card uses theme */
+.ql-pf-card .text-muted {
+    color: var(--text-secondary) !important;
+}
+
+/* Force card body text color */
+.ql-pf-card-body {
+    color: var(--text-primary) !important;
+}
+
+/* Force form labels to use primary text color */
+.ql-pf-card .form-label {
+    color: var(--text-primary) !important;
+    font-weight: 500;
+}
+
+/* Ensure placeholder text uses secondary color */
+.ql-pf-card .form-control::placeholder,
+.ql-pf-card .form-select::placeholder {
+    color: var(--text-secondary) !important;
+    opacity: 0.7;
+}
+
+/* Override input group text background and text */
+.ql-pf-card .input-group-text {
+    background-color: var(--bg-tertiary) !important;
+    border-color: var(--border-color) !important;
+    color: var(--text-secondary) !important;
+}
+
+/* Make disabled inputs use correct background */
+.ql-pf-card .form-control:disabled,
+.ql-pf-card .form-select:disabled {
+    background-color: var(--bg-secondary) !important;
+    color: var(--text-secondary) !important;
+}
+
+/* Switch control label */
+.ql-pf-switch-control .form-check-label {
+    color: var(--text-primary) !important;
+}
+
+/* Ensure business hours row text uses theme */
+.ql-pf-hours-row .form-label {
+    color: var(--text-primary) !important;
+}
+
+.ql-pf-hours-row .text-muted {
+    color: var(--text-secondary) !important;
+}
+
+/* Image preview container background (already set) */
+.ql-pf-image-preview-container {
+    background-color: var(--bg-secondary) !important;
+}
+
+/* Alert customization */
+.ql-pf-alert {
+    color: var(--text-primary) !important;
+}
+.ql-pf-alert .text-danger {
+    color: var(--danger-color) !important;
+}
+
+/* Cancel button hover state (already handled) */
+.ql-pf-btn-cancel {
+    color: var(--text-primary) !important;
+    border-color: var(--border-color) !important;
+}
+.ql-pf-btn-cancel:hover {
+    background-color: var(--border-color) !important;
+    color: var(--text-primary) !important;
+}
+/* ===== Ultimate Dark Mode Fixes for PlaceForm ===== */
+
+/* Force card background to use theme variable */
+.ql-pf-container .ql-pf-card {
+    background-color: var(--card-bg) !important;
+}
+
+/* Ensure all text inside card body uses primary color */
+.ql-pf-card .ql-pf-card-body {
+    color: var(--text-primary) !important;
+}
+
+/* Force header description text to be visible */
+.ql-pf-card .ql-pf-card-header p.text-muted,
+.ql-pf-card .ql-pf-card-header .text-muted {
+    color: var(--text-secondary) !important;
+}
+
+/* Ensure form labels are visible */
+.ql-pf-card .form-label {
+    color: var(--text-primary) !important;
+}
+
+/* Make all placeholder text visible */
+.ql-pf-card .form-control::placeholder,
+.ql-pf-card .form-select::placeholder {
+    color: var(--text-secondary) !important;
+    opacity: 0.8;
+}
+
+/* Input group text background */
+.ql-pf-card .input-group-text {
+    background-color: var(--bg-tertiary) !important;
+    color: var(--text-secondary) !important;
+    border-color: var(--border-color) !important;
+}
+
+/* Business hours row */
+.ql-pf-hours-row {
+    background-color: var(--bg-secondary) !important;
+    color: var(--text-primary) !important;
+}
+.ql-pf-hours-row .form-label,
+.ql-pf-hours-row .text-muted {
+    color: var(--text-primary) !important;
+}
+
+/* Switch labels */
+.ql-pf-switch-control .form-check-label {
+    color: var(--text-primary) !important;
+}
+
+/* Image preview container */
+.ql-pf-image-preview-container {
+    background-color: var(--bg-secondary) !important;
+}
+
+/* Alert styling */
+.ql-pf-alert {
+    color: var(--text-primary) !important;
+    background-color: rgba(var(--danger-color-rgb), 0.15) !important;
+}
+
+/* Cancel button */
+.ql-pf-btn-cancel {
+    color: var(--text-primary) !important;
+    border-color: var(--border-color) !important;
+}
+.ql-pf-btn-cancel:hover {
+    background-color: var(--border-color) !important;
+    color: var(--text-primary) !important;
+}
+/* ===== Fix Input Fields in Dark Mode ===== */
+.ql-pf-card .form-control,
+.ql-pf-card .form-select {
+    background-color: var(--input-bg) !important;
+    color: var(--input-text) !important;
+    border-color: var(--border-color) !important;
+}
+
+.ql-pf-card .form-control:focus,
+.ql-pf-card .form-select:focus {
+    background-color: var(--input-bg) !important;
+    color: var(--input-text) !important;
+    border-color: var(--search-primary) !important;
+    box-shadow: 0 0 0 0.2rem rgba(var(--search-primary-rgb), 0.25) !important;
+}
+
+/* Ensure placeholders are visible */
+.ql-pf-card .form-control::placeholder,
+.ql-pf-card .form-select::placeholder {
+    color: var(--text-secondary) !important;
+    opacity: 0.7;
+}
+
+/* Fix input group text and borders */
+.ql-pf-card .input-group-text {
+    background-color: var(--bg-tertiary) !important;
+    color: var(--text-secondary) !important;
+    border-color: var(--border-color) !important;
+}
+
+.ql-pf-card .input-group .form-control {
+    border-left: none;
+}
+/* ===== Fix Time Input Fields in Dark Mode ===== */
+.ql-pf-card input[type="time"].form-control,
+.ql-pf-card input[type="time"].ql-pf-time-control {
+    background-color: var(--input-bg) !important;
+    color: var(--input-text) !important;
+    border-color: var(--border-color) !important;
+}
+
+/* WebKit browsers (Chrome, Edge, Safari) */
+.ql-pf-card input[type="time"]::-webkit-calendar-picker-indicator {
+    filter: invert(var(--dark-mode-invert, 0));
+}
+
+.ql-pf-card input[type="time"]::-webkit-datetime-edit,
+.ql-pf-card input[type="time"]::-webkit-datetime-edit-fields-wrapper,
+.ql-pf-card input[type="time"]::-webkit-datetime-edit-text,
+.ql-pf-card input[type="time"]::-webkit-datetime-edit-hour-field,
+.ql-pf-card input[type="time"]::-webkit-datetime-edit-minute-field {
+    color: var(--input-text) !important;
+    background: transparent !important;
+}
+
+/* Firefox (if needed) */
+.ql-pf-card input[type="time"] {
+    color-scheme: var(--dark-mode-invert) ;
 }

@@ -1,0 +1,92 @@
+/* AlertConfigModal.css */
+.alert-config-modal .modal-content {
+  border-radius: 16px;
+  border: none;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+  background-color: var(--card-bg);
+}
+
+.alert-config-modal .modal-header {
+  border-bottom: 1px solid var(--border-color);
+  padding: 1.5rem 2rem;
+}
+
+.alert-config-modal .modal-header .modal-title {
+  color: var(--text-primary);
+  font-weight: 600;
+  font-size: 1.4rem;
+  display: flex;
+  align-items: center;
+}
+
+.alert-config-modal .modal-header .modal-title svg {
+  color: var(--accent-color);
+}
+
+.alert-config-modal .modal-body {
+  padding: 2rem;
+}
+
+.alert-config-modal .modal-footer {
+  border-top: 1px solid var(--border-color);
+  padding: 1.25rem 2rem;
+}
+
+.alert-config-modal .form-label {
+  color: var(--text-primary);
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+}
+
+.alert-config-modal .form-text {
+  color: var(--text-secondary) !important;
+  font-size: 0.85rem;
+  margin-top: 0.25rem;
+}
+
+.alert-config-modal .form-switch .form-check-label {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.alert-config-modal .form-control,
+.alert-config-modal .form-select {
+  background-color: var(--input-bg);
+  border-color: var(--border-color);
+  color: var(--input-text);
+  border-radius: 10px;
+  padding: 0.6rem 1rem;
+  transition: all 0.2s ease;
+}
+
+.alert-config-modal .form-control:focus,
+.alert-config-modal .form-select:focus {
+  border-color: var(--link-color);
+  box-shadow: 0 0 0 0.2rem rgba(var(--link-color-rgb), 0.25);
+}
+
+.alert-config-modal .btn {
+  border-radius: 30px;
+  padding: 0.5rem 1.5rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.alert-config-modal .btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.alert-config-modal .btn-danger {
+  background-color: var(--danger-color);
+  border-color: var(--danger-color);
+}
+
+.alert-config-modal .btn-primary {
+  background-color: var(--btn-primary-bg);
+  border-color: var(--btn-primary-bg);
+}
+
+.alert-config-modal .spinner-border {
+  margin-right: 0.5rem;
+}

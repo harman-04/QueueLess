@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { Card, Button, Container, Row, Col, Form } from 'react-bootstrap';
-import axios from 'axios';
 import Swal from 'sweetalert2';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
@@ -8,6 +7,9 @@ import { Link } from 'react-router-dom';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 import './ProviderPricingPage.css';
 import { useSelector } from 'react-redux';
+import axiosInstance from '../utils/axiosInstance';
+
+const RAZORPAY_KEY = import.meta.env.VITE_RAZORPAY_KEY_ID;
 
 const plans = [
   { name: "Basic", tokenType: "1_MONTH", price: 100, description: "Perfect for new providers." },
@@ -16,21 +18,44 @@ const plans = [
 ];
 
 const trustedDomains = [
-  'gmail.com',
-  'outlook.com',
-  'yahoo.com',
-  'protonmail.com',
-  'zoho.com',
-  'icloud.com',
-  'yourcompany.com',
+  'gmail.com', 'outlook.com', 'yahoo.com', 'protonmail.com',
+  'zoho.com', 'icloud.com', 'yourcompany.com',
 ];
 
 const ProviderPricingPage = () => {
   const [planLoading, setPlanLoading] = useState({});
   const [generatedToken, setGeneratedToken] = useState('');
+  const { id: adminId } = useSelector((state) => state.auth);
 
-  // CORRECTED: Get both 'token' and 'id' from Redux store
-  const { token, id: adminId } = useSelector((state) => state.auth);
+  /**
+   * Helper to handle SweetAlert2 Dark Mode automatically
+   */
+  const customSwal = (options) => {
+    const isDark = document.body.classList.contains('dark-mode');
+    return Swal.fire({
+      background: isDark ? '#2d2d2d' : '#fff',
+      color: isDark ? '#f8f9fa' : '#212529',
+      confirmButtonColor: '#667eea',
+      ...options
+    });
+  };
+
+  /**
+   * Specialized Toast for Copy action
+   */
+  const showCopyToast = () => {
+    const isDark = document.body.classList.contains('dark-mode');
+    const Toast = Swal.mixin({
+      toast: true,
+      position: 'top-end',
+      showConfirmButton: false,
+      timer: 2000,
+      timerProgressBar: true,
+      background: isDark ? '#2d2d2d' : '#fff',
+      color: isDark ? '#f8f9fa' : '#212529',
+    });
+    Toast.fire({ icon: 'success', title: 'Token copied to clipboard!' });
+  };
 
   const formik = useFormik({
     initialValues: { email: '' },
@@ -49,45 +74,29 @@ const ProviderPricingPage = () => {
 
   const handleBuy = async (tokenType) => {
     formik.handleSubmit();
-
     const providerEmail = formik.values.email;
 
     if (formik.errors.email || !providerEmail) {
-      Swal.fire('Error', 'Please enter a valid and trusted email address', 'error');
+      customSwal({ icon: 'error', title: 'Error', text: 'Please enter a valid and trusted email address' });
       return;
     }
 
-    // Check if adminId is available
     if (!adminId) {
-      Swal.fire('Error', 'Authentication error: Admin ID not found. Please log in again.', 'error');
-      return;
-    }
-    
-    // Check if token is available
-    if (!token) {
-      Swal.fire('Error', 'Authentication error: Token not found. Please log in again.', 'error');
+      customSwal({ icon: 'error', title: 'Error', text: 'Authentication error: Admin ID not found. Please log in again.' });
       return;
     }
 
     setPlanLoading(prev => ({ ...prev, [tokenType]: true }));
 
     try {
-      const res = await axios.post('https://localhost:8443/api/payment/create-order', null, {
-        params: {
-          email: providerEmail,
-          role: 'PROVIDER',
-          tokenType,
-          adminId
-        },
-        headers: {
-          Authorization: `Bearer ${token}` // Now the 'token' variable is correctly defined
-        }
+      const res = await axiosInstance.post('/payment/create-order', null, {
+        params: { email: providerEmail, role: 'PROVIDER', tokenType, adminId }
       });
 
       const { amount, orderId, currency } = res.data;
 
       const options = {
-        key: 'rzp_test_qye1jaTP5mlc26',
+        key: RAZORPAY_KEY,
         amount: amount.toString(),
         currency,
         name: "QueueLess Provider Token",
@@ -95,35 +104,29 @@ const ProviderPricingPage = () => {
         order_id: orderId,
         handler: async (response) => {
           try {
-            const confirmRes = await axios.post('https://localhost:8443/api/payment/confirm-provider', null, {
+            const confirmRes = await axiosInstance.post('/payment/confirm-provider', null, {
               params: {
                 orderId,
                 paymentId: response.razorpay_payment_id,
-                providerEmail: providerEmail,
+                providerEmail,
                 tokenType,
-                adminId, 
+                adminId,
               }
             });
-
             setGeneratedToken(confirmRes.data.tokenValue);
-            Swal.fire('Success', 'Payment Successful! Token Generated.', 'success');
+            customSwal({ icon: 'success', title: 'Success', text: 'Payment Successful! Token Generated.' });
           } catch (error) {
-            Swal.fire('Error', error?.response?.data?.message || 'Payment confirmation failed.', 'error');
+            customSwal({ icon: 'error', title: 'Error', text: error?.response?.data?.message || 'Payment confirmation failed.' });
           }
         },
-        prefill: {
-          email: providerEmail,
-        },
-        theme: {
-          color: "#0d6efd",
-        },
+        prefill: { email: providerEmail },
+        theme: { color: "#667eea" },
       };
 
       const rzp = new window.Razorpay(options);
       rzp.open();
-
     } catch (error) {
-      Swal.fire('Error', error?.response?.data?.message || 'Something went wrong!', 'error');
+      customSwal({ icon: 'error', title: 'Error', text: error?.response?.data?.message || 'Something went wrong!' });
     } finally {
       setPlanLoading(prev => ({ ...prev, [tokenType]: false }));
     }
@@ -131,7 +134,7 @@ const ProviderPricingPage = () => {
 
   const handleCopy = () => {
     navigator.clipboard.writeText(generatedToken);
-    Swal.fire('Copied!', 'Token copied to clipboard.', 'success');
+    showCopyToast();
   };
 
   const domain = formik.values.email.split('@')[1];
@@ -140,8 +143,10 @@ const ProviderPricingPage = () => {
 
   return (
     <Container className="py-5 pricing-page">
-      <h2 className="text-center mb-5 text-success fw-bold">Become a Valued Provider</h2>
-      <p className="text-center lead mb-4 text-muted">Select a plan to unlock provider features.</p>
+      <div className="text-center mb-5">
+        <h2 className="fw-bold">Become a Valued Provider</h2>
+        <p className="lead text-muted">Select a plan to unlock provider features.</p>
+      </div>
 
       <Form className="mb-5" onSubmit={formik.handleSubmit}>
         <Row className="justify-content-center">
@@ -167,26 +172,25 @@ const ProviderPricingPage = () => {
 
       <Row className="justify-content-center">
         {plans.map((plan) => (
-          <Col md={4} key={plan.tokenType} className="mb-4">
-            <Card className="pricing-card h-100 d-flex flex-column">
-              <Card.Body className="text-center py-4 flex-grow-1 d-flex flex-column justify-content-between">
-                <div>
-                  <Card.Title className="h5 fw-bold mb-3 text-primary">{plan.name} Plan</Card.Title>
-                  <Card.Subtitle className="h6 mb-3 text-muted">{plan.price} ₹</Card.Subtitle>
-                  <Card.Text className="mb-3 text-secondary">{plan.description}</Card.Text>
-                </div>
+          <Col lg={4} md={6} key={plan.tokenType} className="mb-4">
+            <Card className="pricing-card">
+              <Card.Body className="text-center">
+                <Card.Title className="h5 fw-bold">{plan.name} Plan</Card.Title>
+                <Card.Subtitle className="h2 my-4">
+                  <span className="price-currency">₹</span>{plan.price}
+                </Card.Subtitle>
+                <Card.Text className="text-secondary">{plan.description}</Card.Text>
                 <Button
                   variant="primary"
                   disabled={planLoading[plan.tokenType] || !isEmailValid}
                   onClick={() => handleBuy(plan.tokenType)}
-                  className="mt-3 animated-button rounded-pill"
+                  className="animated-button rounded-pill mt-3"
                 >
                   {planLoading[plan.tokenType] ? (
-                    <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                    <span className="spinner-border spinner-border-sm" role="status"></span>
                   ) : (
-                    <i className="bi bi-briefcase-fill me-2"></i>
+                    <><i className="bi bi-briefcase-fill me-2"></i> Buy Now</>
                   )}
-                  {planLoading[plan.tokenType] ? 'Processing...' : 'Buy Now'}
                 </Button>
               </Card.Body>
             </Card>
@@ -196,19 +200,23 @@ const ProviderPricingPage = () => {
 
       {generatedToken && (
         <div className="text-center mt-5 p-4 token-box">
-          <h4 className="text-success fw-bold mb-3"><i className="bi bi-key-fill me-2"></i> Your Provider Token is Ready!</h4>
-          <p className="fw-bold text-info mb-3 selectable">{generatedToken}</p>
-          <Button variant="outline-success" onClick={handleCopy} className="rounded-pill me-2">
-            <i className="bi bi-clipboard-check me-2"></i> Copy Token
-          </Button>
-          <Link to="/register" className="ms-2">
-            <Button variant="success" className="rounded-pill">
-              <i className="bi bi-person-plus-fill me-2"></i> Proceed to Registration
+          <h4 className="fw-bold mb-3"><i className="bi bi-key-fill me-2"></i> Your Provider Token is Ready!</h4>
+          <div className="selectable mb-4">{generatedToken}</div>
+          
+          <div className="d-flex flex-wrap justify-content-center gap-2">
+            <Button variant="outline-success" onClick={handleCopy} className="rounded-pill">
+              <i className="bi bi-clipboard-check me-2"></i> Copy Token
             </Button>
-          </Link>
-          <p className="mt-3 text-info small">
+            <Link to="/register">
+              <Button variant="success" className="rounded-pill">
+                <i className="bi bi-person-plus-fill me-2"></i> Proceed to Registration
+              </Button>
+            </Link>
+          </div>
+          
+          <p className="mt-4 text-info small">
             <i className="bi bi-info-circle-fill me-2"></i>
-            Copy your token and click <strong className="fw-bold">Proceed to Registration</strong>.
+            Copy your token and click <strong>Proceed to Registration</strong>.
           </p>
         </div>
       )}

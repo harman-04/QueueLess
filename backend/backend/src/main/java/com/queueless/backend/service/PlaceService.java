@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.bson.types.ObjectId;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.core.geo.GeoJsonPoint;
 import org.springframework.stereotype.Service;
@@ -126,24 +127,6 @@ public class PlaceService {
         return places;
     }
 
-//    public List<Place> getPlacesByIds(List<String> placeIds) {
-//        log.debug("Fetching places by IDs: {}", placeIds);
-//        return placeRepository.findAllById(placeIds);
-//    }
-
-
-//    public List<Place> getPlacesByIds(List<String> placeIds) {
-//        if (placeIds == null || placeIds.isEmpty()) {
-//            return new ArrayList<>();
-//        }
-//        return placeRepository.findAllById(placeIds);
-//    }
-
-
-    /**
-     * New method to correctly fetch favorite places by converting String IDs to ObjectId.
-     * This avoids conflicts with the existing findAllById method and ensures correct data retrieval.
-     */
 
         public List<Place> getPlacesByIds(List<String> placeIds) {
             if (placeIds == null || placeIds.isEmpty()) {
@@ -157,11 +140,13 @@ public class PlaceService {
         }
 
 
-    // src/main/java/com/queueless/backend/service/PlaceService.java
-
     public Page<Place> getAllPlacesPaginated(Pageable pageable) {
         log.debug("Fetching paginated places with pageable: {}", pageable);
         return placeRepository.findAll(pageable);
+    }
+
+    public List<Place> getTopRatedPlaces(int limit) {
+        return placeRepository.findTopByOrderByRatingDesc(PageRequest.of(0, limit));
     }
     
 }

@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Modal, Button, Spinner, Alert } from 'react-bootstrap';
 import { FaUser, FaInfoCircle, FaEye, FaEyeSlash } from 'react-icons/fa';
 import axiosInstance from '../utils/axiosInstance';
+import './UserDetailsModal.css';
+import { getShortTokenId } from '../utils/tokenUtils';
 
 const UserDetailsModal = ({ show, onHide, queueId, tokenId }) => {
   const [userDetails, setUserDetails] = useState(null);
@@ -31,11 +33,11 @@ const UserDetailsModal = ({ show, onHide, queueId, tokenId }) => {
   };
 
   return (
-    <Modal show={show} onHide={onHide} size="lg">
+   <Modal show={show} onHide={onHide} size="lg" className="user-details-modal">
       <Modal.Header closeButton>
         <Modal.Title>
           <FaUser className="me-2" />
-          User Details for Token {tokenId}
+          User Details for Token {getShortTokenId(tokenId)}
         </Modal.Title>
       </Modal.Header>
       <Modal.Body>

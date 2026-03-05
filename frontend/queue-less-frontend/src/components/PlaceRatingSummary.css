@@ -1,13 +1,15 @@
-/* In src/components/PlaceRatingSummary.css */
+/* PlaceRatingSummary.css – Enhanced with Dark Mode Support */
 
 /* Card styling */
 .prs-rating-summary-card {
   margin: 1.5rem 0;
-  border: none;
+  border: 1px solid var(--border-color);
   border-radius: 16px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  box-shadow: var(--shadow-lg);
   overflow: hidden;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: var(--card-bg);
+  color: var(--text-primary);
 }
 
 .prs-card-header {
@@ -25,6 +27,8 @@
 
 .prs-card-body {
   padding: 1.5rem;
+  background-color: var(--card-bg);
+  color: var(--text-primary);
 }
 
 /* Rating row layout */
@@ -36,7 +40,7 @@
 .prs-main-rating-col {
   display: flex;
   justify-content: center;
-  border-right: 1px solid #eaeaea;
+  border-right: 1px solid var(--border-color);
   padding: 1.5rem;
 }
 
@@ -47,14 +51,14 @@
 .prs-average-number {
   font-size: 3.5rem;
   font-weight: 700;
-  color: #2c3e50;
+  color: var(--text-primary);
   line-height: 1;
   margin-bottom: 0.75rem;
 }
 
 .prs-rating-label {
   font-size: 1.1rem;
-  color: #7f8c8d;
+  color: var(--text-secondary);
   font-weight: 500;
   margin-top: 0.5rem;
 }
@@ -77,25 +81,26 @@
   padding: 1rem 0.5rem;
   border-radius: 12px;
   transition: all 0.3s ease;
-  background-color: rgba(245, 245, 245, 0.5);
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
 }
 
 .prs-category-rating:hover {
-  background-color: #f8f9fa;
+  background-color: var(--border-color);
   transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+  box-shadow: var(--shadow-md);
 }
 
 .prs-category-value {
   font-size: 1.5rem;
   font-weight: 600;
-  color: #34495e;
+  color: var(--text-primary);
   margin: 0.5rem 0;
 }
 
 .prs-category-label {
   font-size: 0.9rem;
-  color: #7f8c8d;
+  color: var(--text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.5px;
   font-weight: 500;
@@ -113,50 +118,70 @@
   font-size: 1.25rem;
 }
 
-.prs-star-full {
-  color: #FFD700;
-}
-
+.prs-star-full,
 .prs-star-half {
   color: #FFD700;
+  /* keep gold */
 }
 
 .prs-star-empty {
-  color: #e0e0e0;
+  color: var(--border-color);
 }
 
 /* Loading and error states */
-.prs-loading, .prs-error {
+.prs-loading {
   padding: 2rem;
   text-align: center;
-  color: #7f8c8d;
+  color: var(--text-secondary);
   font-style: italic;
+}
+
+/* No ratings card */
+.prs-no-rating-card {
+  margin: 1.5rem 0;
+  border: 1px dashed var(--border-color);
+  border-radius: 16px;
+  box-shadow: none;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  padding: 1.5rem;
+  background-color: var(--card-bg);
+  color: var(--text-primary);
+}
+
+.prs-info-icon {
+  font-size: 2.5rem;
+  color: var(--text-secondary);
+}
+
+.prs-no-rating-text {
+  color: var(--text-primary);
+  font-weight: 600;
 }
 
 /* Responsive design */
 @media (max-width: 768px) {
   .prs-main-rating-col {
     border-right: none;
-    border-bottom: 1px solid #eaeaea;
+    border-bottom: 1px solid var(--border-color);
     padding: 1rem;
   }
-  
+
   .prs-average-number {
     font-size: 2.5rem;
   }
-  
+
   .prs-star {
     font-size: 1rem;
   }
-  
+
   .prs-category-value {
     font-size: 1.25rem;
   }
-  
+
   .prs-detail-row {
     justify-content: center;
   }
-  
+
   .prs-rating-category {
     flex: 0 0 50%;
     max-width: 50%;
@@ -168,45 +193,12 @@
     flex: 0 0 100%;
     max-width: 100%;
   }
-  
+
   .prs-card-body {
     padding: 1rem;
   }
-  
+
   .prs-category-rating {
     padding: 0.75rem 0.5rem;
   }
 }
-
-/* Add new styling for the "No ratings" card */
-.prs-no-rating-card {
-  margin: 1.5rem 0;
-  border: 1px dashed #dcdcdc; /* Dashed border for a less formal look */
-  border-radius: 16px;
-  box-shadow: none; /* No shadow to make it feel less like an active data card */
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  padding: 1.5rem;
-  background-color: #fcfcfc;
-}
-
-.prs-info-icon {
-  font-size: 2.5rem;
-  color: #a0a0a0;
-}
-
-.prs-no-rating-text {
-  color: #555;
-  font-weight: 600;
-}
-
-/* Existing styles below (no changes needed) */
-/* Card styling */
-.prs-rating-summary-card {
-  margin: 1.5rem 0;
-  border: none;
-  border-radius: 16px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-  overflow: hidden;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-}
-/* ... rest of the CSS */

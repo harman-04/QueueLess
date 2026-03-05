@@ -1,0 +1,36 @@
+/* SearchResultsSkeleton.css – Dark Mode Support */
+
+/* Card styling */
+.ql-search-skeleton-card {
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 1.5rem;
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+    height: 100%;
+}
+
+/* Image placeholder */
+.ql-search-skeleton-image {
+    height: 200px;
+    background-color: var(--bg-secondary) !important;
+    /* override inline style */
+    border-top-left-radius: 1.5rem;
+    border-top-right-radius: 1.5rem;
+}
+
+/* Placeholder text – Bootstrap overrides */
+.ql-search-skeleton-card .placeholder {
+    background-color: var(--bg-tertiary, #404040);
+    opacity: 0.7;
+}
+
+.ql-search-skeleton-card .placeholder-glow .placeholder {
+    animation: placeholder-glow 2s ease-in-out infinite;
+}
+
+@keyframes placeholder-glow {
+    50% {
+        opacity: 0.4;
+    }
+}

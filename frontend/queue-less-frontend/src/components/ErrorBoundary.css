@@ -1,0 +1,69 @@
+/* ErrorBoundary.css – Elegant Error Display with Dark Mode */
+.error-boundary {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+}
+.error-boundary .alert {
+  max-width: 500px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 2rem;
+  border-radius: 25px;
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--border-color);
+  background-color: var(--card-bg);
+  color: var(--text-primary);
+}
+
+.error-boundary .alert-danger {
+  background-color: rgba(var(--danger-color-rgb, 231, 76, 60), 0.1);
+  border-left: 6px solid var(--danger-color);
+  color: var(--text-primary);
+}
+
+.error-boundary .alert h4 {
+  font-weight: 700;
+  margin-bottom: 1rem;
+  color: var(--text-primary);
+}
+
+.error-boundary .alert p {
+  color: var(--text-secondary);
+  margin-bottom: 1.5rem;
+  font-size: 1rem;
+}
+
+.error-boundary svg.text-danger {
+  color: var(--danger-color) !important;
+  filter: drop-shadow(0 4px 6px rgba(231, 76, 60, 0.3));
+  margin-bottom: 1rem;
+}
+
+.error-boundary .btn-outline-danger {
+  border: 2px solid var(--danger-color);
+  color: var(--danger-color);
+  background: transparent;
+  border-radius: 40px;
+  padding: 0.6rem 2rem;
+  font-weight: 600;
+  transition: all 0.3s;
+  box-shadow: var(--shadow-sm);
+}
+
+.error-boundary .btn-outline-danger:hover {
+  background: var(--danger-color);
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(231, 76, 60, 0.4);
+}
+
+/* Dark mode refinements (already handled by variables, but ensure icon contrast) */
+.dark-mode .error-boundary .alert-danger {
+  background-color: rgba(231, 76, 60, 0.2);
+}

@@ -1,0 +1,25 @@
+/* QueuesTableSkeleton.css – Dark Mode Support for Skeleton Table */
+
+.queues-table-skeleton .table {
+  background-color: var(--card-bg);
+  color: var(--text-primary);
+  border-color: var(--border-color);
+}
+
+.queues-table-skeleton .table thead th {
+  background-color: var(--bg-secondary);
+  color: var(--text-secondary);
+  border-color: var(--border-color);
+}
+
+.queues-table-skeleton .placeholder {
+  background-color: var(--bg-tertiary, #404040);
+  opacity: 0.7;
+  animation: placeholder-glow 2s ease-in-out infinite;
+}
+
+@keyframes placeholder-glow {
+  50% {
+    opacity: 0.4;
+  }
+}

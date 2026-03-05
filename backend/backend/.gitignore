@@ -31,3 +31,22 @@ build/
 
 ### VS Code ###
 .vscode/
+
+# Logs
+logs/
+*.log
+
+
+*.p12
+firebase-service-account.json
+
+# Build artifacts
+*.jar
+*.war
+*.ear
+
+# System files
+.DS_Store
+Thumbs.db
+
+.env

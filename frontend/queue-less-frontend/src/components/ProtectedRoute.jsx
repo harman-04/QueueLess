@@ -2,7 +2,7 @@
 import React from 'react';
 import { useSelector } from 'react-redux';
 import { Navigate, useLocation } from 'react-router-dom';
-import toast from 'react-hot-toast';
+import { toast } from 'react-toastify';  // changed
 
 const ProtectedRoute = ({ children, allowedRoles = [] }) => {
   const { token, role, isVerified } = useSelector((state) => state.auth);
@@ -16,7 +16,7 @@ const ProtectedRoute = ({ children, allowedRoles = [] }) => {
   // Check if user has the required role
   if (allowedRoles.length > 0 && !allowedRoles.includes(role)) {
     toast.error("You don't have permission to access this page");
-    
+
     // Redirect to appropriate dashboard based on role
     switch (role) {
       case 'ADMIN':
@@ -37,5 +37,5 @@ const ProtectedRoute = ({ children, allowedRoles = [] }) => {
 
   return children;
 };
-// Add this line at the end of the file
+
 export default ProtectedRoute;

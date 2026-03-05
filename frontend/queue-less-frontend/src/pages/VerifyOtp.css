@@ -1,0 +1,37 @@
+/* VerifyOtp.css – Dark Mode Support */
+
+.verify-otp-container {
+  max-width: 400px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+  text-align: center;
+}
+
+.verify-otp-container p {
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  margin-bottom: 1.5rem;
+}
+
+.verify-otp-container .text-muted {
+  color: var(--text-secondary) !important;
+}
+
+.verify-otp-container .btn-link {
+  color: var(--link-color);
+  font-weight: 500;
+  text-decoration: none;
+  transition: all 0.2s;
+}
+
+.verify-otp-container .btn-link:hover:not(:disabled) {
+  color: var(--link-hover);
+  text-decoration: underline;
+  transform: translateY(-1px);
+}
+
+.verify-otp-container .btn-link:disabled {
+  color: var(--text-secondary);
+  cursor: not-allowed;
+  opacity: 0.7;
+}

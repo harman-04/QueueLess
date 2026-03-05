@@ -1,16 +1,35 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Vite + React</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
+<head>
+  <meta charset="UTF-8" />
+<link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="shortcut icon" href="/favicon.ico" />
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+<meta name="apple-mobile-web-app-title" content="QueueLess" />
+<link rel="manifest" href="/site.webmanifest" />  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description"
+    content="QueueLess - Smart queue management system. Join queues, track wait times, and get notified when it's your turn." />
+  <title>QueueLess - Queue Management System</title>
+
+  <!-- Preconnect to Google Fonts for faster loading -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <!-- Leaflet CSS (for maps) -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+</head>
+
+<body>
+  <div id="root"></div>
+
+  <!-- Razorpay script for payments -->
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+
+  <!-- Main app script -->
+  <script type="module" src="/src/main.jsx"></script>
+</body>
+
 </html>

@@ -96,6 +96,7 @@ public class PaymentService {
                     .role(role)
                     .isPaid(false)
                     .createdAt(LocalDateTime.now())
+                    .createdByAdminId(role == Role.PROVIDER ? adminId : null)
                     .build();
 
             paymentRepository.save(payment);
@@ -159,6 +160,7 @@ public class PaymentService {
                     .isUsed(false)
                     .isProviderToken(isProviderToken)
                     .createdByAdminId(adminId)
+                    .createdAt(LocalDateTime.now())
                     .build();
 
             if (role == Role.PROVIDER && adminId != null) {

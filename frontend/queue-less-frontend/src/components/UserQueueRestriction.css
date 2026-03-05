@@ -1,0 +1,96 @@
+/* UserQueueRestriction.css – Dark Mode Support */
+
+.user-queue-restriction {
+  width: 100%;
+}
+
+/* Alert styling */
+.user-queue-restriction .alert {
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  border-radius: 12px;
+  padding: 1rem;
+  margin-bottom: 0;
+}
+
+.user-queue-restriction .alert-danger {
+  background-color: rgba(var(--danger-color-rgb), 0.15);
+  border-left: 4px solid var(--danger-color);
+}
+
+.user-queue-restriction .alert-warning {
+  background-color: rgba(255, 193, 7, 0.15);
+  border-left: 4px solid #ffc107;
+}
+
+.user-queue-restriction .alert p {
+  margin-bottom: 0.5rem;
+  color: var(--text-secondary);
+}
+
+.user-queue-restriction .alert strong {
+  color: var(--text-primary);
+  display: block;
+  margin-bottom: 0.25rem;
+}
+
+.user-queue-restriction .alert small.text-muted {
+  color: var(--text-secondary) !important;
+  display: block;
+  margin-top: 0.5rem;
+}
+
+/* Retry button */
+.user-queue-restriction .btn-outline-danger,
+.user-queue-restriction .btn-outline-warning {
+  border-width: 2px;
+  border-radius: 30px;
+  padding: 0.25rem 1rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.user-queue-restriction .btn-outline-danger {
+  border-color: var(--danger-color);
+  color: var(--danger-color);
+}
+
+.user-queue-restriction .btn-outline-danger:hover {
+  background-color: var(--danger-color);
+  color: white;
+  transform: translateY(-2px);
+}
+
+.user-queue-restriction .btn-outline-warning {
+  border-color: #ffc107;
+  color: #ffc107;
+}
+
+.user-queue-restriction .btn-outline-warning:hover {
+  background-color: #ffc107;
+  color: #212529;
+  transform: translateY(-2px);
+}
+
+/* Loading spinner */
+.user-queue-restriction .spinner-border {
+  color: var(--search-primary);
+  width: 1rem;
+  height: 1rem;
+  border-width: 2px;
+  margin-right: 0.5rem;
+}
+
+.user-queue-restriction .text-center {
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0;
+}

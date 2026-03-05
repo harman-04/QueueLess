@@ -1,0 +1,390 @@
+/* ProviderQueueManagement.css – Dark Mode Support */
+
+.provider-queue-container {
+    background-color: var(--bg-primary);
+    min-height: 100vh;
+    padding: 3rem 0;
+}
+
+/* Header */
+.provider-queue-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 3rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.provider-queue-header h1 {
+    font-weight: 700;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.provider-queue-header .btn-outline-danger {
+    border: 2px solid var(--danger-color);
+    color: var(--danger-color);
+    border-radius: 40px;
+    padding: 0.5rem 1.5rem;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+
+.provider-queue-header .btn-outline-danger:hover {
+    background-color: var(--danger-color);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 15px rgba(231, 76, 60, 0.3);
+}
+
+/* Cards */
+.provider-queue-card {
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    box-shadow: var(--shadow-lg);
+    margin-bottom: 3rem;
+}
+
+.provider-queue-card .card-body {
+    padding: 2rem;
+}
+
+.provider-queue-card h4 {
+    color: var(--text-secondary);
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+}
+
+/* Form elements */
+.provider-queue-card .form-control,
+.provider-queue-card .form-select {
+    background-color: var(--input-bg);
+    border: 2px solid var(--border-color);
+    color: var(--input-text);
+    border-radius: 12px;
+    padding: 0.75rem 1rem;
+    transition: all 0.2s;
+}
+
+.provider-queue-card .form-control:focus,
+.provider-queue-card .form-select:focus {
+    border-color: var(--search-primary);
+    box-shadow: 0 0 0 3px rgba(var(--search-primary-rgb), 0.2);
+    outline: none;
+}
+
+.provider-queue-card .form-check-input {
+    background-color: var(--input-bg);
+    border: 2px solid var(--border-color);
+    width: 1.2rem;
+    height: 1.2rem;
+    margin-right: 0.5rem;
+}
+
+.provider-queue-card .form-check-input:checked {
+    background-color: var(--search-primary);
+    border-color: var(--search-primary);
+}
+
+.provider-queue-card .form-check-label {
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    cursor: pointer;
+}
+
+.provider-queue-card small.text-muted {
+    color: var(--text-secondary) !important;
+    display: block;
+    margin-top: 0.2rem;
+}
+
+/* Create queue button */
+.provider-queue-card .btn-primary {
+    background: linear-gradient(145deg, var(--search-primary), #4a6fdc);
+    border: none;
+    border-radius: 12px;
+    font-weight: 600;
+    padding: 0.75rem 1.5rem;
+    transition: all 0.2s;
+    box-shadow: var(--shadow-sm);
+}
+
+.provider-queue-card .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(var(--search-primary-rgb), 0.4);
+}
+
+/* Queue cards grid */
+.queue-card {
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.queue-card:hover {
+    transform: translateY(-6px);
+    box-shadow: var(--shadow-xl);
+}
+
+.queue-card .card-body {
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 100%;
+}
+
+.queue-card .card-title {
+    color: var(--text-primary);
+    font-weight: 700;
+    font-size: 1.2rem;
+    margin-bottom: 0.5rem;
+}
+
+.queue-card .badge {
+    padding: 0.4rem 0.8rem;
+    border-radius: 30px;
+    font-weight: 600;
+    font-size: 0.75rem;
+}
+
+.queue-card .badge.bg-success {
+    background: linear-gradient(135deg, var(--success-color), #27ae60) !important;
+    color: white;
+}
+
+.queue-card .badge.bg-warning {
+    background: linear-gradient(135deg, #ffc107, #ffb300) !important;
+    color: #212529;
+}
+
+.queue-card .badge.bg-info {
+    background: linear-gradient(135deg, var(--search-primary), #4a6fdc) !important;
+    color: white;
+}
+
+.queue-card .badge.bg-danger {
+    background: linear-gradient(135deg, var(--danger-color), #c0392b) !important;
+    color: white;
+}
+
+.queue-card .card-text {
+    color: var(--text-secondary);
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.queue-card .card-text strong {
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+.queue-card .text-muted {
+    color: var(--text-secondary) !important;
+}
+
+/* Buttons on queue card */
+.queue-card .btn-outline-primary {
+    border: 2px solid var(--search-primary);
+    color: var(--search-primary);
+    background: transparent;
+    border-radius: 30px;
+    padding: 0.4rem 1rem;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+
+.queue-card .btn-outline-primary:hover {
+    background-color: var(--search-primary);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(var(--search-primary-rgb), 0.3);
+}
+
+.queue-card .btn-success {
+    background: linear-gradient(145deg, var(--success-color), #27ae60);
+    border: none;
+    color: white;
+    border-radius: 30px;
+    padding: 0.4rem 1rem;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+
+.queue-card .btn-success:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(var(--success-color-rgb), 0.4);
+}
+
+.queue-card .btn-warning {
+    background: linear-gradient(145deg, #ffc107, #ffb300);
+    border: none;
+    color: #212529;
+    border-radius: 30px;
+    padding: 0.4rem 1rem;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+
+.queue-card .btn-warning:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(255, 193, 7, 0.4);
+}
+
+.queue-card .btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Empty state alert */
+.provider-queue-container .alert-info {
+    background-color: rgba(var(--search-primary-rgb), 0.15);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    border-radius: 12px;
+    border-left: 4px solid var(--search-primary);
+}
+
+/* Loading spinner */
+.provider-queue-container .spinner-border {
+    color: var(--search-primary);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .provider-queue-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .provider-queue-card .card-body {
+        padding: 1.5rem;
+    }
+
+    .provider-queue-card .row.g-3 {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .provider-queue-card .col-md-3,
+    .provider-queue-card .col-md-2,
+    .provider-queue-card .col-md-2.d-grid {
+        width: 100%;
+    }
+
+    .provider-queue-card .btn-primary {
+        width: 100%;
+    }
+}
+
+.provider-queue-header .text-primary-icon {
+    color: var(--search-primary);
+}
+
+/* Ensure card text uses theme colors */
+.queue-card .card-text {
+    color: var(--text-secondary) !important;
+}
+
+.queue-card .card-text strong {
+    color: var(--text-primary) !important;
+    font-weight: 600;
+}
+
+/* Place text with icon */
+.queue-card .card-text svg {
+    color: var(--text-secondary);
+}
+
+/* Queue ID and token count */
+.queue-card .card-text.mb-1,
+.queue-card .card-text:not(.mb-1) {
+    color: var(--text-secondary);
+}
+
+.queue-card .badge.bg-success,
+.queue-card .badge.bg-info,
+.queue-card .badge.bg-danger {
+    color: white !important;
+}
+
+.queue-card .badge.bg-warning {
+    color: #212529 !important;
+    /* dark text for yellow badge */
+}
+
+/* Form controls */
+.provider-queue-card .form-control,
+.provider-queue-card .form-select {
+    background-color: var(--input-bg);
+    border: 2px solid var(--border-color);
+    color: var(--input-text);
+}
+
+.provider-queue-card .form-control::placeholder,
+.provider-queue-card .form-select::placeholder {
+    color: var(--text-secondary);
+    opacity: 0.7;
+}
+
+.provider-queue-card .form-control:focus,
+.provider-queue-card .form-select:focus {
+    border-color: var(--search-primary);
+    box-shadow: 0 0 0 3px rgba(var(--search-primary-rgb), 0.2);
+    outline: none;
+}
+
+.provider-queue-card .form-check-label {
+    color: var(--text-primary);
+}
+
+
+.provider-queue-container .alert-info {
+    background-color: rgba(var(--search-primary-rgb), 0.15);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    border-left: 4px solid var(--search-primary);
+}
+
+.queue-card .badge.bg-success,
+.queue-card .badge.bg-warning,
+.queue-card .badge.bg-info,
+.queue-card .badge.bg-danger {
+    font-weight: 600;
+}
+
+/* Force dark background on all cards inside provider queue container */
+.provider-queue-container .card {
+    background-color: var(--card-bg) !important;
+}
+
+.provider-queue-container .card .card-body {
+    background-color: transparent !important;
+}
+
+/* Ensure queue cards also use the dark background */
+.provider-queue-container .queue-card {
+    background-color: var(--card-bg) !important;
+}
+
+.provider-queue-card .form-control:disabled,
+.provider-queue-card .form-select:disabled {
+    background-color: var(--input-bg) !important;
+    color: var(--text-secondary) !important;
+    opacity: 0.7;
+    border-color: var(--border-color);
+    cursor: not-allowed;
+}

@@ -3,6 +3,13 @@ package com.queueless.backend.controller;
 import com.queueless.backend.dto.PlaceDTO;
 import com.queueless.backend.model.Place;
 import com.queueless.backend.service.PlaceService;
+import com.queueless.backend.security.annotations.AdminOnly;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -11,21 +18,18 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
-import com.queueless.backend.security.annotations.AdminOnly; // New import
-import com.queueless.backend.security.annotations.Authenticated; // New import
 
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 @Slf4j
 @RestController
 @RequestMapping("/api/places")
 @RequiredArgsConstructor
+@Tag(name = "Places", description = "Endpoints for managing places")
 public class PlaceController {
 
     private final PlaceService placeService;
@@ -37,9 +41,14 @@ public class PlaceController {
         return null;
     }
 
-    // Admins only: Create a new place
     @PostMapping
     @AdminOnly
+    @Operation(summary = "Create a new place", description = "Creates a new place. Only accessible by admin.")
+    @ApiResponse(responseCode = "200", description = "Place created successfully",
+            content = @Content(schema = @Schema(implementation = PlaceDTO.class)))
+    @ApiResponse(responseCode = "401", description = "Unauthorized")
+    @ApiResponse(responseCode = "403", description = "Forbidden – admin ID mismatch")
+    @ApiResponse(responseCode = "500", description = "Internal server error")
     public ResponseEntity<PlaceDTO> createPlace(@Valid @RequestBody PlaceDTO placeDTO) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String adminId = getUserIdFromAuthentication(authentication);
@@ -51,7 +60,6 @@ public class PlaceController {
 
         log.info("Request received to create place: {} by admin: {}", placeDTO, adminId);
 
-        // Ensure the adminId in DTO matches the authenticated admin
         if (!placeDTO.getAdminId().equals(adminId)) {
             log.warn("Unauthorized attempt to create place for adminId={} by {}", placeDTO.getAdminId(), adminId);
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
@@ -67,8 +75,11 @@ public class PlaceController {
         }
     }
 
-    // Public access: Get a specific place by ID
     @GetMapping("/{id}")
+    @Operation(summary = "Get place by ID", description = "Returns a single place by its ID. Public access.")
+    @ApiResponse(responseCode = "200", description = "Place found",
+            content = @Content(schema = @Schema(implementation = PlaceDTO.class)))
+    @ApiResponse(responseCode = "404", description = "Place not found")
     public ResponseEntity<PlaceDTO> getPlace(@PathVariable String id) {
         log.debug("Fetching place with ID: {}", id);
         try {
@@ -81,9 +92,11 @@ public class PlaceController {
         }
     }
 
-    // Admins only: Get all places managed by the authenticated admin
     @GetMapping("/admin/my-places")
     @AdminOnly
+    @Operation(summary = "Get my places", description = "Returns all places managed by the authenticated admin.")
+    @ApiResponse(responseCode = "200", description = "List of places")
+    @ApiResponse(responseCode = "401", description = "Unauthorized")
     public ResponseEntity<List<PlaceDTO>> getMyPlaces() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String adminId = getUserIdFromAuthentication(authentication);
@@ -102,9 +115,12 @@ public class PlaceController {
         }
     }
 
-    // Admins only: Get all places managed by a specific admin ID
     @GetMapping("/admin/{adminId}")
     @AdminOnly
+    @Operation(summary = "Get places by admin ID", description = "Returns all places for a specific admin. The authenticated admin must match the requested adminId.")
+    @ApiResponse(responseCode = "200", description = "List of places")
+    @ApiResponse(responseCode = "401", description = "Unauthorized")
+    @ApiResponse(responseCode = "403", description = "Forbidden – admin ID mismatch")
     public ResponseEntity<List<PlaceDTO>> getPlacesByAdmin(@PathVariable String adminId) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null) {
@@ -129,8 +145,9 @@ public class PlaceController {
         }
     }
 
-    // Public access: Get places by a specified type
     @GetMapping("/type/{type}")
+    @Operation(summary = "Get places by type", description = "Returns all places of a given type. Public access.")
+    @ApiResponse(responseCode = "200", description = "List of places")
     public ResponseEntity<List<PlaceDTO>> getPlacesByType(@PathVariable String type) {
         log.debug("Fetching places of type: {}", type);
         List<Place> places = placeService.getPlacesByType(type);
@@ -138,21 +155,27 @@ public class PlaceController {
         return ResponseEntity.ok(places.stream().map(PlaceDTO::fromEntity).collect(Collectors.toList()));
     }
 
-    // Public access: Get nearby places
     @GetMapping("/nearby")
+    @Operation(summary = "Get nearby places", description = "Returns places within a given radius (km) from the specified coordinates. Public access.")
+    @ApiResponse(responseCode = "200", description = "List of nearby places")
     public ResponseEntity<List<PlaceDTO>> getNearbyPlaces(
-            @RequestParam double longitude,
-            @RequestParam double latitude,
-            @RequestParam(defaultValue = "5") double radius) {
+            @Parameter(description = "Longitude") @RequestParam double longitude,
+            @Parameter(description = "Latitude") @RequestParam double latitude,
+            @Parameter(description = "Radius in kilometers") @RequestParam(defaultValue = "5") double radius) {
         log.debug("Searching nearby places [lon={}, lat={}, radius={}km]", longitude, latitude, radius);
         List<Place> places = placeService.getNearbyPlaces(longitude, latitude, radius);
         log.info("Found {} nearby places", places.size());
         return ResponseEntity.ok(places.stream().map(PlaceDTO::fromEntity).collect(Collectors.toList()));
     }
 
-    // Admins only: Update a place
     @PutMapping("/{id}")
     @AdminOnly
+    @Operation(summary = "Update a place", description = "Updates an existing place. Only the owning admin can update.")
+    @ApiResponse(responseCode = "200", description = "Place updated",
+            content = @Content(schema = @Schema(implementation = PlaceDTO.class)))
+    @ApiResponse(responseCode = "401", description = "Unauthorized")
+    @ApiResponse(responseCode = "403", description = "Forbidden – not the owner")
+    @ApiResponse(responseCode = "404", description = "Place not found")
     public ResponseEntity<PlaceDTO> updatePlace(@PathVariable String id, @Valid @RequestBody PlaceDTO placeDTO) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || authentication.getName() == null) {
@@ -164,7 +187,6 @@ public class PlaceController {
         log.info("Updating place with ID: {} | Data: {} by admin: {}", id, placeDTO, adminId);
 
         try {
-            // Verify the place belongs to the authenticated admin
             if (!placeService.isPlaceOwnedByAdmin(id, adminId)) {
                 log.warn("Unauthorized attempt to update place={} by {}", id, adminId);
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
@@ -179,9 +201,13 @@ public class PlaceController {
         }
     }
 
-    // Admins only: Delete a place
     @DeleteMapping("/{id}")
     @AdminOnly
+    @Operation(summary = "Delete a place", description = "Deletes an existing place. Only the owning admin can delete.")
+    @ApiResponse(responseCode = "200", description = "Place deleted")
+    @ApiResponse(responseCode = "401", description = "Unauthorized")
+    @ApiResponse(responseCode = "403", description = "Forbidden – not the owner")
+    @ApiResponse(responseCode = "404", description = "Place not found")
     public ResponseEntity<Void> deletePlace(@PathVariable String id) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || authentication.getName() == null) {
@@ -193,7 +219,6 @@ public class PlaceController {
         log.warn("Request received to delete place with ID: {} by admin: {}", id, adminId);
 
         try {
-            // Verify the place belongs to the authenticated admin
             if (!placeService.isPlaceOwnedByAdmin(id, adminId)) {
                 log.warn("Unauthorized attempt to delete place={} by {}", id, adminId);
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
@@ -208,8 +233,9 @@ public class PlaceController {
         }
     }
 
-    // Public access: Get all places
     @GetMapping
+    @Operation(summary = "Get all places (non-paginated)", description = "Returns all places. Public access. Consider using /paginated for large datasets.")
+    @ApiResponse(responseCode = "200", description = "List of all places")
     public ResponseEntity<List<PlaceDTO>> getAllPlaces() {
         log.debug("Fetching all places");
         List<Place> places = placeService.getAllPlaces();
@@ -217,14 +243,23 @@ public class PlaceController {
         return ResponseEntity.ok(places.stream().map(PlaceDTO::fromEntity).collect(Collectors.toList()));
     }
 
-    // src/main/java/com/queueless/backend/controller/PlaceController.java
-
     @GetMapping("/paginated")
+    @Operation(summary = "Get paginated places", description = "Returns a paginated list of places. Public access.")
+    @ApiResponse(responseCode = "200", description = "Paginated list of places")
     public ResponseEntity<Page<PlaceDTO>> getPlacesPaginated(
             @PageableDefault(size = 20, sort = "name") Pageable pageable) {
         log.debug("Fetching paginated places: page={}, size={}", pageable.getPageNumber(), pageable.getPageSize());
         Page<Place> placePage = placeService.getAllPlacesPaginated(pageable);
         Page<PlaceDTO> dtoPage = placePage.map(PlaceDTO::fromEntity);
         return ResponseEntity.ok(dtoPage);
+    }
+
+    @GetMapping("/top-rated")
+    @Operation(summary = "Get top-rated places", description = "Returns a limited number of places with the highest average rating.")
+    public ResponseEntity<List<PlaceDTO>> getTopRatedPlaces(@RequestParam(defaultValue = "3") int limit) {
+        log.info("Fetching top {} rated places", limit);
+        List<Place> places = placeService.getTopRatedPlaces(limit);
+        List<PlaceDTO> dtos = places.stream().map(PlaceDTO::fromEntity).collect(Collectors.toList());
+        return ResponseEntity.ok(dtos);
     }
 }

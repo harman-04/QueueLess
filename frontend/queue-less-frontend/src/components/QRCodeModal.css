@@ -1,0 +1,122 @@
+/* QRCodeModal.css – Dark Mode Support for QR Code Modal */
+
+.qr-modal .modal-content {
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 20px;
+  box-shadow: var(--shadow-xl);
+  color: var(--text-primary);
+}
+
+.qr-modal .modal-header {
+  border-bottom: 1px solid var(--border-color);
+  padding: 1.25rem 1.5rem;
+}
+
+.qr-modal .modal-title {
+  font-weight: 700;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.qr-modal .modal-title svg {
+  color: var(--search-primary);
+}
+
+.qr-modal .modal-header .btn-close {
+  filter: invert(var(--dark-mode-invert, 0));
+}
+
+.qr-modal .modal-body {
+  padding: 2rem;
+  color: var(--text-primary);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 250px;
+}
+
+/* Loading spinner */
+.qr-modal .spinner-border {
+  color: var(--search-primary);
+  width: 3rem;
+  height: 3rem;
+}
+
+/* Alert styling */
+.qr-modal .alert-danger {
+  background-color: rgba(var(--danger-color-rgb), 0.15);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  border-left: 4px solid var(--danger-color);
+  border-radius: 12px;
+  width: 100%;
+}
+
+/* QR image */
+.qr-modal img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 16px;
+  box-shadow: var(--shadow-md);
+  background-color: white; /* QR codes usually have white background */
+  padding: 0.5rem;
+}
+
+.qr-modal .modal-footer {
+  border-top: 1px solid var(--border-color);
+  padding: 1rem 1.5rem 1.5rem;
+  gap: 0.5rem;
+}
+
+/* Secondary button (Close) */
+.qr-modal .btn-secondary {
+  background: var(--bg-tertiary, #e9ecef);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  border-radius: 40px;
+  padding: 0.5rem 1.5rem;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.dark-mode .qr-modal .btn-secondary {
+  background: #404040;
+  border-color: var(--border-color);
+  color: var(--text-primary);
+}
+
+.qr-modal .btn-secondary:hover {
+  background: var(--border-color);
+  transform: translateY(-2px);
+}
+
+/* Primary button (Download) */
+.qr-modal .btn-primary {
+  background: linear-gradient(145deg, var(--search-primary), #4a6fdc);
+  border: none;
+  color: white;
+  border-radius: 40px;
+  padding: 0.5rem 1.5rem;
+  font-weight: 600;
+  box-shadow: var(--shadow-sm);
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.qr-modal .btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 15px rgba(var(--search-primary-rgb), 0.4);
+}
+
+/* Responsive */
+@media (max-width: 576px) {
+  .qr-modal .modal-body {
+    padding: 1.5rem;
+  }
+}

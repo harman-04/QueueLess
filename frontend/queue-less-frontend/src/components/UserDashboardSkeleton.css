@@ -1,0 +1,38 @@
+/* UserDashboardSkeleton.css – Dark Mode Support */
+
+/* Skeleton container */
+.user-dashboard-skeleton {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  min-height: 100vh;
+  padding: 2rem 0;
+}
+
+/* Cards */
+.user-dashboard-skeleton .card {
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  box-shadow: var(--shadow-md);
+}
+
+/* Placeholders */
+.user-dashboard-skeleton .placeholder {
+  background-color: var(--bg-tertiary, #404040);
+  opacity: 0.7;
+  animation: placeholder-glow 2s ease-in-out infinite;
+}
+
+@keyframes placeholder-glow {
+  50% {
+    opacity: 0.4;
+  }
+}
+
+/* Image placeholder */
+.user-dashboard-skeleton .skeleton-image {
+  height: 120px;
+  background-color: var(--bg-secondary) !important;
+  border-top-left-radius: 16px;
+  border-top-right-radius: 16px;
+}

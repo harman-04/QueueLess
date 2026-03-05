@@ -1,23 +1,28 @@
 package com.queueless.backend.security;
 
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Component;
-
-import java.util.HashSet;
-import java.util.Set;
 
 @Component
 public class OtpVerificationStore {
-    private final Set<String> verifiedEmails = new HashSet<>();
 
-    public void markVerified(String email) {
-        verifiedEmails.add(email);
-    }
+    private static final String CACHE_NAME = "verifiedEmails";
 
+    @Cacheable(value = CACHE_NAME, key = "#email", unless = "#result == false")
     public boolean isVerified(String email) {
-        return verifiedEmails.contains(email);
+        // If not present in cache, return false
+        return false;
     }
 
+    @CachePut(value = CACHE_NAME, key = "#email")
+    public boolean markVerified(String email) {
+        return true;
+    }
+
+    @CacheEvict(value = CACHE_NAME, key = "#email")
     public void remove(String email) {
-        verifiedEmails.remove(email);
+        // Evict from cache
     }
 }

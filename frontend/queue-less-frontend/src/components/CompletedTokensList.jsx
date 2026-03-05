@@ -1,7 +1,8 @@
 import React from 'react';
 import { Card, Accordion, Badge } from 'react-bootstrap';
 import { FaUserCheck, FaClock, FaCalendarAlt, FaHistory } from 'react-icons/fa';
-import './CompletedTokensList.css'; // NEW CSS FILE
+import './CompletedTokensList.css'; 
+import { getShortTokenId } from '../utils/tokenUtils';
 
 const CompletedTokensList = ({ completedTokens }) => {
     if (!completedTokens || completedTokens.length === 0) {
@@ -42,7 +43,7 @@ const CompletedTokensList = ({ completedTokens }) => {
                                 <Card key={token.tokenId} className="completed-token-card">
                                     <Card.Body>
                                         <div className="completed-card-header-info">
-                                            <h4 className="completed-token-number">#{token.tokenId}</h4>
+                                            <h4 className="completed-token-number">#{getShortTokenId(token.tokenId)}</h4>
                                             <Badge bg="success" className="completed-status-badge">
                                                 <FaUserCheck className="me-1" /> Completed
                                             </Badge>

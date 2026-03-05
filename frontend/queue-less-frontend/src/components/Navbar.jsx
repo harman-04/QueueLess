@@ -1,11 +1,17 @@
+// src/components/Navbar.jsx
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { Button, NavDropdown, Badge, Collapse } from 'react-bootstrap';
 import { logout } from '../redux/authSlice';
 import WebSocketService from '../services/websocketService';
-import { FaSearch } from 'react-icons/fa';
+import { FaSearch, FaQrcode } from 'react-icons/fa';
 import "./Navbar.css";
+import QRScannerModal from './QRScannerModal';
+import { toggleDarkMode } from '../redux/authSlice';
+import { toast } from "react-toastify";
+import { messaging, getToken } from '../firebase';
+import axiosInstance from '../utils/axiosInstance';
 
 const Navbar = () => {
   const navigate = useNavigate();
@@ -16,8 +22,11 @@ const Navbar = () => {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const logoRef = useRef(null);
+  const [showScanner, setShowScanner] = useState(false);
 
   const isAuthenticated = !!token;
+  const { preferences } = useSelector((state) => state.auth);
+
 
   useEffect(() => {
     const handleScroll = () => {
@@ -29,19 +38,30 @@ const Navbar = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const handleLogout = () => {
+const handleLogout = async () => {
+  try {
+    // Get current FCM token and remove it
+    const currentToken = await getToken(messaging, { vapidKey: import.meta.env.VITE_FIREBASE_VAPID_KEY });
+    if (currentToken) {
+      await axiosInstance.delete(`/user/fcm-token?token=${encodeURIComponent(currentToken)}`);
+    }
+  } catch (error) {
+    console.error('Failed to remove FCM token:', error);
+  } finally {
     WebSocketService.disconnect();
     dispatch(logout());
     navigate('/');
-  };
+    toast.info("You have been logged out.");
+  }
+};
 
   const getInitials = (fullName) =>
     fullName
       ? fullName
-          .split(' ')
-          .map((n) => n[0])
-          .join('')
-          .toUpperCase()
+        .split(' ')
+        .map((n) => n[0])
+        .join('')
+        .toUpperCase()
       : '';
 
   return (
@@ -117,6 +137,14 @@ const Navbar = () => {
                       Advanced Search
                     </Button>
 
+                    <Button
+                      onClick={() => setShowScanner(true)}
+                      className="ql-nav-btn-outline"
+                    >
+                      <FaQrcode className="me-1" />
+                      Scan QR
+                    </Button>
+
                     {/* Corrected Favorites button using Bootstrap Icons */}
                     <Button
                       className="ql-nav-btn-outline"
@@ -189,15 +217,19 @@ const Navbar = () => {
                         <i className="bi bi-person-circle me-2"></i>
                         Profile
                       </NavDropdown.Item>
-                      <NavDropdown.Item onClick={() => navigate('/settings')} className="ql-dropdown-item">
-                        <i className="bi bi-gear-wide-connected me-2"></i>
-                        Settings
+
+                      <NavDropdown.Item onClick={() => dispatch(toggleDarkMode())} className="ql-dropdown-item">
+                        <i className="bi bi-moon-stars me-2"></i>
+                        {preferences.darkMode ? 'Light Mode' : 'Dark Mode'}
                       </NavDropdown.Item>
+                      {/* Settings link removed – no route yet */}
                       <NavDropdown.Divider className="ql-dropdown-divider" />
                       <NavDropdown.Item onClick={handleLogout} className="ql-dropdown-item">
                         <i className="bi bi-box-arrow-right me-2"></i>
                         Logout
                       </NavDropdown.Item>
+
+
                     </NavDropdown>
                   </>
                 )}
@@ -208,7 +240,8 @@ const Navbar = () => {
       </nav>
 
       {/* Spacer so content is never hidden */}
-      {!open && <div style={{ height: '72px' }}></div>}
+     
+      <QRScannerModal show={showScanner} onHide={() => setShowScanner(false)} />
     </>
   );
 };

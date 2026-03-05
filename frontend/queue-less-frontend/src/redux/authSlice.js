@@ -9,7 +9,15 @@ const getInitialState = () => {
   const profileImageUrl = localStorage.getItem('profileImageUrl');
   const placeId = localStorage.getItem('placeId');
   const isVerified = localStorage.getItem('isVerified') === 'true';
-  const preferences = JSON.parse(localStorage.getItem('preferences') || 'null');
+ const preferences = JSON.parse(localStorage.getItem('preferences') || 'null') || {
+    emailNotifications: true,
+    smsNotifications: false,
+        pushNotifications: true,   
+    language: 'en',
+    defaultSearchRadius: 5,
+    darkMode: false,
+    favoritePlaceIds: []
+  };
   const ownedPlaceIds = JSON.parse(localStorage.getItem('ownedPlaceIds') || '[]');
 
   return {
@@ -20,14 +28,7 @@ const getInitialState = () => {
     profileImageUrl: profileImageUrl || null,
     placeId: placeId || null,
     isVerified: isVerified || false,
-    preferences: preferences || {
-      emailNotifications: true,
-      smsNotifications: false,
-      language: 'en',
-      defaultSearchRadius: 5,
-      darkMode: false,
-      favoritePlaceIds: []
-    },
+     preferences,
     ownedPlaceIds: ownedPlaceIds || []
   };
 };
@@ -48,6 +49,7 @@ const authSlice = createSlice({
       state.preferences = preferences || {
         emailNotifications: true,
         smsNotifications: false,
+        pushNotifications: true,
         language: 'en',
         defaultSearchRadius: 5,
         darkMode: false,
@@ -116,6 +118,7 @@ const authSlice = createSlice({
       state.preferences = {
         emailNotifications: true,
         smsNotifications: false,
+        pushNotifications: true,
         language: 'en',
         defaultSearchRadius: 5,
         darkMode: false,
@@ -137,8 +140,12 @@ const authSlice = createSlice({
       // Clear any other stored data that might be related to the user session
       localStorage.removeItem('dismissedFeedbackPrompts');
     },
+    toggleDarkMode: (state) => {
+      state.preferences.darkMode = !state.preferences.darkMode;
+      localStorage.setItem('preferences', JSON.stringify(state.preferences));
+    },
   },
 });
 
-export const { loginSuccess, updateProfile, updatePreferences, logout } = authSlice.actions;
+export const { loginSuccess, updateProfile, updatePreferences, toggleDarkMode, logout } = authSlice.actions;
 export default authSlice.reducer;

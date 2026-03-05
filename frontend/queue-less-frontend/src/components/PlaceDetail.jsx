@@ -4,7 +4,9 @@ import { useDispatch, useSelector } from "react-redux";
 import { useParams, useNavigate } from "react-router-dom";
 import { fetchPlaceById } from "../redux/placeSlice";
 import { fetchServicesByPlace } from "../redux/serviceSlice";
+import BestTimeToJoin from '../components/BestTimeToJoin';
 import { Card, Button, Spinner, Alert, Row, Col, Badge } from "react-bootstrap";
+import './PlaceDetail.css';
 import {
   FaMapMarkerAlt,
   FaStar,
@@ -35,7 +37,7 @@ const PlaceDetail = () => {
     loading: servicesLoading,
     error: servicesError,
   } = useSelector((state) => state.services);
-  const { token, role } = useSelector((state) => state.auth);
+  const { token, role, id: userId } = useSelector((state) => state.auth);
   const [joiningQueue, setJoiningQueue] = useState(false);
   const [queues, setQueues] = useState([]);
 
@@ -120,7 +122,7 @@ const PlaceDetail = () => {
   };
 
   return (
-    <div className="container py-4">
+    <div className="container py-4 place-detail-container ">
       <Row>
         <Col md={8}>
           <Card className="mb-4">
@@ -261,8 +263,8 @@ const PlaceDetail = () => {
             </>
           )}
         </Col>
-        <Col md={4}>
-          <Card>
+        <Col md={4} >
+          <Card >
             <Card.Header>
               <h5>Services</h5>
             </Card.Header>
@@ -282,8 +284,8 @@ const PlaceDetail = () => {
                   <div key={service.id} className="mb-3 p-2 border rounded">
                     <h6>{service.name}</h6>
                     <p className="text-muted small">{service.description}</p>
-                    <div className="d-flex justify-content-between align-items-center">
-                      <div>
+                    <div className="d-flex justify-content-between align-items-center ">
+                      <div >
                         <Badge bg="info" className="me-2">
                           <FaClock className="me-1" />{" "}
                           {service.averageServiceTime} mins
@@ -294,7 +296,7 @@ const PlaceDetail = () => {
                           </Badge>
                         )}
                         {service.emergencySupport && (
-                          <Badge bg="danger">
+                          <Badge bg="danger" className="mt-4">
                             <FaUsers className="me-1" /> Emergency
                           </Badge>
                         )}
@@ -327,14 +329,13 @@ const PlaceDetail = () => {
                           ` • ~${queue.estimatedWaitTime} min wait`}
                       </div>
                     )}
+                    {queue && <BestTimeToJoin queueId={queue.id} />}
                   </div>
                 );
               })}
               {role === "ADMIN" &&
                 currentPlace &&
-                currentPlace.adminId &&
-                currentPlace.adminId.toString() ===
-                  localStorage.getItem("userId") && (
+                currentPlace.adminId === userId && (
                   <Button
                     variant="outline-primary"
                     className="w-100 mt-3"

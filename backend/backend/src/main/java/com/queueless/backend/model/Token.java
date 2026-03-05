@@ -25,7 +25,7 @@ public class Token {
     private String createdForEmail;
     private boolean isProviderToken;
     private String providerEmail;
-
+    private LocalDateTime createdAt;
     // New fields to track provider token ownership
     private String createdByAdminId; // For PROVIDER tokens: which admin purchased this token
 }

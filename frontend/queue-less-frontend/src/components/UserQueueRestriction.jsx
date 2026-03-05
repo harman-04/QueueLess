@@ -3,6 +3,7 @@ import { useSelector } from 'react-redux';
 import { Alert, Button, Spinner } from 'react-bootstrap';
 import { FaClock, FaInfoCircle, FaSync } from 'react-icons/fa';
 import axiosInstance from '../utils/axiosInstance';
+import './UserQueueRestriction.css';
 
 const UserQueueRestriction = ({ onRestrictionCheck, queueId }) => {
   const [restriction, setRestriction] = useState(null);
@@ -68,31 +69,34 @@ const UserQueueRestriction = ({ onRestrictionCheck, queueId }) => {
   if (!restriction) return null;
 
   if (!restriction.canJoinQueue) {
-    const canJoinAfter = new Date(restriction.canJoinAfter).toLocaleString();
-    return (
-      <Alert variant="danger" className="my-3">
-        <FaInfoCircle className="me-2" />
-        <strong>Queue Join Restricted</strong>
-        <p className="mb-1">{restriction.restrictionReason}</p>
-        <small className="text-muted">
-          You can join another queue after: {canJoinAfter}
-        </small>
-        <Button variant="outline-danger" size="sm" className="ms-2 mt-2" onClick={checkRestriction}>
-          <FaSync /> Check Again
-        </Button>
-      </Alert>
-    );
-  }
+    let timeMessage = null;
+    if (restriction.canJoinAfter) {
+        try {
+            const canJoinAfter = new Date(restriction.canJoinAfter).toLocaleString();
+            timeMessage = (
+                <small className="text-muted">
+                    You can join another queue after: {canJoinAfter}
+                </small>
+            );
+        } catch (e) {
+            console.error("Invalid date format for canJoinAfter", restriction.canJoinAfter);
+        }
+    }
 
-  return (
-    <Alert variant="success" className="my-3">
-      <FaInfoCircle className="me-2" />
-      You can join this queue
-      <Button variant="outline-success" size="sm" className="ms-2" onClick={checkRestriction}>
-        <FaSync /> Refresh Status
-      </Button>
-    </Alert>
-  );
+    return (   <div className="user-queue-restriction">
+        <Alert variant="danger" className="my-3">
+            <FaInfoCircle className="me-2" />
+            <strong>Queue Join Restricted</strong>
+            <p className="mb-1">{restriction.restrictionReason}</p>
+            {timeMessage}
+            <Button variant="outline-danger" size="sm" className="ms-2 mt-2" onClick={checkRestriction}>
+                <FaSync /> Check Again
+            </Button>
+        </Alert>
+        </div>
+    );
+}
+
 };
 
 export default UserQueueRestriction;

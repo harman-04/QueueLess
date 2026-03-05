@@ -1,0 +1,42 @@
+/* BestTimeToJoin.css */
+.best-time-card {
+  margin-top: 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  overflow: hidden;
+  background-color: var(--card-bg);
+}
+
+.best-time-card .card-header {
+  background-color: var(--card-bg);
+  color: var(--text-primary);
+  font-weight: 600;
+  border-bottom: 1px solid var(--border-color);
+  padding: 0.75rem 1.25rem;
+}
+
+.best-time-card .card-body {
+  background-color: var(--card-bg);
+  padding: 1.25rem;
+}
+
+.best-time-card .card-body p {
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+}
+
+.best-time-card .list-group-item {
+  background-color: var(--card-bg);
+  border-color: var(--border-color);
+  color: var(--text-primary);
+  padding: 0.75rem 1.25rem;
+}
+
+.best-time-card .list-group-item span:first-child {
+  color: var(--text-primary);
+}
+
+.best-time-card .text-success {
+  color: var(--success-color) !important;
+  font-weight: 500;
+}

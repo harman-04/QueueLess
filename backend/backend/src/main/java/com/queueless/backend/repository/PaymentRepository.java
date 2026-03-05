@@ -2,7 +2,6 @@ package com.queueless.backend.repository;
 
 import com.queueless.backend.model.Payment;
 import org.springframework.data.mongodb.repository.MongoRepository;
-
 import java.util.List;
 import java.util.Optional;
 

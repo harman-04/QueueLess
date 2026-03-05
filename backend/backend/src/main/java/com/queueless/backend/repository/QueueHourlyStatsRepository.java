@@ -9,4 +9,5 @@ import java.util.List;
 public interface QueueHourlyStatsRepository extends MongoRepository<QueueHourlyStats, String> {
     List<QueueHourlyStats> findByQueueIdAndHourBetween(String queueId, LocalDateTime start, LocalDateTime end);
     void deleteByHourBefore(LocalDateTime cutoff);
+    List<QueueHourlyStats> findByQueueIdInAndHourBetween(List<String> queueIds, LocalDateTime start, LocalDateTime end);
 }

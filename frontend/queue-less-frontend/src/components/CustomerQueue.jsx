@@ -1,7 +1,7 @@
+// src/components/CustomerQueue.jsx
 import React, { useState, useEffect } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import { useSelector } from "react-redux";
 import { useParams, useNavigate } from "react-router-dom";
-import axios from "axios";
 import { toast } from "react-toastify";
 import {
   FaUserPlus,
@@ -18,22 +18,23 @@ import {
   FaExclamationCircle,
   FaHandPointRight,
   FaInfoCircle,
-  FaFileMedical
+  FaFileMedical,
+  FaQrcode
 } from "react-icons/fa";
 import { Modal, Button, Form } from "react-bootstrap";
 import { normalizeQueue } from "../utils/normalizeQueue";
 import "animate.css/animate.min.css";
 import "./CustomerQueue.css";
 import FeedbackPrompt from "./FeedbackPrompt";
+import { getShortTokenId } from "../utils/tokenUtils";
 import UserQueueRestriction from "./UserQueueRestriction";
-
-const API_BASE_URL = "https://localhost:8443/api/queues";
+import NotificationModal from "./NotificationModal";
+import axiosInstance from "../utils/axiosInstance"; 
 
 const CustomerQueue = () => {
   const { queueId } = useParams();
-  const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { id: userId, token, role, name } = useSelector((state) => state.auth);
+  const { id: userId, token } = useSelector((state) => state.auth);
 
   const [queue, setQueue] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -52,11 +53,12 @@ const CustomerQueue = () => {
     visibleToAdmin: true
   });
   const [userToken, setUserToken] = useState(null);
-  const [refreshInterval, setRefreshInterval] = useState(null);
   const [isTokenExpired, setIsTokenExpired] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
   const [canJoinQueue, setCanJoinQueue] = useState(true);
   const [showExpiredMessage, setShowExpiredMessage] = useState(false);
+  const [showNotification, setShowNotification] = useState(false);
+  const [notification, setNotification] = useState({ title: '', message: '', variant: 'danger' });
 
   useEffect(() => {
     if (!queueId) {
@@ -66,10 +68,7 @@ const CustomerQueue = () => {
 
     const fetchQueue = async () => {
       try {
-        const response = await axios.get(`${API_BASE_URL}/${queueId}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-
+        const response = await axiosInstance.get(`/queues/${queueId}`);
         const normalizedQueue = normalizeQueue(response.data);
         setQueue(normalizedQueue);
 
@@ -114,44 +113,65 @@ const CustomerQueue = () => {
     fetchQueue();
 
     const interval = setInterval(fetchQueue, 5000);
-    setRefreshInterval(interval);
-
-    return () => {
-      if (interval) clearInterval(interval);
-    };
-  }, [queueId, token, navigate, userId, userToken?.tokenId]);
+    return () => clearInterval(interval);
+  }, [queueId, navigate, userId, userToken?.tokenId]);
 
   useEffect(() => {
-  const checkFeedbackEligibility = async () => {
-    
-    console.log("Checking feedback eligibility for:", userToken);
-      // Read the dismissed tokens from local storage
-    const dismissedTokens = JSON.parse(localStorage.getItem('dismissedFeedbackPrompts') || '[]');
-    const isDismissed = dismissedTokens.includes(userToken?.tokenId);
+    const handleEmergencyApproval = (event) => {
+      const { tokenId, approved, message } = event.detail;
+      setNotification({
+        title: approved ? 'Emergency Approved' : 'Emergency Rejected',
+        message: message || (approved ? 'Your emergency token has been approved!' : 'Your emergency request was rejected.'),
+        variant: approved ? 'success' : 'danger'
+      });
+      setShowNotification(true);
+    };
+    window.addEventListener('emergency-approval', handleEmergencyApproval);
+    return () => window.removeEventListener('emergency-approval', handleEmergencyApproval);
+  }, []);
 
-    if (userToken?.status === "COMPLETED" && !isDismissed) {
-      try {
-        const response = await axios.get(
-          `https://localhost:8443/api/feedback/token/${userToken.tokenId}`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        console.log("Feedback already provided:", response.data);
-        setShowFeedback(false);
-      } catch (error) {
-        if (error.response?.status === 404) {
-          console.log("Feedback not provided yet. Showing prompt.");
-          setShowFeedback(true);
-        } else {
-          console.error("Error checking feedback eligibility:", error);
-          setShowFeedback(true);
-        }
+  useEffect(() => {
+    const handleTokenCancelled = (event) => {
+      const { tokenId, reason, queueId: cancelledQueueId } = event.detail;
+      if (cancelledQueueId === queueId && userToken?.tokenId === tokenId) {
+        setNotification({
+          title: 'Token Cancelled',
+          message: `Your token ${tokenId} has been cancelled.\nReason: ${reason}`,
+          variant: 'danger'
+        });
+        setShowNotification(true);
+        setUserToken(null);
+        setIsTokenExpired(false);
+        setShowExpiredMessage(false);
       }
-    } else {
-      setShowFeedback(false);
-    }
-  };
-  checkFeedbackEligibility();
-}, [userToken, token]);
+    };
+    window.addEventListener('token-cancelled', handleTokenCancelled);
+    return () => window.removeEventListener('token-cancelled', handleTokenCancelled);
+  }, [queueId, userToken]);
+
+  useEffect(() => {
+    const checkFeedbackEligibility = async () => {
+      const dismissedTokens = JSON.parse(localStorage.getItem('dismissedFeedbackPrompts') || '[]');
+      const isDismissed = dismissedTokens.includes(userToken?.tokenId);
+
+      if (userToken?.status === "COMPLETED" && !isDismissed) {
+        try {
+          await axiosInstance.get(`/feedback/token/${userToken.tokenId}`);
+          setShowFeedback(false);
+        } catch (error) {
+          if (error.response?.status === 404) {
+            setShowFeedback(true);
+          } else {
+            console.error("Error checking feedback eligibility:", error);
+            setShowFeedback(true);
+          }
+        }
+      } else {
+        setShowFeedback(false);
+      }
+    };
+    checkFeedbackEligibility();
+  }, [userToken, token]);
 
   const handleAddToken = async (isGroup = false, isEmergency = false, withDetails = false) => {
     if (!userId || !token) {
@@ -182,40 +202,30 @@ const CustomerQueue = () => {
 
     setAddingToken(true);
     try {
-      let endpoint = `${API_BASE_URL}/${queueId}/add-token`;
+      let endpoint = `/queues/${queueId}/add-token`;
       let requestData = null;
 
       if (isGroup) {
-        endpoint = `${API_BASE_URL}/${queueId}/add-group-token`;
-        requestData = { 
-          groupMembers: groupMembers.filter(m => m.name && m.details) 
-        };
+        endpoint = `/queues/${queueId}/add-group-token`;
+        requestData = { groupMembers: groupMembers.filter(m => m.name && m.details) };
       } else if (isEmergency) {
-        endpoint = `${API_BASE_URL}/${queueId}/add-emergency-token`;
+        endpoint = `/queues/${queueId}/add-emergency-token`;
         requestData = { emergencyDetails };
       }
 
-      const response = await axios.post(
-        endpoint,
-        requestData,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      
+      const response = await axiosInstance.post(endpoint, requestData);
       const newTokenId = response.data.tokenId;
       const tokenType = isGroup ? "group" : isEmergency ? "emergency" : "regular";
-      
+
       toast.success(`You have joined the queue! Your ${tokenType} token is ${newTokenId}.`);
-      
       setUserToken(response.data);
-      
+
       setShowGroupForm(false);
       setShowEmergencyForm(false);
       setGroupMembers([{ name: "", details: "" }]);
       setEmergencyDetails("");
-      
-      const queueResponse = await axios.get(`${API_BASE_URL}/${queueId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+
+      const queueResponse = await axiosInstance.get(`/queues/${queueId}`);
       setQueue(normalizeQueue(queueResponse.data));
     } catch (error) {
       console.error("Error adding token:", error);
@@ -236,14 +246,12 @@ const CustomerQueue = () => {
   const handleAddTokenWithDetails = async () => {
     setAddingToken(true);
     try {
-      const response = await axios.post(
-        `${API_BASE_URL}/${queueId}/add-token-with-details`,
-        userDetails,
-        { headers: { Authorization: `Bearer ${token}` } }
+      const response = await axiosInstance.post(
+        `/queues/${queueId}/add-token-with-details`,
+        userDetails
       );
-      
+
       toast.success(`You have joined the queue! Your token is ${response.data.tokenId}.`);
-      
       setUserToken(response.data);
       setShowDetailsForm(false);
       setUserDetails({
@@ -254,10 +262,8 @@ const CustomerQueue = () => {
         visibleToProvider: true,
         visibleToAdmin: true
       });
-      
-      const queueResponse = await axios.get(`${API_BASE_URL}/${queueId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+
+      const queueResponse = await axiosInstance.get(`/queues/${queueId}`);
       setQueue(normalizeQueue(queueResponse.data));
     } catch (error) {
       console.error("Error adding token with details:", error);
@@ -296,17 +302,11 @@ const CustomerQueue = () => {
     if (!userToken) return;
 
     try {
-      await axios.delete(
-        `${API_BASE_URL}/${queueId}/cancel-token/${userToken.tokenId}`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-
+      await axiosInstance.delete(`/queues/${queueId}/cancel-token/${userToken.tokenId}`);
       toast.info(`Token ${userToken.tokenId} has been canceled.`);
       setUserToken(null);
-      
-      const response = await axios.get(`${API_BASE_URL}/${queueId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+
+      const response = await axiosInstance.get(`/queues/${queueId}`);
       setQueue(normalizeQueue(response.data));
     } catch (error) {
       console.error("Error canceling token:", error);
@@ -319,9 +319,8 @@ const CustomerQueue = () => {
     setShowExpiredMessage(true);
   };
 
-   // ADD THIS NEW HANDLER
   const handleFeedbackPromptClosed = () => {
-      setShowFeedback(false); // This is the crucial line to remove the blur
+    setShowFeedback(false);
   };
 
   const handleExpiredMessageDismissed = () => {
@@ -379,13 +378,11 @@ const CustomerQueue = () => {
   );
 
   return (
-    <div className="customer-queue-container">
+    <div className="customer-queue-container ">
       {showExpiredMessage && !showFeedback && <ExpiredTokenMessage />}
 
       <div
-        className={`main-content ${
-          showExpiredMessage || showFeedback ? "blurred-content" : ""
-        }`}
+        className={`main-content ${showExpiredMessage || showFeedback ? "blurred-content" : ""}`}
       >
         <div className="header-section animate__animated animate__fadeInDown">
           <h1 className="queue-title">{queue.serviceName} Queue</h1>
@@ -423,27 +420,23 @@ const CustomerQueue = () => {
               <div className="d-flex justify-content-between align-items-center mb-3">
                 <div>
                   <h5 className="mb-1">
-                    Token:{" "}
-                    <span className="fw-bold text-primary">
-                      {userToken.tokenId}
-                    </span>
+                    Token: <span className="fw-bold text-primary">{getShortTokenId(userToken.tokenId)}</span>
                   </h5>
                   <p className="mb-0 text-muted">
                     Status:
                     <span
-                      className={`badge ms-2 ${
-                        userToken.status === "WAITING"
+                      className={`badge ms-2 ${userToken.status === "WAITING"
                           ? "bg-warning"
                           : userToken.status === "IN_SERVICE"
-                          ? "bg-success"
-                          : "bg-secondary"
-                      }`}
+                            ? "bg-success"
+                            : "bg-secondary"
+                        }`}
                     >
                       {userToken.status === "WAITING"
                         ? "Waiting"
                         : userToken.status === "IN_SERVICE"
-                        ? "In Service"
-                        : "Completed"}
+                          ? "In Service"
+                          : "Completed"}
                     </span>
                   </p>
                 </div>
@@ -462,15 +455,9 @@ const CustomerQueue = () => {
                 <div className="alert alert-info">
                   <FaClock className="me-2" />
                   Your position in queue: <strong>{position}</strong> of{" "}
-                  {
-                    queue.tokens.filter((t) => t.status === "WAITING")
-                      .length
-                  }
+                  {queue.tokens.filter((t) => t.status === "WAITING").length}
                   {queue.estimatedWaitTime > 0 && (
-                    <span>
-                      {" "}
-                      • Estimated wait: ~{queue.estimatedWaitTime} minutes
-                    </span>
+                    <span> • ~{queue.estimatedWaitTime} minutes</span>
                   )}
                 </div>
               )}
@@ -478,8 +465,7 @@ const CustomerQueue = () => {
               {userToken.status === "IN_SERVICE" && (
                 <div className="alert alert-success animate__animated animate__pulse animate__infinite">
                   <FaUserCheck className="me-2" />
-                  <strong>You're currently being served!</strong> Please proceed
-                  to the counter.
+                  <strong>You're currently being served!</strong> Please proceed to the counter.
                 </div>
               )}
 
@@ -533,7 +519,7 @@ const CustomerQueue = () => {
             <div className="card-body text-center">
               <h4 className="fw-semibold text-secondary mb-3">Now Serving</h4>
               <div className="display-4 fw-bold text-primary mb-2 serving-token-id">
-                {currentServing.tokenId}
+               {getShortTokenId(currentServing.tokenId)}
               </div>
               <p className="text-muted">Please wait for your turn</p>
             </div>
@@ -543,19 +529,14 @@ const CustomerQueue = () => {
         {!userToken && (
           <div className="join-queue-card animate__animated animate__fadeIn">
             <div className="card-body text-center">
-              <h4 className="fw-semibold text-secondary mb-3">
-                Join this Queue
-              </h4>
+              <h4 className="fw-semibold text-secondary mb-3">Join this Queue</h4>
 
               <UserQueueRestriction
-                onRestrictionCheck={(restriction) =>
-                  setCanJoinQueue(restriction.canJoinQueue)
-                }
+                onRestrictionCheck={(restriction) => setCanJoinQueue(restriction.canJoinQueue)}
               />
 
               <p className="text-muted">
-                Current tokens in queue:{" "}
-                {queue.tokens.filter((t) => t.status === "WAITING").length}
+                Current tokens in queue: {queue.tokens.filter((t) => t.status === "WAITING").length}
               </p>
               <p className="text-muted">
                 Estimated wait time: {queue.estimatedWaitTime} minutes
@@ -563,8 +544,7 @@ const CustomerQueue = () => {
 
               {!queue.isActive && (
                 <div className="alert alert-warning mb-3">
-                  <FaPauseCircle className="me-2" /> This queue is currently
-                  paused by the provider.
+                  <FaPauseCircle className="me-2" /> This queue is currently paused by the provider.
                 </div>
               )}
 
@@ -628,6 +608,8 @@ const CustomerQueue = () => {
                     {showEmergencyForm ? "Cancel Emergency" : "Emergency Token"}
                   </button>
                 )}
+
+    
               </div>
             </div>
           </div>
@@ -637,9 +619,7 @@ const CustomerQueue = () => {
           <div className="form-card animate__animated animate__fadeIn">
             <div className="card-body">
               <h5 className="form-title">Group Token Details</h5>
-              <p className="form-subtitle">
-                Add all group members and their details.
-              </p>
+              <p className="form-subtitle">Add all group members and their details.</p>
 
               {groupMembers.map((member, index) => (
                 <div key={index} className="group-member-row mb-3">
@@ -648,18 +628,14 @@ const CustomerQueue = () => {
                     className="form-control"
                     placeholder="Member Name"
                     value={member.name}
-                    onChange={(e) =>
-                      updateGroupMember(index, "name", e.target.value)
-                    }
+                    onChange={(e) => updateGroupMember(index, "name", e.target.value)}
                   />
                   <input
                     type="text"
                     className="form-control"
                     placeholder="Details (e.g., condition)"
                     value={member.details}
-                    onChange={(e) =>
-                      updateGroupMember(index, "details", e.target.value)
-                    }
+                    onChange={(e) => updateGroupMember(index, "details", e.target.value)}
                   />
                   <button
                     className="btn btn-outline-danger"
@@ -672,25 +648,15 @@ const CustomerQueue = () => {
               ))}
 
               <div className="d-flex justify-content-between mt-3">
-                <button
-                  className="btn btn-outline-primary"
-                  onClick={addGroupMember}
-                >
+                <button className="btn btn-outline-primary" onClick={addGroupMember}>
                   <FaUserPlus /> Add Member
                 </button>
                 <button
                   className="btn btn-success"
                   onClick={() => handleAddToken(true, false)}
-                  disabled={
-                    addingToken ||
-                    groupMembers.filter((m) => m.name && m.details).length === 0
-                  }
+                  disabled={addingToken || groupMembers.filter((m) => m.name && m.details).length === 0}
                 >
-                  {addingToken ? (
-                    <FaSpinner className="fa-spin me-2" />
-                  ) : (
-                    <FaCheckCircle className="me-2" />
-                  )}
+                  {addingToken ? <FaSpinner className="fa-spin me-2" /> : <FaCheckCircle className="me-2" />}
                   Submit Group Token
                 </button>
               </div>
@@ -702,9 +668,7 @@ const CustomerQueue = () => {
           <div className="form-card animate__animated animate__fadeIn">
             <div className="card-body">
               <h5 className="form-title">Emergency Details</h5>
-              <p className="form-subtitle">
-                Please describe the emergency situation.
-              </p>
+              <p className="form-subtitle">Please describe the emergency situation.</p>
               <div className="mb-3">
                 <textarea
                   className="form-control"
@@ -720,11 +684,7 @@ const CustomerQueue = () => {
                   onClick={() => handleAddToken(false, true)}
                   disabled={addingToken || !emergencyDetails.trim()}
                 >
-                  {addingToken ? (
-                    <FaSpinner className="fa-spin me-2" />
-                  ) : (
-                    <FaCheckCircle className="me-2" />
-                  )}
+                  {addingToken ? <FaSpinner className="fa-spin me-2" /> : <FaCheckCircle className="me-2" />}
                   Submit Emergency Token
                 </button>
               </div>
@@ -734,18 +694,14 @@ const CustomerQueue = () => {
 
         <div className="stats-card animate__animated animate__fadeIn">
           <div className="card-body">
-            <h5 className="fw-semibold text-secondary mb-3">
-              Queue Information
-            </h5>
+            <h5 className="fw-semibold text-secondary mb-3">Queue Information</h5>
             <div className="row text-center">
               <div className="col-md-4">
                 <div className="stat-item">
                   <FaClock className="stat-icon text-primary" />
                   <div>
                     <h6 className="mb-0">Estimated Wait</h6>
-                    <p className="mb-0 fw-bold">
-                      {queue.estimatedWaitTime} min
-                    </p>
+                    <p className="mb-0 fw-bold">{queue.estimatedWaitTime} min</p>
                   </div>
                 </div>
               </div>
@@ -755,11 +711,7 @@ const CustomerQueue = () => {
                   <div>
                     <h6 className="mb-0">Waiting</h6>
                     <p className="mb-0 fw-bold">
-                      {
-                        queue.tokens.filter((t) => t.status === "WAITING")
-                          .length
-                      }{" "}
-                      people
+                      {queue.tokens.filter((t) => t.status === "WAITING").length} people
                     </p>
                   </div>
                 </div>
@@ -770,11 +722,7 @@ const CustomerQueue = () => {
                   <div>
                     <h6 className="mb-0">In Service</h6>
                     <p className="mb-0 fw-bold">
-                      {
-                        queue.tokens.filter((t) => t.status === "IN_SERVICE")
-                          .length
-                      }{" "}
-                      person
+                      {queue.tokens.filter((t) => t.status === "IN_SERVICE").length} person
                     </p>
                   </div>
                 </div>
@@ -787,10 +735,7 @@ const CustomerQueue = () => {
       {/* User Details Modal */}
       <Modal show={showDetailsForm} onHide={() => setShowDetailsForm(false)} size="lg">
         <Modal.Header closeButton>
-          <Modal.Title>
-            <FaFileMedical className="me-2" />
-            Provide Your Details
-          </Modal.Title>
+          <Modal.Title><FaFileMedical className="me-2" /> Provide Your Details</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <Form>
@@ -800,21 +745,19 @@ const CustomerQueue = () => {
                 type="text"
                 placeholder="Why are you joining this queue?"
                 value={userDetails.purpose}
-                onChange={(e) => setUserDetails({...userDetails, purpose: e.target.value})}
+                onChange={(e) => setUserDetails({ ...userDetails, purpose: e.target.value })}
                 required
               />
             </Form.Group>
-
             <Form.Group className="mb-3">
               <Form.Label>Condition (if applicable)</Form.Label>
               <Form.Control
                 type="text"
                 placeholder="Medical condition or special circumstances"
                 value={userDetails.condition}
-                onChange={(e) => setUserDetails({...userDetails, condition: e.target.value})}
+                onChange={(e) => setUserDetails({ ...userDetails, condition: e.target.value })}
               />
             </Form.Group>
-
             <Form.Group className="mb-3">
               <Form.Label>Additional Notes</Form.Label>
               <Form.Control
@@ -822,22 +765,20 @@ const CustomerQueue = () => {
                 rows={3}
                 placeholder="Any additional information the provider should know"
                 value={userDetails.notes}
-                onChange={(e) => setUserDetails({...userDetails, notes: e.target.value})}
+                onChange={(e) => setUserDetails({ ...userDetails, notes: e.target.value })}
               />
             </Form.Group>
-
             <Form.Group className="mb-3">
               <Form.Check
                 type="checkbox"
                 label="Keep my details private"
                 checked={userDetails.isPrivate}
-                onChange={(e) => setUserDetails({...userDetails, isPrivate: e.target.checked})}
+                onChange={(e) => setUserDetails({ ...userDetails, isPrivate: e.target.checked })}
               />
               <Form.Text className="text-muted">
                 When checked, your details will only be visible to administrators
               </Form.Text>
             </Form.Group>
-
             {!userDetails.isPrivate && (
               <>
                 <Form.Group className="mb-3">
@@ -845,7 +786,7 @@ const CustomerQueue = () => {
                     type="checkbox"
                     label="Visible to provider"
                     checked={userDetails.visibleToProvider}
-                    onChange={(e) => setUserDetails({...userDetails, visibleToProvider: e.target.checked})}
+                    onChange={(e) => setUserDetails({ ...userDetails, visibleToProvider: e.target.checked })}
                   />
                 </Form.Group>
                 <Form.Group className="mb-3">
@@ -853,7 +794,7 @@ const CustomerQueue = () => {
                     type="checkbox"
                     label="Visible to administrators"
                     checked={userDetails.visibleToAdmin}
-                    onChange={(e) => setUserDetails({...userDetails, visibleToAdmin: e.target.checked})}
+                    onChange={(e) => setUserDetails({ ...userDetails, visibleToAdmin: e.target.checked })}
                   />
                 </Form.Group>
               </>
@@ -861,23 +802,13 @@ const CustomerQueue = () => {
           </Form>
         </Modal.Body>
         <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowDetailsForm(false)}>
-            Cancel
-          </Button>
-          <Button 
-            variant="primary" 
+          <Button variant="secondary" onClick={() => setShowDetailsForm(false)}>Cancel</Button>
+          <Button
+            variant="primary"
             onClick={handleAddTokenWithDetails}
             disabled={addingToken || !userDetails.purpose.trim()}
           >
-            {addingToken ? (
-              <>
-                <FaSpinner className="fa-spin me-2" /> Adding...
-              </>
-            ) : (
-              <>
-                <FaUserPlus className="me-2" /> Join Queue
-              </>
-            )}
+            {addingToken ? <><FaSpinner className="fa-spin me-2" /> Adding...</> : <><FaUserPlus className="me-2" /> Join Queue</>}
           </Button>
         </Modal.Footer>
       </Modal>
@@ -887,9 +818,17 @@ const CustomerQueue = () => {
           queueId={queueId}
           tokenId={userToken.tokenId}
           onFeedbackSubmitted={handleFeedbackDismissed}
-           onClose={handleFeedbackPromptClosed}
+          onClose={handleFeedbackPromptClosed}
         />
       )}
+      <NotificationModal
+        show={showNotification}
+        onHide={() => setShowNotification(false)}
+        title={notification.title}
+        message={notification.message}
+        variant={notification.variant}
+      />
+
     </div>
   );
 };

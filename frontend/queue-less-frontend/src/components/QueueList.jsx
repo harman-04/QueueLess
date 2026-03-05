@@ -1,17 +1,18 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { FaUserCheck, FaCheckCircle, FaTimesCircle, FaEye } from 'react-icons/fa';
-import { useDispatch, useSelector } from 'react-redux';
-import { sendWebSocketMessage } from '../redux/websocketActions';
-import axios from 'axios';
+import { useSelector } from 'react-redux';
+import WebSocketService from '../services/websocketService';
 import { toast } from 'react-toastify';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
-import './QueueList.css'; // NEW CSS FILE
+import { getShortTokenId } from '../utils/tokenUtils';
+import './QueueList.css';
 import { Card, Button, Badge } from 'react-bootstrap';
-
-const API_BASE_URL = "https://localhost:8443/api/queues";
+import CancelTokenModal from './CancelTokenModal';
+import axiosInstance from '../utils/axiosInstance';
 
 const QueueList = ({ queue, onServeNext, onViewUserDetails }) => {
-    const dispatch = useDispatch();
+    const [showCancelModal, setShowCancelModal] = useState(false);
+    const [tokenToCancel, setTokenToCancel] = useState(null);
     const { token: authToken } = useSelector((state) => state.auth);
 
     if (!queue) {
@@ -24,23 +25,25 @@ const QueueList = ({ queue, onServeNext, onViewUserDetails }) => {
 
     const inServiceToken = queue.tokens?.find(t => t.status === 'IN_SERVICE');
     const waitingTokens = queue.tokens?.filter(t => t.status === 'WAITING') || [];
-    
+
     const handleServeNext = () => {
         if (onServeNext) {
             onServeNext();
         } else if (!inServiceToken && waitingTokens.length > 0) {
-            dispatch(sendWebSocketMessage('/app/queue/serve-next', { queueId: queue.id }));
+            const success = WebSocketService.sendMessage('/app/queue/serve-next', { queueId: queue.id });
+            if (!success) {
+                toast.error("Failed to send serve next request. Please try again.");
+            }
         } else {
             toast.error("Cannot serve next token. A token is already in service or the queue is empty.");
         }
     };
-    
+
     const handleCompleteToken = async (tokenId) => {
         try {
-            await axios.post(
-                `${API_BASE_URL}/${queue.id}/complete-token`,
-                { tokenId: tokenId },
-                { headers: { 'Authorization': `Bearer ${authToken}`, 'Content-Type': 'application/json' } }
+            await axiosInstance.post(
+                `/queues/${queue.id}/complete-token`,
+                { tokenId }
             );
             toast.success(`Token ${tokenId} completed successfully!`);
         } catch (error) {
@@ -48,15 +51,20 @@ const QueueList = ({ queue, onServeNext, onViewUserDetails }) => {
         }
     };
 
-    const handleCancelToken = async (tokenId) => {
+    const handleCancelClick = (token) => {
+        setTokenToCancel(token);
+        setShowCancelModal(true);
+    };
+
+    const handleConfirmCancel = async (reason) => {
         try {
-            await axios.delete(
-                `${API_BASE_URL}/${queue.id}/cancel-token/${tokenId}`,
-                { headers: { 'Authorization': `Bearer ${authToken}` } }
+            await axiosInstance.delete(
+                `/queues/${queue.id}/cancel-token/${tokenToCancel.tokenId}?reason=${encodeURIComponent(reason || '')}`
             );
-            toast.info(`Token ${tokenId} has been canceled.`);
+            toast.info(`Token ${tokenToCancel.tokenId} has been cancelled.`);
+            // Optionally refresh queue data
         } catch (error) {
-            toast.error("Failed to cancel token.");
+            toast.error('Failed to cancel token.');
         }
     };
 
@@ -65,19 +73,18 @@ const QueueList = ({ queue, onServeNext, onViewUserDetails }) => {
 
         const sourceIndex = result.source.index;
         const destinationIndex = result.destination.index;
-        
+
         const reorderedTokens = Array.from(waitingTokens);
         const [removed] = reorderedTokens.splice(sourceIndex, 1);
         reorderedTokens.splice(destinationIndex, 0, removed);
 
         const otherTokens = queue.tokens.filter(t => t.status?.toLowerCase() !== 'waiting');
         const newCombinedList = [...otherTokens, ...reorderedTokens];
-        
+
         try {
-            await axios.put(
-                `${API_BASE_URL}/${queue.id}/reorder`,
-                newCombinedList,
-                { headers: { 'Authorization': `Bearer ${authToken}` } }
+            await axiosInstance.put(
+                `/queues/${queue.id}/reorder`,
+                newCombinedList
             );
             toast.success("Queue order updated!");
         } catch (error) {
@@ -85,12 +92,10 @@ const QueueList = ({ queue, onServeNext, onViewUserDetails }) => {
         }
     };
 
-    const isServeNextDisabled = !!inServiceToken || waitingTokens.length === 0;
-
     return (
         <div className="queuelist-card-container">
             <div className="queuelist-body">
-                
+
                 {/* In Service Token Section */}
                 {inServiceToken && (
                     <Card className="queuelist-serving-card queuelist-animate-in">
@@ -99,16 +104,16 @@ const QueueList = ({ queue, onServeNext, onViewUserDetails }) => {
                                 <FaUserCheck className="queuelist-icon-large queuelist-text-success" />
                                 <h4 className="queuelist-serving-title">Now Serving</h4>
                             </div>
-                            <h1 className="queuelist-serving-token">{inServiceToken.tokenId}</h1>
+                            <h1 className="queuelist-serving-token">{getShortTokenId(inServiceToken.tokenId)}</h1>
                             <div className="queuelist-serving-actions">
-                                <Button 
+                                <Button
                                     onClick={() => onViewUserDetails(inServiceToken.tokenId)}
                                     variant="outline-secondary"
                                     className="queuelist-btn-icon"
                                 >
                                     <FaEye /> View Details
                                 </Button>
-                                <Button 
+                                <Button
                                     onClick={() => handleCompleteToken(inServiceToken.tokenId)}
                                     variant="success"
                                 >
@@ -143,7 +148,7 @@ const QueueList = ({ queue, onServeNext, onViewUserDetails }) => {
                                                     >
                                                         <Card.Body>
                                                             <div className="queuelist-item-content">
-                                                                <span className="queuelist-token-number">{token.tokenId}</span>
+                                                                <span className="queuelist-token-number">{getShortTokenId(token.tokenId)}</span>
                                                                 <div className="queuelist-item-actions">
                                                                     <Button
                                                                         onClick={() => onViewUserDetails(token.tokenId)}
@@ -154,7 +159,7 @@ const QueueList = ({ queue, onServeNext, onViewUserDetails }) => {
                                                                         <FaEye />
                                                                     </Button>
                                                                     <Button
-                                                                        onClick={() => handleCancelToken(token.tokenId)}
+                                                                        onClick={() => handleCancelClick(token)}
                                                                         variant="danger"
                                                                         size="sm"
                                                                     >
@@ -178,6 +183,13 @@ const QueueList = ({ queue, onServeNext, onViewUserDetails }) => {
                         </div>
                     )}
                 </div>
+
+                <CancelTokenModal
+                    show={showCancelModal}
+                    onHide={() => setShowCancelModal(false)}
+                    token={tokenToCancel}
+                    onConfirm={handleConfirmCancel}
+                />
             </div>
         </div>
     );

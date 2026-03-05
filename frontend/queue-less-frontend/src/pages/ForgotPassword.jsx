@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import AuthFormWrapper from '../components/AuthFormWrapper';
 import passwordAxios from '../utils/passwordAxios';
 import { toast } from 'react-toastify';
+import './ForgotPassword.css';
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState('');
@@ -22,6 +23,7 @@ const ForgotPassword = () => {
 
   return (
     <AuthFormWrapper title="Forgot Password">
+       <div className="forgot-password-container">
       <form onSubmit={handleSubmit}>
         <div className="mb-3">
           <label>Email</label>
@@ -30,11 +32,13 @@ const ForgotPassword = () => {
             className="form-control"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            placeholder='Enter Your Email Here'
             required
           />
         </div>
         <button className="btn btn-primary w-100" type="submit">Send OTP</button>
       </form>
+      </div>
     </AuthFormWrapper>
   );
 };

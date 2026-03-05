@@ -8,6 +8,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
 
@@ -27,6 +28,7 @@ public class User {
     private String name;
 
     @Email
+    @Indexed(unique = true)   // <-- added
     private String email;
 
     @NotBlank
@@ -43,13 +45,16 @@ public class User {
 
     @Field("activeTokenId")
     private String activeTokenId;
+
     @Field("lastQueueJoinTime")
     private LocalDateTime lastQueueJoinTime;
 
+    private String adminId;
+    private List<String> managedPlaceIds;
 
-    // New fields for provider-admin relationship
-    private String adminId; // For PROVIDER role: ID of the admin who created this provider
-    private List<String> managedPlaceIds; // For PROVIDER role: Places this provider can manage
+    // In User.java
+    @Field("fcmTokens")
+    private List<String> fcmTokens;
 
     @Data
     @NoArgsConstructor
@@ -58,6 +63,7 @@ public class User {
     public static class UserPreferences {
         private Boolean emailNotifications;
         private Boolean smsNotifications;
+        private Boolean pushNotifications;
         private String language;
         private Integer defaultSearchRadius;
         private Boolean darkMode;

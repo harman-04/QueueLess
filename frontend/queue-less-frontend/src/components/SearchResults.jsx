@@ -1,39 +1,55 @@
+// src/components/SearchResults.jsx
 import React from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { Row, Col, Card, Spinner, Pagination, Badge, Alert, Button } from 'react-bootstrap';
-import { FaMapMarkerAlt, FaStar, FaClock, FaUsers, FaAmbulance, FaCaretUp, FaInfoCircle, FaHourglassHalf, FaTicketAlt, FaSearch } from 'react-icons/fa';
-import { setPage, performSearch } from '../redux/searchSlice';
+import { Row, Col, Card, Spinner, Badge, Button } from 'react-bootstrap';
+import { FaMapMarkerAlt, FaStar, FaClock, FaUsers, FaAmbulance, FaInfoCircle, FaHourglassHalf, FaTicketAlt, FaSearch } from 'react-icons/fa';
+import { performSearch } from '../redux/searchSlice';
 import { useNavigate } from 'react-router-dom';
+import SearchResultsSkeleton from './SearchResultsSkeleton';
 import 'animate.css';
-import './SearchResults.css'; // The new, conflict-free CSS file
+import './SearchResults.css';
 
 const SearchResults = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { results, loading, filters, currentPage, totalPages, sortBy, sortDirection } = useSelector((state) => state.search);
-
-  const handlePageChange = (page) => {
-    dispatch(setPage(page));
-    dispatch(performSearch({
-      filters,
-      page,
-      sortBy,
-      sortDirection
-    }));
-  };
+  const { results, loading, loadingMore, filters, sortBy, sortDirection } = useSelector((state) => state.search);
 
   const handleViewDetails = (placeId) => {
     navigate(`/places/${placeId}`);
   };
 
-  if (loading) {
-    return (
-      <div className="ql-search-loading-container animate__animated animate__fadeIn">
-        <Spinner animation="border" variant="primary" />
-        <p className="mt-2 text-muted">Searching for the best places...</p>
-      </div>
-    );
-  }
+  const handleLoadMore = (type) => {
+    const nextPage = (results[`${type}Page`] || 0) + 1;
+    if (hasMore(type)) {
+      dispatch(performSearch({
+        filters,
+        page: nextPage,
+        size: 20,
+        sortBy,
+        sortDirection,
+        type
+      }));
+    }
+  };
+
+  // Robust hasMore: uses totalPages if available and >1, otherwise falls back to total count vs loaded count
+  const hasMore = (type) => {
+    const currentPage = results[`${type}Page`] || 0;
+    const totalPages = results[`${type}TotalPages`] || 0;
+    const totalItems = results[`total${type.charAt(0).toUpperCase() + type.slice(1)}`] || 0;
+    const currentItems = results[type]?.length || 0;
+
+    // If totalPages is reliable ( > 1 ), use pagination logic
+    if (totalPages > 1) {
+      return currentPage + 1 < totalPages;
+    }
+    // Fallback: if totalItems > currentItems, assume more pages exist
+    return totalItems > currentItems;
+  };
+
+if (loading) {
+  return <SearchResultsSkeleton />;
+}
 
   const hasResults = results?.places?.length > 0 || results?.services?.length > 0 || results?.queues?.length > 0;
 
@@ -52,7 +68,7 @@ const SearchResults = () => {
       {/* Search Summary Section */}
       <div className="ql-search-results-summary animate__animated animate__fadeIn">
         <h6 className="text-muted">
-          Showing results for "<span className="fw-bold text-dark">{filters?.query}</span>"
+          Showing results for "<span className="fw-bold text-dark">{filters?.query || 'all'}</span>"
         </h6>
         <div className="ql-search-results-count mt-3">
           {results?.totalPlaces > 0 && <span><FaMapMarkerAlt /> {results.totalPlaces} Places</span>}
@@ -108,6 +124,17 @@ const SearchResults = () => {
               </Col>
             ))}
           </Row>
+          {hasMore('places') && (
+            <div className="text-center mt-4">
+              <Button
+                variant="outline-primary"
+                onClick={() => handleLoadMore('places')}
+                disabled={loadingMore?.places}
+              >
+                {loadingMore?.places ? <Spinner animation="border" size="sm" /> : 'Load More Places'}
+              </Button>
+            </div>
+          )}
         </div>
       )}
 
@@ -153,6 +180,17 @@ const SearchResults = () => {
               </Col>
             ))}
           </Row>
+          {hasMore('services') && (
+            <div className="text-center mt-4">
+              <Button
+                variant="outline-primary"
+                onClick={() => handleLoadMore('services')}
+                disabled={loadingMore?.services}
+              >
+                {loadingMore?.services ? <Spinner animation="border" size="sm" /> : 'Load More Services'}
+              </Button>
+            </div>
+          )}
         </div>
       )}
 
@@ -206,39 +244,17 @@ const SearchResults = () => {
               </Col>
             ))}
           </Row>
-        </div>
-      )}
-
-      {/* Pagination */}
-      {results?.totalPages > 1 && (
-        <div className="ql-search-pagination-container animate__animated animate__fadeIn">
-          <Pagination>
-            <Pagination.First
-              onClick={() => handlePageChange(0)}
-              disabled={currentPage === 0}
-            />
-            <Pagination.Prev
-              onClick={() => handlePageChange(currentPage - 1)}
-              disabled={currentPage === 0}
-            />
-            {[...Array(results.totalPages)].map((_, index) => (
-              <Pagination.Item
-                key={index}
-                active={index === currentPage}
-                onClick={() => handlePageChange(index)}
+          {hasMore('queues') && (
+            <div className="text-center mt-4">
+              <Button
+                variant="outline-primary"
+                onClick={() => handleLoadMore('queues')}
+                disabled={loadingMore?.queues}
               >
-                {index + 1}
-              </Pagination.Item>
-            ))}
-            <Pagination.Next
-              onClick={() => handlePageChange(currentPage + 1)}
-              disabled={currentPage === results.totalPages - 1}
-            />
-            <Pagination.Last
-              onClick={() => handlePageChange(results.totalPages - 1)}
-              disabled={currentPage === results.totalPages - 1}
-            />
-          </Pagination>
+                {loadingMore?.queues ? <Spinner animation="border" size="sm" /> : 'Load More Queues'}
+              </Button>
+            </div>
+          )}
         </div>
       )}
     </div>

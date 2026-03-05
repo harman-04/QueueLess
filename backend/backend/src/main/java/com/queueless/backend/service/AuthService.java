@@ -4,8 +4,10 @@ import com.queueless.backend.dto.JwtResponse;
 import com.queueless.backend.dto.LoginRequest;
 import com.queueless.backend.dto.RegisterRequest;
 import com.queueless.backend.enums.Role;
+import com.queueless.backend.model.OtpDocument;
 import com.queueless.backend.model.Token;
 import com.queueless.backend.model.User;
+import com.queueless.backend.repository.OtpRepository;
 import com.queueless.backend.repository.TokenRepository;
 import com.queueless.backend.repository.UserRepository;
 import com.queueless.backend.security.JwtTokenProvider;
@@ -17,6 +19,8 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.Random;
 
 @Slf4j
 @Service
@@ -27,6 +31,8 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtProvider;
     private final TokenRepository tokenRepository;
+    private final OtpRepository otpRepository;
+    private final EmailService emailService;
 
     public JwtResponse login(LoginRequest request) {
         log.info("Login attempt for email: {}", request.getEmail());
@@ -37,16 +43,17 @@ public class AuthService {
                     throw new RuntimeException("Invalid credentials");
                 });
 
-        log.debug("Stored password hash: {}", user.getPassword());
-        log.debug("Input password: {}", request.getPassword());
+
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
             log.warn("Login failed - Password mismatch for email: {}", request.getEmail());
             throw new RuntimeException("Invalid credentials");
         }
-        if (user.getRole() != Role.USER && !user.getIsVerified()) {
+
+
+        if (!user.getIsVerified()) {
             log.warn("Login failed - User not verified: {}", request.getEmail());
-            throw new RuntimeException("Account not verified. Please contact administrator.");
+            throw new RuntimeException("Account not verified. Please check your email.");
         }
 
         String jwtToken = jwtProvider.generateToken(user);
@@ -74,14 +81,16 @@ public class AuthService {
         }
 
         boolean isVerifiedAutomatically = false;
+        Token token = null;
 
+        // For ADMIN or PROVIDER, validate the token
         if (request.getRole() == Role.ADMIN || request.getRole() == Role.PROVIDER) {
             if (request.getToken() == null || request.getToken().isEmpty()) {
                 log.error("Registration failed - Token required for role: {}", request.getRole());
                 throw new RuntimeException("Token is required for role " + request.getRole());
             }
 
-            Token token = tokenRepository.findByTokenValue(request.getToken())
+            token = tokenRepository.findByTokenValue(request.getToken())
                     .orElseThrow(() -> {
                         log.error("Registration failed - Invalid token for email: {}", request.getEmail());
                         return new RuntimeException("Invalid token");
@@ -115,11 +124,15 @@ public class AuthService {
             isVerifiedAutomatically = true;
         }
 
-        User.UserPreferences userPreferences = null;
+        // Build user preferences
+        User.UserPreferences userPreferences;
         if (request.getPreferences() != null) {
             userPreferences = User.UserPreferences.builder()
                     .emailNotifications(request.getPreferences().getEmailNotifications())
                     .smsNotifications(request.getPreferences().getSmsNotifications())
+                    .pushNotifications(request.getPreferences().getPushNotifications() != null
+                            ? request.getPreferences().getPushNotifications()
+                            : true)
                     .language(request.getPreferences().getLanguage())
                     .defaultSearchRadius(request.getPreferences().getDefaultSearchRadius())
                     .darkMode(request.getPreferences().getDarkMode())
@@ -129,6 +142,7 @@ public class AuthService {
             userPreferences = User.UserPreferences.builder()
                     .emailNotifications(true)
                     .smsNotifications(false)
+                    .pushNotifications(true)
                     .language("en")
                     .defaultSearchRadius(5)
                     .darkMode(false)
@@ -136,15 +150,13 @@ public class AuthService {
                     .build();
         }
 
+        // For PROVIDER, extract adminId and managed place
         String adminId = null;
         List<String> managedPlaceIds = new ArrayList<>();
-        if (request.getRole() == Role.PROVIDER) {
-            Token token = tokenRepository.findByTokenValue(request.getToken()).orElse(null);
-            if (token != null) {
-                adminId = token.getCreatedByAdminId();
-                if (request.getPlaceId() != null && !request.getPlaceId().isEmpty()) {
-                    managedPlaceIds.add(request.getPlaceId());
-                }
+        if (request.getRole() == Role.PROVIDER && token != null) {
+            adminId = token.getCreatedByAdminId();
+            if (request.getPlaceId() != null && !request.getPlaceId().isEmpty()) {
+                managedPlaceIds.add(request.getPlaceId());
             }
         }
 
@@ -165,8 +177,66 @@ public class AuthService {
                 .build();
 
         userRepository.save(user);
+        if (request.getRole() == Role.USER) {
+            sendVerificationOtp(request.getEmail());
+        }
         log.info("Registration successful for email: {} | Role: {}", user.getEmail(), user.getRole());
 
         return "User registered successfully!";
     }
-}
+
+    private void sendVerificationOtp(String email) {
+        // Clean previous OTPs
+        otpRepository.deleteByEmail(email);
+
+        // Generate 6-digit OTP
+        String otp = String.valueOf(new Random().nextInt(900000) + 100000);
+
+        // Save OTP
+        OtpDocument otpDoc = OtpDocument.builder()
+                .email(email)
+                .otp(otp)
+                .expiryTime(LocalDateTime.now().plusMinutes(5))
+                .build();
+        otpRepository.save(otpDoc);
+
+        // Send email
+        emailService.sendVerificationOtpEmail(email, otp);
+        log.info("Verification OTP sent to {}", email);
+    }
+
+    public String verifyEmail(String email, String otp) {
+        log.info("Verifying email {} with OTP", email);
+        Optional<OtpDocument> otpDocOpt = otpRepository.findByEmail(email);
+        if (otpDocOpt.isEmpty()) {
+            throw new RuntimeException("OTP not found or expired");
+        }
+        OtpDocument otpDoc = otpDocOpt.get();
+        if (!otpDoc.getOtp().equals(otp)) {
+            throw new RuntimeException("Invalid OTP");
+        }
+        if (otpDoc.getExpiryTime().isBefore(LocalDateTime.now())) {
+            throw new RuntimeException("OTP expired");
+        }
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        user.setIsVerified(true);
+        userRepository.save(user);
+
+        otpRepository.delete(otpDoc);
+        log.info("Email {} verified successfully", email);
+        return "Email verified successfully";
+    }
+
+    public String resendVerificationOtp(String email) {
+        log.info("Resending verification OTP to {}", email);
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        if (user.getIsVerified()) {
+            throw new RuntimeException("User already verified");
+        }
+        sendVerificationOtp(email);
+        return "Verification OTP resent";
+    }
+    }

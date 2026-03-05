@@ -1,4 +1,3 @@
-// Enhanced JwtTokenProvider with more claims
 package com.queueless.backend.security;
 
 import com.queueless.backend.model.User;
@@ -12,7 +11,6 @@ import org.springframework.stereotype.Component;
 
 import java.security.Key;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Component
@@ -35,10 +33,8 @@ public class JwtTokenProvider {
         claims.put("userId", user.getId());
         claims.put("email", user.getEmail());
         claims.put("name", user.getName());
-        // Remove profileImageUrl from token claims
         claims.put("placeId", user.getPlaceId());
         claims.put("isVerified", user.getIsVerified());
-        // Remove preferences from token if not absolutely necessary
         claims.put("ownedPlaceIds", user.getOwnedPlaceIds());
 
         return Jwts.builder()
@@ -55,11 +51,8 @@ public class JwtTokenProvider {
                 .build()
                 .parseClaimsJws(token)
                 .getBody();
-
-        return claims.get("email", String.class); // Get email from claims
+        return claims.get("email", String.class);
     }
-
-
 
     public String getRoleFromToken(String token) {
         return (String) Jwts.parserBuilder()
@@ -76,8 +69,7 @@ public class JwtTokenProvider {
                 .build()
                 .parseClaimsJws(token)
                 .getBody();
-
-        return claims.getSubject(); // Get from standard sub claim
+        return claims.getSubject();
     }
 
     public boolean validateToken(String token) {
@@ -104,6 +96,7 @@ public class JwtTokenProvider {
             return false;
         }
     }
+
     public Collection<GrantedAuthority> getAuthoritiesFromToken(String token) {
         String role = getRoleFromToken(token);
         return Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + role));

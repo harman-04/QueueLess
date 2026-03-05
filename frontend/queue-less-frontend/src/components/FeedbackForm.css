@@ -1,38 +1,72 @@
+/* FeedbackForm.css – Enhanced Feedback Modal with Dark Mode */
+
+/* ===== Modal Styling ===== */
 .feedback-modal .modal-content {
-  border-radius: 16px;
-  border: none;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 20px;
+  box-shadow: var(--shadow-xl);
+  color: var(--text-primary);
 }
 
+.feedback-modal .modal-header {
+  border-bottom: 1px solid var(--border-color);
+  padding: 1.5rem 1.5rem 0.5rem;
+}
+
+.feedback-modal .modal-header .btn-close {
+  filter: invert(var(--dark-mode-invert, 0));
+}
+
+.feedback-modal .modal-title {
+  color: var(--text-primary);
+}
+
+.feedback-modal .modal-title p.text-muted {
+  color: var(--text-secondary) !important;
+}
+
+/* Header Icon */
 .feedback-header-icon {
-  width: 60px;
-  height: 60px;
+  width: 70px;
+  height: 70px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, var(--search-primary) 0%, #764ba2 100%);
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 0 auto;
+  margin: 0 auto 1rem;
   color: white;
-  font-size: 24px;
+  font-size: 28px;
+  box-shadow: var(--shadow-md);
 }
 
+/* ===== Card Inside Modal ===== */
 .feedback-card {
+  background-color: transparent !important;
   border: none;
   box-shadow: none;
+  color: var(--text-primary);
 }
 
+.feedback-card .card-body {
+  background-color: transparent;
+  color: var(--text-primary);
+}
+
+/* ===== Rating Sections ===== */
 .rating-section {
   padding: 1.5rem 0;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid var(--border-color);
   text-align: center;
 }
 
 .main-rating {
-  border-bottom: 2px solid #f0f0f0;
+  border-bottom: 2px solid var(--border-color);
   margin-bottom: 1.5rem;
 }
 
+/* Star Rating Groups */
 .star-rating-group {
   text-align: center;
   margin-bottom: 1.5rem;
@@ -42,7 +76,7 @@
   display: block;
   margin-bottom: 0.75rem;
   font-weight: 600;
-  color: #333;
+  color: var(--text-primary);
   font-size: 1rem;
 }
 
@@ -67,7 +101,7 @@
 }
 
 .star {
-  color: #ddd;
+  color: var(--border-color);
   transition: all 0.2s ease;
   font-size: 1.5rem;
 }
@@ -76,68 +110,142 @@
   font-size: 2.5rem;
 }
 
-.star:hover,
 .star.filled {
   color: #ffc107;
+  /* Keep gold for stars – works in both themes */
   filter: drop-shadow(0 2px 4px rgba(255, 193, 7, 0.3));
+}
+
+/* Star hover is handled by JS but we keep the filled class */
+.star:hover {
+  color: #ffc107;
 }
 
 .rating-label {
   font-size: 0.9rem;
-  color: #666;
+  color: var(--text-secondary);
   min-height: 1.5rem;
   font-weight: 500;
 }
 
+/* Detailed Ratings Section */
 .detailed-ratings-section {
   margin-bottom: 1.5rem;
 }
 
 .section-title {
-  color: #555;
+  color: var(--text-primary);
   font-weight: 600;
   margin-bottom: 1rem;
   padding-bottom: 0.5rem;
-  border-bottom: 1px dashed #eee;
+  border-bottom: 1px dashed var(--border-color);
 }
 
 .detailed-ratings .star-rating-group label {
   font-weight: normal;
   font-size: 0.9rem;
+  color: var(--text-secondary);
 }
 
 .detailed-ratings .star {
   font-size: 1.2rem;
 }
 
+/* ===== Form Controls ===== */
+.feedback-modal .form-label {
+  color: var(--text-primary);
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.feedback-modal .form-control {
+  background-color: var(--input-bg);
+  border: 2px solid var(--border-color);
+  color: var(--input-text);
+  border-radius: 15px;
+  padding: 0.75rem 1rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.feedback-modal .form-control:focus {
+  border-color: var(--search-primary);
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(var(--search-primary-rgb), 0.2);
+}
+
+.feedback-modal .form-control::placeholder {
+  color: var(--text-secondary);
+  opacity: 0.7;
+}
+
+/* Character count */
+.feedback-modal .text-end small {
+  color: var(--text-secondary) !important;
+}
+
+/* ===== Buttons ===== */
 .submit-button {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(145deg, var(--search-primary), #764ba2);
   border: none;
-  border-radius: 8px;
+  border-radius: 40px;
   padding: 0.75rem 1.5rem;
   font-weight: 600;
   transition: all 0.3s ease;
+  color: white;
+  box-shadow: var(--shadow-md);
 }
 
 .submit-button:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+  box-shadow: 0 8px 20px rgba(var(--search-primary-rgb), 0.4);
 }
 
 .submit-button:disabled {
-  opacity: 0.7;
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
+/* Cancel button */
+.feedback-modal .btn-outline-secondary {
+  background: transparent;
+  border: 2px solid var(--border-color);
+  color: var(--text-primary);
+  border-radius: 40px;
+  padding: 0.75rem 1.5rem;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.feedback-modal .btn-outline-secondary:hover {
+  background: var(--border-color);
+  color: var(--text-primary);
+  transform: translateY(-2px);
+}
+
+/* Spinner */
+.spinner-border {
+  color: currentColor;
+}
+
+/* ===== Responsive ===== */
 @media (max-width: 768px) {
   .detailed-ratings .col-md-4 {
     margin-bottom: 1rem;
   }
- 
+
   .star {
     font-size: 1.3rem;
   }
 
   .stars-lg .star {
     font-size: 2rem;
+  }
+
+  .feedback-header-icon {
+    width: 60px;
+    height: 60px;
+    font-size: 24px;
   }
 }

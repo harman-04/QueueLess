@@ -7,6 +7,7 @@ import { fetchPlaceById } from '../redux/placeSlice';
 import { Form, Button, Card, Spinner, Alert, Table, Modal, Row, Col, Badge } from 'react-bootstrap';
 import { FaPlus, FaEdit, FaTrash, FaClock, FaUsers, FaAmbulance } from 'react-icons/fa';
 import { toast } from 'react-toastify';
+import './ServiceManagement.css';
 
 const ServiceManagement = () => {
   const dispatch = useDispatch();
@@ -25,7 +26,7 @@ const ServiceManagement = () => {
     emergencySupport: false,
     isActive: true
   });
-  
+
   const services = servicesByPlace[placeId] || [];
 
   useEffect(() => {
@@ -127,7 +128,7 @@ const ServiceManagement = () => {
   }
 
   return (
-    <div className="container py-4">
+    <div className="container py-4 service-management-container p-4 ">
       <div className="d-flex justify-content-between align-items-center mb-4">
         <div>
           <h2>Manage Services</h2>
@@ -204,9 +205,9 @@ const ServiceManagement = () => {
                           <FaTrash />
                         </Button>
                       </td>
-                  </tr>
-                 ))}
-               </tbody>
+                    </tr>
+                  ))}
+                </tbody>
               </Table>
             )}
           </Card.Body>
@@ -228,6 +229,7 @@ const ServiceManagement = () => {
                     name="name"
                     value={formData.name}
                     onChange={handleChange}
+                    placeholder='Add The Name of The Service for This Place'
                     required
                   />
                 </Form.Group>
@@ -254,6 +256,7 @@ const ServiceManagement = () => {
                 rows={3}
                 name="description"
                 value={formData.description}
+                placeholder='Add The More Description About Service'
                 onChange={handleChange}
               />
             </Form.Group>

@@ -1,10 +1,14 @@
+/* SearchResults.css – Enhanced with Dark Mode Support */
+
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
 
 /* Main Page Layout */
 .ql-search-results-page {
   padding: 2.5rem 0;
   font-family: 'Poppins', sans-serif;
-  background-color: #f7f9fc;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  min-height: 100vh;
 }
 
 /* Results Summary */
@@ -15,15 +19,20 @@
   text-align: center;
   margin-bottom: 2.5rem;
   padding: 1.5rem;
-  background-color: #ffffff;
+  background-color: var(--card-bg);
   border-radius: 1rem;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--border-color);
 }
 
 .ql-search-results-summary h6 {
   font-weight: 500;
-  color: #6c757d;
+  color: var(--text-secondary);
   margin-bottom: 0.5rem;
+}
+
+.ql-search-results-summary h6 .fw-bold {
+  color: var(--text-primary);
 }
 
 .ql-search-results-count {
@@ -36,11 +45,11 @@
   align-items: center;
   font-size: 0.95rem;
   font-weight: 600;
-  color: #495057;
+  color: var(--text-primary);
 }
 
 .ql-search-results-count svg {
-  color: #667eea;
+  color: var(--search-primary);
   font-size: 1.2rem;
   margin-right: 0.5rem;
 }
@@ -48,30 +57,31 @@
 /* Section Titles */
 .ql-search-section-title {
   font-weight: 700;
-  color: #212529;
+  color: var(--text-primary);
   font-size: 1.8rem;
   margin-bottom: 1.5rem;
   padding-bottom: 0.5rem;
-  border-bottom: 3px solid #667eea;
+  border-bottom: 3px solid var(--search-primary);
   display: inline-block;
 }
 
 /* Unified Card Styles */
 .ql-search-result-card {
   transition: transform 0.3s ease, box-shadow 0.3s ease;
-  border: none;
+  border: 1px solid var(--border-color);
   border-radius: 1.5rem;
   overflow: hidden;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+  box-shadow: var(--shadow-sm);
   height: 100%;
   display: flex;
   flex-direction: column;
-  background: #ffffff;
+  background-color: var(--card-bg);
+  color: var(--text-primary);
 }
 
 .ql-search-result-card:hover {
   transform: translateY(-8px);
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--shadow-xl);
 }
 
 .ql-search-card-image-container {
@@ -93,8 +103,8 @@
 
 .ql-search-card-no-image {
   height: 220px;
-  background-color: #eef2f5;
-  color: #ced4da;
+  background-color: var(--bg-secondary);
+  color: var(--text-secondary);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -110,13 +120,13 @@
 .ql-search-result-title {
   font-size: 1.5rem;
   font-weight: 600;
-  color: #343a40;
+  color: var(--text-primary);
   margin-bottom: 0.5rem;
 }
 
 .ql-search-result-text-big {
   font-size: 1rem;
-  color: #495057;
+  color: var(--text-secondary);
   line-height: 1.5;
   margin-bottom: 0.75rem;
   flex-grow: 1;
@@ -128,13 +138,13 @@
 
 .ql-search-result-text-small {
   font-size: 0.9rem;
-  color: #6c757d;
+  color: var(--text-secondary);
   margin-bottom: 0.5rem;
 }
 
 .ql-search-card-footer-details {
   padding-top: 1rem;
-  border-top: 1px solid #e9ecef;
+  border-top: 1px solid var(--border-color);
   margin-top: auto;
   display: flex;
   justify-content: space-between;
@@ -146,7 +156,7 @@
 .ql-search-rating-value {
   font-size: 1.2rem;
   font-weight: 600;
-  color: #495057;
+  color: var(--text-primary);
 }
 
 .ql-search-result-badge {
@@ -155,6 +165,9 @@
   font-weight: 500;
   font-size: 0.8rem;
   text-transform: uppercase;
+  background: var(--search-primary);
+  color: white;
+  border: none;
 }
 
 .ql-search-feature-badge {
@@ -164,17 +177,43 @@
   border-radius: 1.5rem;
 }
 
+.ql-search-feature-badge.bg-success {
+  background: linear-gradient(135deg, var(--success-color), #27ae60) !important;
+  color: white;
+  border: none;
+}
+
+.ql-search-feature-badge.bg-danger {
+  background: linear-gradient(135deg, var(--danger-color), #c0392b) !important;
+  color: white;
+  border: none;
+}
+
+.ql-search-feature-badge.bg-info {
+  background: linear-gradient(135deg, var(--search-primary), #4a6fdc) !important;
+  color: white;
+  border: none;
+}
+
 .ql-search-stat-item {
   display: flex;
   align-items: center;
   gap: 0.5rem;
   font-size: 0.95rem;
   font-weight: 500;
-  color: #495057;
+  color: var(--text-primary);
 }
 
 .ql-search-stat-item svg {
-  color: #667eea;
+  color: var(--search-primary);
+}
+
+.ql-search-stat-item.text-danger svg {
+  color: var(--danger-color);
+}
+
+.ql-search-stat-item.text-success svg {
+  color: var(--success-color);
 }
 
 /* Buttons */
@@ -187,68 +226,91 @@
 }
 
 .ql-search-view-details-btn.btn-primary {
-  background-color: #667eea;
-  border-color: #667eea;
+  background: linear-gradient(145deg, var(--search-primary), #4a6fdc);
+  border: none;
+  color: white;
+  box-shadow: var(--shadow-sm);
 }
 
 .ql-search-view-details-btn.btn-primary:hover {
-  background-color: #5568d4;
-  border-color: #5568d4;
+  background: linear-gradient(145deg, #4a6fdc, var(--search-primary));
   transform: translateY(-2px);
+  box-shadow: 0 8px 15px rgba(var(--search-primary-rgb), 0.4);
 }
 
 .ql-search-view-details-btn.btn-outline-primary {
-  color: #667eea;
-  border-color: #667eea;
+  border: 2px solid var(--search-primary);
+  color: var(--search-primary);
+  background: transparent;
 }
 
 .ql-search-view-details-btn.btn-outline-primary:hover {
-  background-color: #667eea;
-  color: #ffffff;
+  background: var(--search-primary);
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 15px rgba(var(--search-primary-rgb), 0.3);
 }
 
-/* Pagination */
-.ql-search-pagination-container {
-  display: flex;
-  justify-content: center;
-  margin-top: 3rem;
+/* Load More Buttons */
+.btn-outline-primary {
+  border: 2px solid var(--search-primary);
+  color: var(--search-primary);
+  background: transparent;
+  border-radius: 30px;
+  padding: 0.5rem 1.5rem;
+  font-weight: 600;
+  transition: all 0.2s;
 }
 
+.btn-outline-primary:hover:not(:disabled) {
+  background: var(--search-primary);
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 15px rgba(var(--search-primary-rgb), 0.3);
+}
+
+.btn-outline-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Pagination (if used) */
 .pagination .page-link {
   border-radius: 0.75rem;
   margin: 0 0.25rem;
-  color: #6c757d;
-  border-color: #dee2e6;
+  color: var(--text-secondary);
+  border-color: var(--border-color);
   transition: all 0.3s ease;
   font-weight: 500;
+  background-color: var(--card-bg);
 }
 
 .pagination .page-item.active .page-link {
-  background-color: #667eea;
-  border-color: #667eea;
+  background-color: var(--search-primary);
+  border-color: var(--search-primary);
   color: white;
-  box-shadow: 0 4px 10px rgba(102, 126, 234, 0.3);
+  box-shadow: 0 4px 10px rgba(var(--search-primary-rgb), 0.3);
 }
 
 .pagination .page-link:hover {
-  background-color: #e9ecef;
-  color: #343a40;
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
 }
 
 /* No results and Loading states */
 .ql-search-no-results-state {
-  background-color: #ffffff;
-  border: 2px dashed #e0e0e0;
+  background-color: var(--card-bg);
+  border: 2px dashed var(--border-color);
   border-radius: 1rem;
   padding: 4rem;
   text-align: center;
   margin-top: 2rem;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+  box-shadow: var(--shadow-md);
 }
 
 .ql-search-empty-icon {
   font-size: 3rem;
-  color: #95a5a6;
+  color: var(--text-secondary);
 }
 
 .ql-search-loading-container {
@@ -260,5 +322,59 @@
 }
 
 .ql-search-loading-container p {
-  color: #7f8c8d;
+  color: var(--text-secondary);
+}
+
+/* Force card background to use theme variable */
+.ql-search-result-card {
+  background-color: var(--card-bg) !important;
+}
+
+/* Override Bootstrap text-muted utility */
+.ql-search-results-summary .text-muted,
+.ql-search-results-summary h6.text-muted,
+.ql-search-result-card .text-muted,
+.ql-search-result-card .ql-search-result-text-big,
+.ql-search-result-card .ql-search-result-text-small,
+.ql-search-result-card .ql-search-card-footer-details .text-muted {
+  color: var(--text-secondary) !important;
+}
+
+/* Fix bold query text in summary */
+.ql-search-results-summary .fw-bold.text-dark {
+  color: var(--text-primary) !important;
+}
+
+/* Ensure rating value uses primary text color */
+.ql-search-rating-value {
+  color: var(--text-primary) !important;
+}
+
+/* Force card backgrounds to use theme variable */
+.ql-search-result-card {
+  background-color: var(--card-bg) !important;
+}
+
+/* Override Bootstrap text utilities */
+.ql-search-results-page .text-muted,
+.ql-search-results-page .ql-search-results-summary .text-muted,
+.ql-search-results-page .ql-search-result-card .text-muted {
+  color: var(--text-secondary) !important;
+}
+
+.ql-search-results-page .text-dark {
+  color: var(--text-primary) !important;
+}
+
+/* Force card titles to use theme primary color */
+.ql-search-result-card .ql-search-result-title {
+    color: var(--text-primary) !important;
+}
+
+.ql-search-no-results-state h4 {
+    color: var(--text-primary) !important;
+}
+
+.ql-search-no-results-state .text-muted {
+    color: var(--text-secondary) !important;
 }

@@ -1,16 +1,18 @@
+/* CompletedTokensList.css */
+
 /* Container for the completed tokens section */
 .completed-tokens-container {
     margin-top: 2.5rem;
 }
 
 .completed-tokens-accordion-header {
-    background-color: #f8f9fa !important;
+    background-color: var(--bg-secondary) !important;
     border-radius: 16px !important;
     padding: 1.2rem 1.5rem !important;
     font-weight: 600 !important;
-    color: #4a5568 !important;
-    border: 1px solid #e2e8f0 !important;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    color: var(--text-primary) !important;
+    border: 1px solid var(--border-color) !important;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
 }
 
 .completed-tokens-accordion-header button {
@@ -25,11 +27,12 @@
     display: flex;
     align-items: center;
     gap: 0.75rem;
+    color: var(--text-primary);
 }
 
 .accordion-button:not(.collapsed) {
-    background-color: #e9ecef !important;
-    color: #212529 !important;
+    background-color: var(--dropdown-hover-bg) !important;
+    color: var(--text-primary) !important;
 }
 
 .completed-tokens-grid {
@@ -41,14 +44,15 @@
 
 .completed-token-card {
     border-radius: 12px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
     transition: transform 0.2s ease-in-out;
-    border: 1px solid #d4edda;
+    border: 1px solid var(--success-color);
+    background-color: var(--card-bg);
 }
 
 .completed-token-card:hover {
     transform: translateY(-5px);
-    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
 }
 
 .completed-card-header-info {
@@ -60,7 +64,7 @@
 .completed-token-number {
     font-size: 1.5rem;
     font-weight: 700;
-    color: #38a169;
+    color: var(--success-color);
     margin: 0;
 }
 
@@ -68,6 +72,8 @@
     padding: 0.4em 0.8em;
     font-size: 0.85em;
     border-radius: 20px;
+    background-color: var(--success-color);
+    color: white;
 }
 
 .completed-card-body-details {
@@ -75,30 +81,100 @@
     flex-direction: column;
     gap: 0.5rem;
     font-size: 0.9rem;
-    color: #718096;
+    color: var(--text-secondary);
 }
 
 .completed-detail-item {
     display: flex;
     align-items: center;
     gap: 0.5rem;
+    color: var(--text-secondary);
+}
+
+.completed-detail-item svg {
+    color: var(--text-secondary);
 }
 
 .completed-user-details-summary {
     font-size: 0.95rem;
-    color: #4a5568;
-    background: #f7fafc;
+    color: var(--text-primary);
+    background: var(--bg-secondary);
     padding: 0.75rem;
     border-radius: 8px;
-    border: 1px dashed #e2e8f0;
+    border: 1px dashed var(--border-color);
 }
 
 .completed-tokens-empty {
     text-align: center;
     padding: 3rem;
-    color: #a0aec0;
+    color: var(--text-secondary);
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
+}
+
+.completed-tokens-empty svg {
+    color: var(--text-secondary);
+    margin-bottom: 1rem;
+}
+
+/* CompletedTokensList.css – add at the end */
+
+/* Fix accordion button styling in dark mode */
+.completed-tokens-accordion-header .accordion-button {
+    background-color: var(--bg-secondary) !important;
+    color: var(--text-primary) !important;
+    border-radius: 16px !important;
+    padding: 1.2rem 1.5rem !important;
+    font-weight: 600 !important;
+    border: 1px solid var(--border-color) !important;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+}
+
+/* Ensure the title section and h5 use the correct color */
+.completed-tokens-accordion-header .accordion-button .completed-tokens-title-section,
+.completed-tokens-accordion-header .accordion-button h5 {
+    color: var(--text-primary) !important;
+}
+
+/* Make the accordion arrow icon visible in dark mode */
+.completed-tokens-accordion-header .accordion-button::after {
+    filter: invert(1) grayscale(100%) brightness(200%);
+}
+
+/* Optionally, if you want the badge to adapt */
+.completed-tokens-accordion-header .badge.bg-secondary {
+    background-color: var(--text-secondary) !important;
+    color: var(--bg-primary) !important;
+}
+
+/* Force accordion body background */
+.accordion-body {
+    background-color: var(--card-bg) !important;
+    color: var(--text-primary) !important;
+}
+
+/* Ensure card body uses theme background */
+.completed-token-card .card-body {
+    background-color: var(--card-bg);
+    color: var(--text-primary);
+}
+
+/* Token number – keep success color */
+.completed-token-number {
+    color: var(--success-color) !important;
+}
+
+/* Date and duration text */
+.completed-detail-item span {
+    color: var(--text-secondary);
+}
+
+/* Empty state */
+.completed-tokens-empty {
+    color: var(--text-secondary);
+}
+.completed-tokens-empty h5 {
+    color: var(--text-primary);
 }

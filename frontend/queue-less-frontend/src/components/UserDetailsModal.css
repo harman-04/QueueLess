@@ -1,0 +1,134 @@
+/* UserDetailsModal.css – Dark Mode Support */
+
+.user-details-modal .modal-content {
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 20px;
+  box-shadow: var(--shadow-xl);
+  color: var(--text-primary);
+}
+
+.user-details-modal .modal-header {
+  border-bottom: 1px solid var(--border-color);
+  padding: 1.25rem 1.5rem;
+}
+
+.user-details-modal .modal-title {
+  font-weight: 700;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.user-details-modal .modal-header .btn-close {
+  filter: invert(var(--dark-mode-invert, 0));
+}
+
+.user-details-modal .modal-body {
+  padding: 1.5rem;
+  color: var(--text-primary);
+}
+
+.user-details-modal .modal-body h5,
+.user-details-modal .modal-body h6 {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+/* Badge for visibility status */
+.user-details-modal .badge {
+  padding: 0.5rem 1rem;
+  border-radius: 30px;
+  font-weight: 500;
+  font-size: 0.8rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.user-details-modal .badge.bg-success {
+  background: linear-gradient(135deg, var(--success-color), #27ae60) !important;
+  color: white;
+}
+
+.user-details-modal .badge.bg-secondary {
+  background: var(--text-secondary) !important;
+  color: white;
+}
+
+/* Text paragraphs */
+.user-details-modal p {
+  color: var(--text-secondary);
+  margin-bottom: 0.5rem;
+}
+
+/* Border-bottom items for custom fields */
+.user-details-modal .border-bottom {
+  border-bottom: 1px solid var(--border-color) !important;
+  padding: 0.5rem 0;
+}
+
+.user-details-modal .fw-semibold {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.user-details-modal .border-bottom span:last-child {
+  color: var(--text-secondary);
+}
+
+/* Alert styling */
+.user-details-modal .alert {
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  border-radius: 12px;
+}
+
+.user-details-modal .alert-info {
+  background-color: rgba(var(--search-primary-rgb), 0.15);
+  border-left: 4px solid var(--search-primary);
+}
+
+.user-details-modal .alert-danger {
+  background-color: rgba(var(--danger-color-rgb), 0.15);
+  border-left: 4px solid var(--danger-color);
+}
+
+/* Loading spinner */
+.user-details-modal .spinner-border {
+  color: var(--search-primary);
+}
+
+.user-details-modal .text-center p {
+  color: var(--text-secondary);
+  margin-top: 0.5rem;
+}
+
+/* Modal footer */
+.user-details-modal .modal-footer {
+  border-top: 1px solid var(--border-color);
+  padding: 1rem 1.5rem 1.5rem;
+}
+
+.user-details-modal .btn-secondary {
+  background: var(--bg-tertiary, #e9ecef);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  border-radius: 40px;
+  padding: 0.5rem 1.5rem;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.dark-mode .user-details-modal .btn-secondary {
+  background: #404040;
+  border-color: var(--border-color);
+  color: var(--text-primary);
+}
+
+.user-details-modal .btn-secondary:hover {
+  background: var(--border-color);
+  transform: translateY(-2px);
+}

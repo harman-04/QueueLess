@@ -1,4 +1,5 @@
-// src/components/RatingDisplay.css
+/* RatingDisplay.css – Dark Mode Support */
+
 .rating-display {
   display: flex;
   align-items: center;
@@ -11,11 +12,13 @@
 }
 
 .star {
-  color: #ddd;
+  color: var(--text-secondary);
+  /* empty stars use theme secondary text */
 }
 
 .star.filled {
   color: #ffc107;
+  /* keep gold for filled stars */
 }
 
 .stars-sm .star {
@@ -32,11 +35,11 @@
 
 .rating-number {
   font-weight: 600;
-  color: #333;
+  color: var(--text-primary);
 }
 
 .review-count {
   font-size: 0.8rem;
-  color: #666;
+  color: var(--text-secondary);
   margin-left: 0.3rem;
 }

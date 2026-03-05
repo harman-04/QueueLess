@@ -4,6 +4,7 @@ import { addFavoritePlace, removeFavoritePlace, fetchFavoritePlaces } from '../r
 import { FaHeart, FaRegHeart } from 'react-icons/fa';
 import { Button, Spinner } from 'react-bootstrap';
 import { toast } from 'react-toastify'; // Correct import for toast notifications
+import './FavoriteButton.css';
 
 const FavoriteButton = ({ placeId, size = 'sm' }) => {
     const dispatch = useDispatch();
@@ -50,7 +51,7 @@ const FavoriteButton = ({ placeId, size = 'sm' }) => {
             size={size}
             onClick={handleToggleFavorite}
             disabled={isProcessing || loading}
-            className="d-flex align-items-center"
+            className="d-flex align-items-center favorite-btn"
         >
             {isProcessing ? (
                 <Spinner animation="border" size="sm" />

@@ -1,19 +1,24 @@
-// Update Place model to ensure consistency
 package com.queueless.backend.model;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.geo.GeoJsonPoint;
 import org.springframework.data.mongodb.core.index.CompoundIndex;
+import org.springframework.data.mongodb.core.index.CompoundIndexes;
+import org.springframework.data.mongodb.core.index.GeoSpatialIndexType;
+import org.springframework.data.mongodb.core.index.GeoSpatialIndexed;
+import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
-import org.springframework.data.mongodb.core.geo.GeoJsonPoint;
 
 import java.util.List;
 import java.util.Map;
 
 @Document(collection = "places")
-@CompoundIndex(name = "location_index", def = "{'location': '2dsphere'}")
+@CompoundIndexes({
+        @CompoundIndex(name = "place_admin_location", def = "{'adminId': 1, 'location': '2dsphere'}")
+})
 @Data
 @NoArgsConstructor
 public class Place {
@@ -24,16 +29,18 @@ public class Place {
     private String name;
 
     @Field("type")
-    private String type; // HOSPITAL, SHOP, BANK, etc.
+    private String type;
 
     @Field("address")
     private String address;
 
     @Field("location")
+    @GeoSpatialIndexed(type = GeoSpatialIndexType.GEO_2DSPHERE)   // <-- added
     private GeoJsonPoint location;
 
     @Field("adminId")
-    private String adminId; // Reference to admin user
+    @Indexed   // <-- added
+    private String adminId;
 
     @Field("imageUrls")
     private List<String> imageUrls;
@@ -48,7 +55,7 @@ public class Place {
     private Integer totalRatings = 0;
 
     @Field("contactInfo")
-    private Map<String, String> contactInfo; // phone, email, website, etc.
+    private Map<String, String> contactInfo;
 
     @Field("businessHours")
     private List<BusinessHours> businessHours;

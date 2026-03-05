@@ -8,9 +8,25 @@ pnpm-debug.log*
 lerna-debug.log*
 
 node_modules
+# Dependencies
+node_modules/
+package-lock.json
+
 dist
 dist-ssr
 *.local
+
+# Build output
+dist/
+dist-ssr/
+*.local
+
+# Environment variables
+.env
+
+
+# Firebase config 
+firebase-messaging-sw.js
 
 # Editor directories and files
 .vscode/*

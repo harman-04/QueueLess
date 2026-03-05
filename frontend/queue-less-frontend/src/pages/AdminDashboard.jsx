@@ -1,18 +1,30 @@
-// Enhanced AdminDashboard.jsx with beautiful UI
+// src/pages/AdminDashboard.jsx
 import React, { useState, useEffect } from 'react';
 import {
   Container, Row, Col, Card, Table, Spinner, Alert, Tabs, Tab,
-  Badge, Button, Modal, Form, InputGroup
+  Badge, Button, Form, InputGroup
 } from 'react-bootstrap';
 import {
   FaBuilding, FaList, FaUsers, FaCheckCircle, FaMoneyBill, FaChartLine,
   FaUserTie, FaCog, FaEye, FaPauseCircle, FaPlayCircle, FaSearch,
-  FaFilter, FaPlus, FaEdit, FaTrash, FaSync, FaDownload, FaTimes
+  FaFilter, FaPlus, FaEdit, FaTrash, FaSync, FaDownload, FaTimes, FaMapMarkerAlt, FaFilePdf, FaFileExcel, FaBell
 } from 'react-icons/fa';
 import axiosInstance from '../utils/axiosInstance';
 import { toast } from 'react-toastify';
-import './AdminDashboard.css';
 import { useNavigate } from 'react-router-dom';
+import './AdminDashboard.css';
+import './AnalyticsSkeleton.css';
+import { useDispatch, useSelector } from 'react-redux';
+import {
+  fetchTokensOverTime,
+  fetchBusiestHours,
+} from '../redux/adminAnalyticsSlice';
+import TokenVolumeChart from '../components/TokenVolumeChart';
+import BusiestHoursChart from '../components/BusiestHoursChart';
+import ProviderLeaderboard from '../components/ProviderLeaderboard';
+import AlertConfigModal from '../components/AlertConfigModal';
+import PlaceMap from '../components/PlaceMap';
+import QueuesTableSkeleton from '../components/QueuesTableSkeleton'; // <-- import skeleton
 
 const AdminDashboard = () => {
   const [stats, setStats] = useState(null);
@@ -20,12 +32,22 @@ const AdminDashboard = () => {
   const [providers, setProviders] = useState([]);
   const [queues, setQueues] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [queuesLoading, setQueuesLoading] = useState(false); // separate for queues tab
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('stats');
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
-  const [showProviderModal, setShowProviderModal] = useState(false);
+  const [showAlertModal, setShowAlertModal] = useState(false);
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const { tokensOverTime, busiestHours, loading: analyticsLoading, error: analyticsError } = useSelector((state) => state.adminAnalytics);
+
+  useEffect(() => {
+    if (activeTab === 'analytics') {
+      dispatch(fetchTokensOverTime(30));
+      dispatch(fetchBusiestHours());
+    }
+  }, [activeTab, dispatch]);
 
   useEffect(() => {
     fetchDashboardData();
@@ -50,6 +72,27 @@ const AdminDashboard = () => {
       toast.error('Failed to load dashboard data');
     } finally {
       setLoading(false);
+      setQueuesLoading(false);
+    }
+  };
+
+  const fetchQueuesData = async () => {
+    setQueuesLoading(true);
+    try {
+      const response = await axiosInstance.get('/admin/queues/enhanced');
+      setQueues(response.data);
+    } catch (err) {
+      toast.error('Failed to refresh queues');
+    } finally {
+      setQueuesLoading(false);
+    }
+  };
+
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    if (tab === 'queues' && queues.length === 0) {
+      // Optionally refresh queues when switching to the tab
+      // fetchQueuesData();
     }
   };
 
@@ -78,9 +121,29 @@ const AdminDashboard = () => {
 
       await axiosInstance.put(endpoint);
       toast.success(`Queue ${currentStatus ? 'paused' : 'resumed'} successfully!`);
-      fetchDashboardData();
+      fetchQueuesData(); // refresh only queues
     } catch (error) {
       toast.error('Failed to update queue status');
+    }
+  };
+
+  const handleExportReport = async (format) => {
+    try {
+      const response = await axiosInstance.get(`/admin/report/${format}`, {
+        responseType: 'blob'
+      });
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      const filename = `admin-report-${new Date().toISOString().slice(0, 10)}.${format === 'pdf' ? 'pdf' : 'xlsx'}`;
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      toast.success('Report downloaded successfully!');
+    } catch (error) {
+      toast.error('Failed to download report');
     }
   };
 
@@ -121,7 +184,7 @@ const AdminDashboard = () => {
   }
 
   return (
-    <Container fluid className="admin-dashboard-container">
+    <Container fluid className="admin-dashboard-container  ">
       <div className="admin-dashboard">
         <div className="dashboard-header">
           <h1 className="dashboard-title">Admin Dashboard ⚡</h1>
@@ -132,10 +195,10 @@ const AdminDashboard = () => {
           </div>
         </div>
 
-        <Tabs activeKey={activeTab} onSelect={(k) => setActiveTab(k)} className="dashboard-tabs">
-          <Tab eventKey="stats" title={
-            <span><FaChartLine className="me-2" /> Overview</span>
-          }>
+        <Tabs activeKey={activeTab} onSelect={handleTabChange} className="dashboard-tabs ">
+          <Tab className='mt-4' eventKey="stats" title={<span><FaChartLine className="me-2" /> Overview</span>}>
+
+
             {/* Statistics Cards */}
             {stats && (
               <Row className="stats-grid">
@@ -204,38 +267,51 @@ const AdminDashboard = () => {
               </Card.Header>
               <Card.Body>
                 <Row>
-                  <Col xs={6} md={3} className="text-center mb-3">
+                  <Col xs={6} md={2} className="text-center mb-3">
                     <Button variant="light" className="action-btn" onClick={() => navigate('/places/new')}>
                       <FaPlus size={24} className="mb-2 text-primary" />
                       <div>Add Place</div>
                     </Button>
                   </Col>
-                  <Col xs={6} md={3} className="text-center mb-3">
+                  <Col xs={6} md={2} className="text-center mb-3">
                     <Button variant="light" className="action-btn" onClick={() => setActiveTab('providers')}>
                       <FaUserTie size={24} className="mb-2 text-success" />
                       <div>Manage Providers</div>
                     </Button>
                   </Col>
-                  <Col xs={6} md={3} className="text-center mb-3">
+                  <Col xs={6} md={2} className="text-center mb-3">
                     <Button variant="light" className="action-btn" onClick={() => navigate('/provider-pricing')}>
                       <FaMoneyBill size={24} className="mb-2 text-info" />
                       <div>Buy Tokens</div>
                     </Button>
                   </Col>
-                  <Col xs={6} md={3} className="text-center mb-3">
-                    <Button variant="light" className="action-btn">
-                      <FaDownload size={24} className="mb-2 text-secondary" />
-                      <div>Export Data</div>
+                  <Col xs={6} md={2} className="text-center mb-3">
+                    <Button variant="light" className="action-btn" onClick={() => handleExportReport('pdf')}>
+                      <FaFilePdf size={24} className="mb-2 text-danger" />
+                      <div>Export PDF</div>
                     </Button>
                   </Col>
+                  <Col xs={6} md={2} className="text-center mb-3">
+                    <Button variant="light" className="action-btn" onClick={() => handleExportReport('excel')}>
+                      <FaFileExcel size={24} className="mb-2 text-success" />
+                      <div>Export Excel</div>
+                    </Button>
+                  </Col>
+
+                  <Col xs={6} md={2} className="text-center mb-3">
+                    <Button variant="light" className="action-btn" onClick={() => setShowAlertModal(true)}>
+                      <FaBell size={24} className="mb-2 text-warning" />
+                      <div>Alert Config</div>
+                    </Button>
+                  </Col>
+
+
                 </Row>
               </Card.Body>
             </Card>
           </Tab>
 
-          <Tab eventKey="queues" title={
-            <span><FaList className="me-2" /> Queues</span>
-          }>
+          <Tab eventKey="queues" title={<span><FaList className="me-2" /> Queues</span>}>
             <Card className="dashboard-card">
               <Card.Header className="d-flex flex-column flex-md-row justify-content-between align-items-md-center card-header-styled">
                 <h5 className="mb-2 mb-md-0">All Queues</h5>
@@ -260,14 +336,17 @@ const AdminDashboard = () => {
                 </div>
               </Card.Header>
               <Card.Body className="p-0">
-                {filteredQueues.length === 0 ? (
+                {queuesLoading ? (
+                  <QueuesTableSkeleton />
+                ) : filteredQueues.length === 0 ? (
                   <div className="text-center py-5">
                     <FaList size={48} className="text-muted mb-3" />
                     <p className="text-muted">No queues found matching your criteria.</p>
                   </div>
                 ) : (
                   <div className="table-responsive">
-                    <Table hover className="queues-table mb-0">
+                    <Table hover className="queues-table mb-0 mt-4">
+                      {/* table headers and rows as before */}
                       <thead>
                         <tr>
                           <th>Service</th>
@@ -338,7 +417,7 @@ const AdminDashboard = () => {
                   </div>
                 ) : (
                   <div className="table-responsive">
-                    <Table hover className="payments-table mb-0">
+                    <Table hover className="payments-table mb-0 mt-4">
                       <thead>
                         <tr>
                           <th>Date</th>
@@ -353,12 +432,7 @@ const AdminDashboard = () => {
                         {payments.map((payment) => (
                           <tr key={payment.id}>
                             <td>{formatDate(payment.createdAt)}</td>
-                            <td>
-                              {payment.role === 'PROVIDER'
-                                ? `Provider token for ${payment.createdForEmail}`
-                                : `Admin token for ${payment.createdForEmail}`
-                              }
-                            </td>
+                            <td>{payment.description}</td>
                             <td className="fw-semibold">{formatCurrency(payment.amount)}</td>
                             <td>
                               <Badge pill bg={payment.role === 'ADMIN' ? 'primary' : 'info'}>
@@ -366,11 +440,11 @@ const AdminDashboard = () => {
                               </Badge>
                             </td>
                             <td>
-                              <Badge pill bg={payment.isPaid ? 'success' : 'warning'}>
-                                {payment.isPaid ? 'Completed' : 'Pending'}
+                              <Badge pill bg={payment.paid ? 'success' : 'warning'}>
+                                {payment.paid ? 'Completed' : 'Pending'}
                               </Badge>
                             </td>
-                            <td className="text-muted">{payment.razorpayOrderId}</td>
+                            <td className="text-muted">{payment.reference}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -380,126 +454,70 @@ const AdminDashboard = () => {
               </Card.Body>
             </Card>
           </Tab>
-
-          <Tab eventKey="providers" title={
-            <span><FaUserTie className="me-2" /> Providers</span>
-          }>
+          <Tab eventKey="providers" title={<span><FaUserTie className="me-2" /> Providers</span>}>
             <Card className="dashboard-card">
               <Card.Header className="d-flex flex-column flex-md-row justify-content-between align-items-md-center card-header-styled">
                 <h5 className="mb-2 mb-md-0">Provider Management</h5>
-                <Button variant="primary" size="sm" onClick={() => setShowProviderModal(true)}>
-                  <FaPlus className="me-2" /> Add Provider
+                <Button variant="primary" size="sm" onClick={() => navigate('/provider-pricing')}>
+                  <FaPlus className="me-2" /> Buy Provider Tokens
                 </Button>
               </Card.Header>
               <Card.Body className="p-4">
-                {providers.length === 0 ? (
-                  <div className="text-center py-5">
-                    <FaUserTie size={48} className="text-muted mb-3" />
-                    <p className="text-muted">No providers found.</p>
-                  </div>
-                ) : (
-                  <Row>
-                    {providers.map((providerData) => {
-                      const provider = providerData.provider;
-                      const stats = providerData.stats;
-
-                      return (
-                        <Col xs={12} md={6} lg={4} key={provider.id} className="mb-4">
-                          <Card className="provider-card-styled">
-                            <Card.Body>
-                              <div className="d-flex align-items-center mb-3">
-                                <div className="provider-avatar me-3">
-                                  {provider.name.charAt(0).toUpperCase()}
-                                </div>
-                                <div className="flex-grow-1">
-                                  <h6 className="mb-0 fw-bold">{provider.name}</h6>
-                                  <small className="text-muted">{provider.email}</small>
-                                </div>
-                              </div>
-
-                              <div className="provider-stats-grid mb-3">
-                                <div className="stat-item">
-                                  <span className="value text-primary">{stats.totalQueues}</span>
-                                  <span className="label">Queues</span>
-                                </div>
-                                <div className="stat-item">
-                                  <span className="value text-success">{stats.activeQueues}</span>
-                                  <span className="label">Active</span>
-                                </div>
-                                <div className="stat-item">
-                                  <span className="value text-info">{stats.tokensServedToday}</span>
-                                  <span className="label">Today</span>
-                                </div>
-                              </div>
-
-                              <div className="d-flex justify-content-end">
-                                <Button variant="outline-primary" size="sm" className="me-2">
-                                  <FaEye /> View
-                                </Button>
-                                <Button variant="outline-secondary" size="sm">
-                                  <FaCog /> Manage
-                                </Button>
-                              </div>
-                            </Card.Body>
-                          </Card>
-                        </Col>
-                      );
-                    })}
-                  </Row>
-                )}
+                <ProviderLeaderboard providers={providers} loading={loading} error={error} />
               </Card.Body>
             </Card>
           </Tab>
+
+         <Tab eventKey="analytics" title={<span><FaChartLine className="me-2" /> Analytics</span>}>
+  <Row>
+    <Col md={12}>
+      {analyticsLoading ? (
+        <div className="skeleton-box analytics-skeleton-card animate__animated animate__fadeIn">
+           <div className="d-flex h-100 align-items-center justify-content-center">
+              <Spinner animation="grow" variant="primary" size="lg" />
+              <span className="ms-3 fw-bold text-primary">Analyzing Token Volume...</span>
+           </div>
+        </div>
+      ) : (
+        <TokenVolumeChart data={tokensOverTime} error={analyticsError} />
+      )}
+    </Col>
+  </Row>
+
+  <Row>
+    <Col md={12}>
+      {analyticsLoading ? (
+        <div className="skeleton-box analytics-skeleton-card animate__animated animate__fadeIn">
+           <div className="d-flex h-100 align-items-center justify-content-center">
+              <Spinner animation="grow" variant="info" size="lg" />
+              <span className="ms-3 fw-bold text-info">Mapping Busiest Hours...</span>
+           </div>
+        </div>
+      ) : (
+        <BusiestHoursChart data={busiestHours} error={analyticsError} />
+      )}
+    </Col>
+  </Row>
+</Tab>
+
+          <Tab eventKey="map" title={<span><FaMapMarkerAlt className="me-2" /> Heat Map</span>}>
+            <PlaceMap />
+          </Tab>
         </Tabs>
 
-        {/* Add Provider Modal */}
-        <Modal show={showProviderModal} onHide={() => setShowProviderModal(false)} size="lg" centered>
-          <Modal.Header className="border-0 modal-header-styled">
-            <Modal.Title className="fw-bold">Add New Provider</Modal.Title>
-            <Button variant="light" onClick={() => setShowProviderModal(false)}><FaTimes /></Button>
-          </Modal.Header>
-          <Modal.Body>
-            <Form>
-              <Row>
-                <Col md={6}>
-                  <Form.Group className="mb-3">
-                    <Form.Label>Name</Form.Label>
-                    <Form.Control type="text" placeholder="Enter provider name" />
-                  </Form.Group>
-                </Col>
-                <Col md={6}>
-                  <Form.Group className="mb-3">
-                    <Form.Label>Email</Form.Label>
-                    <Form.Control type="email" placeholder="Enter provider email" />
-                  </Form.Group>
-                </Col>
-              </Row>
-              <Form.Group className="mb-3">
-                <Form.Label>Phone Number</Form.Label>
-                <Form.Control type="tel" placeholder="Enter phone number" />
-              </Form.Group>
-              <Form.Group className="mb-3">
-                <Form.Label>Assign Places</Form.Label>
-                <Form.Select multiple>
-                  <option>Place 1</option>
-                  <option>Place 2</option>
-                  <option>Place 3</option>
-                </Form.Select>
-              </Form.Group>
-            </Form>
-          </Modal.Body>
-          <Modal.Footer className="border-0">
-            <Button variant="secondary" onClick={() => setShowProviderModal(false)}>
-              Cancel
-            </Button>
-            <Button variant="primary" onClick={() => setShowProviderModal(false)}>
-              Add Provider
-            </Button>
-          </Modal.Footer>
-        </Modal>
+        {/* REMOVED: The Add Provider Modal */}
+        <AlertConfigModal
+          show={showAlertModal}
+          onHide={() => setShowAlertModal(false)}
+          onConfigChanged={() => { }} // optional callback to refresh something
+        />
       </div>
     </Container>
+
   );
+
 };
+
+
 
 export default AdminDashboard;

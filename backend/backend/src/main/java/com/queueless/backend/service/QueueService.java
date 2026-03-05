@@ -19,26 +19,17 @@ import com.queueless.backend.repository.UserRepository;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 @Slf4j
 @org.springframework.stereotype.Service
 @RequiredArgsConstructor
 public class QueueService {
-
-
-//    private final ConcurrentHashMap<String, LocalDateTime> userQueueJoins = new ConcurrentHashMap<>();
-//    private static final long JOIN_COOLDOWN_MINUTES = 30;
-
-    private static final Logger logger = LoggerFactory.getLogger(QueueService.class);
 
     private final QueueRepository queueRepository;
     private final SimpMessagingTemplate messagingTemplate;
@@ -55,36 +46,21 @@ public class QueueService {
         return userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
     }
-    // Add these missing methods
-//    public LocalDateTime getLastQueueJoinTime(String userId) {
-//        return userQueueJoins.get(userId);
-//    }
+
     public LocalDateTime getLastQueueJoinTime(String userId) {
         User user = getUserOrThrow(userId);
         return user.getLastQueueJoinTime();
     }
-//    public boolean canUserJoinQueue(String userId) {
-//        LocalDateTime lastJoin = userQueueJoins.get(userId);
-//        if (lastJoin == null) return true;
-//
-//        return lastJoin.plusMinutes(JOIN_COOLDOWN_MINUTES).isBefore(LocalDateTime.now());
-//    }
 
     public boolean canUserJoinQueue(String userId) {
         User user = getUserOrThrow(userId);
         return user.getActiveTokenId() == null;
     }
 
-//    public long getJoinCooldownMinutes() {
-//        return JOIN_COOLDOWN_MINUTES;
-//    }
-
-//    private boolean hasActiveQueueParticipation(String userId) {
-//        return !canUserJoinQueue(userId);
-//    }
     private boolean hasActiveQueueParticipation(String userId) {
         return !canUserJoinQueue(userId);
     }
+
     private Queue getQueueOrThrow(String queueId) {
         return queueRepository.findById(queueId)
                 .orElseThrow(() -> {
@@ -123,15 +99,14 @@ public class QueueService {
             throw new IllegalStateException("Queue has reached its maximum capacity. Please try again later.");
         }
 
-        // Get user details for storing with token
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         int nextToken = queue.getTokenCounter() + 1;
         queue.setTokenCounter(nextToken);
-        String tokenId = "T-" + String.format("%03d", nextToken);
+        // Globally unique token ID: queueId + "-T-" + counter
+        String tokenId = queueId + "-T-" + String.format("%03d", nextToken);
 
-        // Create user details object
         UserQueueDetails userDetails = new UserQueueDetails();
         userDetails.setPurpose(tokenRequest.getPurpose());
         userDetails.setCondition(tokenRequest.getCondition());
@@ -148,7 +123,6 @@ public class QueueService {
         user.setActiveTokenId(tokenId);
         user.setLastQueueJoinTime(LocalDateTime.now());
         userRepository.save(user);
-//        userQueueJoins.put(userId, LocalDateTime.now());
 
         Queue updatedQueue = queueRepository.save(queue);
         broadcastQueueUpdate(queueId, updatedQueue);
@@ -165,7 +139,6 @@ public class QueueService {
                 .findFirst()
                 .orElseThrow(() -> new ResourceNotFoundException("Token not found"));
 
-        // Check if requester has permission to view details
         User requester = userRepository.findById(requesterId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
@@ -180,7 +153,6 @@ public class QueueService {
                     token.getUserDetails().getVisibleToProvider() == null ||
                     token.getUserDetails().getVisibleToProvider();
         } else if (requesterId.equals(token.getUserId())) {
-            // Users can always view their own details
             canViewDetails = true;
         }
 
@@ -194,7 +166,6 @@ public class QueueService {
         response.setDetailsVisible(canViewDetails);
 
         if (token.getUserDetails() != null && canViewDetails) {
-            // Apply privacy settings
             boolean isPrivate = token.getUserDetails().getIsPrivate() != null &&
                     token.getUserDetails().getIsPrivate();
 
@@ -212,7 +183,6 @@ public class QueueService {
     public QueueResetResponseDTO resetQueueWithOptions(String queueId, QueueResetRequestDTO resetRequest, String requesterId) {
         Queue queue = getQueueOrThrow(queueId);
 
-        // Verify requester has permission to reset this queue
         User requester = userRepository.findById(requesterId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
@@ -225,18 +195,12 @@ public class QueueService {
 
         QueueResetResponseDTO response = new QueueResetResponseDTO();
 
-        // Preserve data if requested
         if (resetRequest.getPreserveData() != null && resetRequest.getPreserveData()) {
             try {
-                // Export current queue data with user details if requested
                 byte[] exportData = exportService.exportQueueToPdf(queue,
                         resetRequest.getReportType() != null ? resetRequest.getReportType() : "full",
                         resetRequest.getIncludeUserDetails());
 
-
-
-                // In a real implementation, you would save this to cloud storage or a file system
-                // For now, we'll just log it and generate a mock URL
                 String exportId = "export-" + System.currentTimeMillis() + "-" + queueId;
                 String filename = String.format("queue-reset-%s-%s.%s",
                         queue.getServiceName().replaceAll("\\s+", "-"),
@@ -253,29 +217,24 @@ public class QueueService {
             }
         }
 
-        // Count tokens being reset
         int tokensReset = queue.getTokens().size();
 
-        // Collect user IDs of all tokens that will be removed
         Set<String> affectedUserIds = queue.getTokens().stream()
                 .map(QueueToken::getUserId)
                 .collect(Collectors.toSet());
 
-
-        // Reset the queue
         queue.getTokens().clear();
         queue.setTokenCounter(0);
         queue.setCurrentPosition(0);
         queue.setStartTime(LocalDateTime.now());
 
-        // Reset statistics if needed
         if (queue.getStatistics() != null) {
             queue.getStatistics().setDailyUsersServed(0);
         }
 
         queueRepository.save(queue);
         broadcastQueueUpdate(queueId, queue);
-        // Remove user tracking for the affected users
+
         affectedUserIds.forEach(userId -> {
             userRepository.findById(userId).ifPresent(user -> {
                 user.setActiveTokenId(null);
@@ -291,7 +250,7 @@ public class QueueService {
         log.info("Queue {} reset by user {}, {} tokens cleared", queueId, requesterId, tokensReset);
         return response;
     }
-    // Existing methods with user restriction checks
+
     public QueueToken addNewToken(String queueId, String userId) {
         Queue queue = getQueueOrThrow(queueId);
 
@@ -324,7 +283,7 @@ public class QueueService {
 
         int nextToken = queue.getTokenCounter() + 1;
         queue.setTokenCounter(nextToken);
-        String tokenId = "T-" + String.format("%03d", nextToken);
+        String tokenId = queueId + "-T-" + String.format("%03d", nextToken);
 
         QueueToken token = new QueueToken(tokenId, userId, TokenStatus.WAITING.toString(), LocalDateTime.now());
         queue.getTokens().add(token);
@@ -333,8 +292,6 @@ public class QueueService {
         user.setActiveTokenId(tokenId);
         user.setLastQueueJoinTime(LocalDateTime.now());
         userRepository.save(user);
-
-//        userQueueJoins.put(userId, LocalDateTime.now());
 
         Queue updatedQueue = queueRepository.save(queue);
         broadcastQueueUpdate(queueId, updatedQueue);
@@ -347,7 +304,7 @@ public class QueueService {
         Queue queue = getQueueOrThrow(queueId);
 
         if (!queue.getIsActive()) {
-            logger.warn("Inactive queue join attempt: queueId={}", queueId);
+            log.warn("Inactive queue join attempt: queueId={}", queueId);
             throw new QueueInactiveException("Provider is on break. Queue temporarily unavailable.");
         }
 
@@ -379,7 +336,7 @@ public class QueueService {
 
         int nextToken = queue.getTokenCounter() + 1;
         queue.setTokenCounter(nextToken);
-        String tokenId = "G-" + String.format("%03d", nextToken);
+        String tokenId = queueId + "-G-" + String.format("%03d", nextToken);
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
@@ -395,11 +352,10 @@ public class QueueService {
         Queue updatedQueue = queueRepository.save(queue);
         broadcastQueueUpdate(queueId, updatedQueue);
 
-        logger.debug("Group token {} added to queueId={} with {} members", tokenId, queueId, groupMembers.size());
+        log.debug("Group token {} added to queueId={} with {} members", tokenId, queueId, groupMembers.size());
         return token;
     }
 
-    // Update addEmergencyToken method
     public QueueToken addEmergencyToken(String queueId, String userId, String emergencyDetails) {
         Queue queue = getQueueOrThrow(queueId);
 
@@ -427,24 +383,20 @@ public class QueueService {
 
         int nextToken = queue.getTokenCounter() + 1;
         queue.setTokenCounter(nextToken);
-        String tokenId = "E-" + String.format("%03d", nextToken);
+        String tokenId = queueId + "-E-" + String.format("%03d", nextToken);
 
-        // Get user name
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         QueueToken token;
         if (queue.getAutoApproveEmergency()) {
-            // Auto-approve emergency token
             token = new QueueToken(tokenId, userId, user.getName(), TokenStatus.WAITING.toString(),
                     LocalDateTime.now(), emergencyDetails, queue.getEmergencyPriorityWeight());
             queue.getTokens().add(token);
             user.setActiveTokenId(tokenId);
             user.setLastQueueJoinTime(LocalDateTime.now());
             userRepository.save(user);
-//            userQueueJoins.put(userId, LocalDateTime.now());
         } else {
-            // Require provider approval
             token = new QueueToken(tokenId, userId, user.getName(), TokenStatus.PENDING.toString(),
                     LocalDateTime.now(), emergencyDetails, queue.getEmergencyPriorityWeight());
             queue.getPendingEmergencyTokens().add(token);
@@ -456,7 +408,6 @@ public class QueueService {
         return token;
     }
 
-    // Emergency approval methods
     public Queue approveEmergencyToken(String queueId, String tokenId, boolean approve, String reason) {
         Queue queue = getQueueOrThrow(queueId);
 
@@ -471,17 +422,14 @@ public class QueueService {
         QueueToken token = pendingToken.get();
 
         if (approve) {
-            // Move to active tokens
             token.setStatus(TokenStatus.WAITING.toString());
             queue.getTokens().add(token);
 
-            // Update user's active token
-            User user = getUserOrThrow(token.getUserId());   // FIXED: use token.getUserId()
+            User user = getUserOrThrow(token.getUserId());
             user.setActiveTokenId(tokenId);
             user.setLastQueueJoinTime(LocalDateTime.now());
             userRepository.save(user);
 
-            // Notify user
             messagingTemplate.convertAndSendToUser(
                     token.getUserId(),
                     "/queue/emergency-approved",
@@ -493,7 +441,6 @@ public class QueueService {
                     )
             );
         } else {
-            // Notify user of rejection
             messagingTemplate.convertAndSendToUser(
                     token.getUserId(),
                     "/queue/emergency-approved",
@@ -506,7 +453,6 @@ public class QueueService {
             );
         }
 
-        // Remove from pending
         queue.getPendingEmergencyTokens().removeIf(t -> t.getTokenId().equals(tokenId));
 
         Queue updatedQueue = queueRepository.save(queue);
@@ -514,6 +460,7 @@ public class QueueService {
 
         return updatedQueue;
     }
+
     public List<QueueToken> getPendingEmergencyTokens(String queueId) {
         Queue queue = getQueueOrThrow(queueId);
         return queue.getPendingEmergencyTokens();
@@ -615,14 +562,13 @@ public class QueueService {
     }
 
     public Queue createNewQueue(String providerId, String serviceName, String placeId, String serviceId) {
-        logger.info("Creating queue for providerId={}, serviceName={}, placeId={}, serviceId={}",
+        log.info("Creating queue for providerId={}, serviceName={}, placeId={}, serviceId={}",
                 providerId, serviceName, placeId, serviceId);
 
         Queue newQueue = new Queue(providerId, serviceName, placeId, serviceId);
         return queueRepository.save(newQueue);
     }
 
-    // Enhanced createNewQueue method
     public Queue createNewQueue(String providerId, String serviceName, String placeId, String serviceId,
                                 Integer maxCapacity, Boolean supportsGroupToken, Boolean emergencySupport,
                                 Integer emergencyPriorityWeight, Boolean requiresEmergencyApproval,
@@ -656,8 +602,6 @@ public class QueueService {
         newQueue.setSupportsGroupToken(supportsGroupToken != null ? supportsGroupToken : false);
         newQueue.setEmergencySupport(emergencySupport != null ? emergencySupport : false);
         newQueue.setEmergencyPriorityWeight(emergencyPriorityWeight != null ? emergencyPriorityWeight : 10);
-
-        // Set emergency approval settings
         newQueue.setRequiresEmergencyApproval(requiresEmergencyApproval != null ? requiresEmergencyApproval : false);
         newQueue.setAutoApproveEmergency(autoApproveEmergency != null ? autoApproveEmergency : false);
 
@@ -666,7 +610,7 @@ public class QueueService {
 
     public Queue createNewQueue(String providerId, String serviceName, String placeId, String serviceId,
                                 Integer maxCapacity, Boolean supportsGroupToken, Boolean emergencySupport, Integer emergencyPriorityWeight) {
-        logger.info("Creating queue with advanced settings for providerId={}", providerId);
+        log.info("Creating queue with advanced settings for providerId={}", providerId);
 
         User provider = userRepository.findById(providerId)
                 .orElseThrow(() -> new RuntimeException("Provider not found"));
@@ -700,22 +644,22 @@ public class QueueService {
     }
 
     public List<Queue> getQueuesByProviderId(String providerId) {
-        logger.info("Fetching queues for providerId={}", providerId);
+        log.info("Fetching queues for providerId={}", providerId);
         List<Queue> queues = queueRepository.findByProviderId(providerId);
         queues = queues.stream()
                 .filter(queue -> queue.getProviderId().equals(providerId))
                 .collect(Collectors.toList());
-        logger.debug("Filtered to {} queues for providerId={}", queues.size(), providerId);
+        log.debug("Filtered to {} queues for providerId={}", queues.size(), providerId);
         return queues;
     }
 
     public List<Queue> getQueuesByPlaceId(String placeId) {
-        logger.info("Fetching queues for placeId={}", placeId);
+        log.info("Fetching queues for placeId={}", placeId);
         return queueRepository.findByPlaceId(placeId);
     }
 
     public List<Queue> getQueuesByServiceId(String serviceId) {
-        logger.info("Fetching queues for serviceId={}", serviceId);
+        log.info("Fetching queues for serviceId={}", serviceId);
         return queueRepository.findByServiceId(serviceId);
     }
 
@@ -724,11 +668,10 @@ public class QueueService {
     }
 
     public List<Queue> getAllQueues() {
-        logger.info("Fetching all active queues");
+        log.info("Fetching all active queues");
         return queueRepository.findByIsActive(true);
     }
 
-    // Update completion to remove from tracking
     public Queue completeToken(String queueId, String tokenId) {
         Queue queue = getQueueOrThrow(queueId);
 
@@ -743,19 +686,15 @@ public class QueueService {
         token.setStatus(TokenStatus.COMPLETED.toString());
         token.setCompletedAt(LocalDateTime.now());
 
-        // Add duration calculation
         if (token.getServedAt() != null) {
             long durationInMinutes = java.time.Duration.between(token.getServedAt(), token.getCompletedAt()).toMinutes();
-            token.setServiceDurationMinutes(durationInMinutes); // You'll need to add this field to your QueueToken model
+            token.setServiceDurationMinutes(durationInMinutes);
         }
 
         User user = getUserOrThrow(token.getUserId());
         user.setActiveTokenId(null);
-        user.setLastQueueJoinTime(null);   // optional, allows immediate rejoin
+        user.setLastQueueJoinTime(null);
         userRepository.save(user);
-
-        // Remove from user tracking
-//        userQueueJoins.remove(token.getUserId());
 
         Queue updatedQueue = queueRepository.save(queue);
         broadcastQueueUpdate(queueId, updatedQueue);
@@ -764,79 +703,38 @@ public class QueueService {
         return updatedQueue;
     }
 
-    // Scheduled cleanup for tracking map
-//    @Scheduled(fixedRate = 3600000) // Cleanup every hour
-//    public void cleanupUserQueueTracking() {
-////        LocalDateTime cutoffTime = LocalDateTime.now().minusMinutes(JOIN_COOLDOWN_MINUTES);
-////        userQueueJoins.entrySet().removeIf(entry ->
-////                entry.getValue().isBefore(cutoffTime)
-////        );
-////        log.info("Cleaned up user queue tracking. Current size: {}", userQueueJoins.size());
-//
-//        List<Queue> allQueues = queueRepository.findAll();
-//
-//        for (Queue queue : allQueues) {
-//            boolean modified = false;
-//            Iterator<QueueToken> iterator = queue.getTokens().iterator();
-//
-//            while (iterator.hasNext()) {
-//                QueueToken token = iterator.next();
-//                if (token.getIssuedAt().isBefore(LocalDateTime.now().minusHours(24))) {
-//                    // Clear user's active token if it matches
-//                    userRepository.findById(token.getUserId()).ifPresent(user -> {
-//                        if (token.getTokenId().equals(user.getActiveTokenId())) {
-//                            user.setActiveTokenId(null);
-//                            user.setLastQueueJoinTime(null);
-//                            userRepository.save(user);
-//                        }
-//                    });
-//                    iterator.remove();
-//                    modified = true;
-//                    logger.info("Removed expired token: {}", token.getTokenId());
-//                }
-//            }
-//
-//            if (modified) {
-//                queueRepository.save(queue);
-//                broadcastQueueUpdate(queue.getId(), queue);
-//            }
-//        }
-//    }
+    @Scheduled(fixedRate = 3600000) // Run every hour
+    public void cleanupExpiredTokens() {
+        log.info("Cleaning up expired tokens (older than 24 hours)...");
+        List<Queue> allQueues = queueRepository.findAll();
 
-@Scheduled(fixedRate = 3600000) // Run every hour
-public void cleanupExpiredTokens() {
-    logger.info("Cleaning up expired tokens (older than 24 hours)...");
-    List<Queue> allQueues = queueRepository.findAll();
+        for (Queue queue : allQueues) {
+            boolean modified = false;
+            Iterator<QueueToken> iterator = queue.getTokens().iterator();
 
-    for (Queue queue : allQueues) {
-        boolean modified = false;
-        Iterator<QueueToken> iterator = queue.getTokens().iterator();
+            while (iterator.hasNext()) {
+                QueueToken token = iterator.next();
+                if (token.getIssuedAt().isBefore(LocalDateTime.now().minusHours(24))) {
+                    userRepository.findById(token.getUserId()).ifPresent(user -> {
+                        if (token.getTokenId().equals(user.getActiveTokenId())) {
+                            user.setActiveTokenId(null);
+                            user.setLastQueueJoinTime(null);
+                            userRepository.save(user);
+                        }
+                    });
+                    iterator.remove();
+                    modified = true;
+                    log.info("Removed expired token: {}", token.getTokenId());
+                }
+            }
 
-        while (iterator.hasNext()) {
-            QueueToken token = iterator.next();
-            if (token.getIssuedAt().isBefore(LocalDateTime.now().minusHours(24))) {
-                // Clear user's active token if it matches
-                userRepository.findById(token.getUserId()).ifPresent(user -> {
-                    if (token.getTokenId().equals(user.getActiveTokenId())) {
-                        user.setActiveTokenId(null);
-                        user.setLastQueueJoinTime(null);
-                        userRepository.save(user);
-                    }
-                });
-                iterator.remove();
-                modified = true;
-                logger.info("Removed expired token: {}", token.getTokenId());
+            if (modified) {
+                queueRepository.save(queue);
+                broadcastQueueUpdate(queue.getId(), queue);
             }
         }
-
-        if (modified) {
-            queueRepository.save(queue);
-            broadcastQueueUpdate(queue.getId(), queue);
-        }
     }
-}
 
-    // Update cancellation to remove from tracking
     public Queue cancelToken(String queueId, String tokenId, String reason) {
         Queue queue = getQueueOrThrow(queueId);
 
@@ -846,7 +744,6 @@ public void cleanupExpiredTokens() {
 
         boolean removed = queue.getTokens().removeIf(t -> t.getTokenId().equals(tokenId));
         if (!removed) {
-            // Check if it's a pending emergency token
             removed = queue.getPendingEmergencyTokens().removeIf(t -> t.getTokenId().equals(tokenId));
 
             if (!removed) {
@@ -855,18 +752,15 @@ public void cleanupExpiredTokens() {
             }
         }
 
-        // Remove from user tracking if it was an active token
         if (tokenToCancel.isPresent()) {
-//            userQueueJoins.remove(tokenToCancel.get().getUserId());
             QueueToken token = tokenToCancel.get();
-            token.setCancellationReason(reason); // store reason (optional)
+            token.setCancellationReason(reason);
 
             User user = getUserOrThrow(tokenToCancel.get().getUserId());
             user.setActiveTokenId(null);
             user.setLastQueueJoinTime(null);
             userRepository.save(user);
 
-            // Send WebSocket notification to user
             messagingTemplate.convertAndSendToUser(
                     token.getUserId(),
                     "/queue/token-cancelled",
@@ -888,20 +782,19 @@ public void cleanupExpiredTokens() {
     public Queue reorderQueue(String queueId, List<QueueToken> newTokens) {
         Queue queue = getQueueOrThrow(queueId);
         queue.setTokens(newTokens);
-        // After setting newTokens, reset notification flags for all waiting tokens
         newTokens.stream()
                 .filter(t -> "WAITING".equals(t.getStatus()))
                 .forEach(t -> t.setNotificationSent(false));
         Queue updatedQueue = queueRepository.save(queue);
         broadcastQueueUpdate(queueId, updatedQueue);
 
-        logger.info("Queue reordered for queueId={}", queueId);
+        log.info("Queue reordered for queueId={}", queueId);
         return updatedQueue;
     }
 
     @PostConstruct
     public void cleanupInconsistentTokenStatuses() {
-        logger.info("Cleaning up inconsistent token statuses...");
+        log.info("Cleaning up inconsistent token statuses...");
         List<Queue> allQueues = queueRepository.findAll();
 
         for (Queue queue : allQueues) {
@@ -912,7 +805,7 @@ public void cleanupExpiredTokens() {
                     .count();
 
             if (inServiceCount > 1) {
-                logger.warn("Queue {} has {} IN_SERVICE tokens, fixing...", queue.getId(), inServiceCount);
+                log.warn("Queue {} has {} IN_SERVICE tokens, fixing...", queue.getId(), inServiceCount);
 
                 boolean foundFirst = false;
                 for (QueueToken token : queue.getTokens()) {
@@ -929,7 +822,7 @@ public void cleanupExpiredTokens() {
 
             if (needsUpdate) {
                 queueRepository.save(queue);
-                logger.info("Fixed inconsistent token statuses for queue {}", queue.getId());
+                log.info("Fixed inconsistent token statuses for queue {}", queue.getId());
             }
         }
     }
@@ -950,34 +843,9 @@ public void cleanupExpiredTokens() {
         Queue updatedQueue = queueRepository.save(queue);
         broadcastQueueUpdate(queueId, updatedQueue);
 
-        logger.info("Updated statistics for queue {}", queueId);
+        log.info("Updated statistics for queue {}", queueId);
         return updatedQueue;
     }
-
-//    @Scheduled(fixedRate = 60000)
-//    public void cleanupExpiredTokens() {
-//        logger.info("Cleaning up expired tokens...");
-//        List<Queue> allQueues = queueRepository.findAll();
-//
-//        for (Queue queue : allQueues) {
-//            boolean modified = false;
-//            Iterator<QueueToken> iterator = queue.getTokens().iterator();
-//
-//            while (iterator.hasNext()) {
-//                QueueToken token = iterator.next();
-//                if (token.getIssuedAt().isBefore(LocalDateTime.now().minusHours(24))) {
-//                    iterator.remove();
-//                    modified = true;
-//                    logger.info("Removed expired token: {}", token.getTokenId());
-//                }
-//            }
-//
-//            if (modified) {
-//                queueRepository.save(queue);
-//                broadcastQueueUpdate(queue.getId(), queue);
-//            }
-//        }
-//    }
 
     public List<Queue> getQueuesByUserId(String userId) {
         return queueRepository.findAll().stream()
@@ -1007,17 +875,15 @@ public void cleanupExpiredTokens() {
         LocalDateTime thirtyDaysAgo = LocalDateTime.now().minusDays(30);
         List<QueueHourlyStats> stats = statsRepository.findByQueueIdAndHourBetween(queueId, thirtyDaysAgo, LocalDateTime.now());
 
-        // Group by hour of day (0-23) and calculate average waiting count
         Map<Integer, Double> avgByHour = stats.stream()
                 .collect(Collectors.groupingBy(
                         s -> s.getHour().getHour(),
                         Collectors.averagingInt(QueueHourlyStats::getWaitingCount)
                 ));
 
-        // Find hours with lowest average waiting count
         List<Map.Entry<Integer, Double>> sorted = avgByHour.entrySet().stream()
                 .sorted(Map.Entry.comparingByValue())
-                .limit(3) // top 3 best hours
+                .limit(3)
                 .collect(Collectors.toList());
 
         List<String> bestHours = sorted.stream()
@@ -1033,4 +899,16 @@ public void cleanupExpiredTokens() {
                 "averageWaitTimes", averages
         );
     }
+
+    public QueueToken addTokenByType(String queueId, String userId, String tokenType) {
+        if ("GROUP".equalsIgnoreCase(tokenType)) {
+            throw new UnsupportedOperationException("Group tokens cannot be joined via QR");
+        } else if ("EMERGENCY".equalsIgnoreCase(tokenType)) {
+            return addEmergencyToken(queueId, userId, "Joined via QR");
+        } else {
+            return addNewToken(queueId, userId);
+        }
+    }
+
+
 }

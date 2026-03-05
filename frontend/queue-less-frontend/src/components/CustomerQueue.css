@@ -1,197 +1,484 @@
-/* General Body and Container Styling */
-body {
-  background: linear-gradient(135deg, #f0f4f8, #d9e2ec);
-  font-family: 'Roboto', sans-serif;
-}
+/* CustomerQueue.css – Enhanced UI/UX with Dark Mode */
 
+/* ===== Global Styles & Container ===== */
 .customer-queue-container {
-  padding: 3rem 1rem;
-  max-width: 900px;
+  padding: 2rem 1rem;
+  max-width: 1000px;
   margin: 0 auto;
   position: relative;
+  min-height: 100vh;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  transition: background-color 0.3s, color 0.3s;
 }
 
-/* Page Header */
+/* ===== Header Section ===== */
 .header-section {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1rem; /* Reduced margin to bring badges closer */
-  position: relative;
-  z-index: 2;
+  margin-bottom: 1.5rem;
+  gap: 1rem;
 }
 
 .queue-title {
   font-weight: 700;
-  color: #2c3e50;
-  text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
+  font-size: 2.2rem;
+  background: linear-gradient(135deg, var(--search-primary), var(--accent-color));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin: 0;
 }
-
-/* Badges Container */
-.badges-container {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem; /* Space between badges */
-  margin-bottom: 2rem; /* Separates badges from the next section */
-  margin-left: -0.25rem; /* Optional: Align badges with the main text block */
-}
-
-.badge {
-  font-size: 0.8em;
-  font-weight: 600;
-  padding: 0.4em 0.8em;
-  border-radius: 50px;
-}
-
-.badge-paused { background-color: #f1c40f; color: #fff; }
-.badge-info { background-color: #3498db; color: #fff; }
-.badge-danger { background-color: #e74c3c; color: #fff; }
 
 .btn-back-home {
-  background: none;
-  border: 2px solid #bdc3c7;
-  color: #7f8c8d;
+  background: transparent;
+  border: 2px solid var(--border-color);
+  color: var(--text-secondary);
   font-weight: 600;
-  padding: 0.6rem 1.2rem;
+  padding: 0.6rem 1.4rem;
   border-radius: 50px;
   transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .btn-back-home:hover {
-  background-color: #7f8c8d;
-  color: #fff;
+  background-color: var(--text-secondary);
+  border-color: var(--text-secondary);
+  color: var(--bg-primary);
   transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
 }
 
-/* Card Styling */
-.status-card, .serving-card, .join-queue-card, .form-card, .stats-card {
-  background-color: #ffffff;
-  border-radius: 15px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
-  padding: 2.5rem;
+/* ===== Badges Container ===== */
+.badges-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 2rem;
+}
+
+.badge {
+  padding: 0.5rem 1.2rem;
+  border-radius: 50px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: var(--shadow-sm);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.badge-paused {
+  background: linear-gradient(135deg, #f39c12, #e67e22);
+  color: white;
+}
+
+.badge-info {
+  background: linear-gradient(135deg, var(--search-primary), #4f46e5);
+  color: white;
+}
+
+.badge-danger {
+  background: linear-gradient(135deg, var(--danger-color), #c0392b);
+  color: white;
+}
+
+/* ===== Card Styling (shared) ===== */
+.status-card,
+.serving-card,
+.join-queue-card,
+.form-card,
+.stats-card {
+  background-color: var(--card-bg);
+  border-radius: 20px;
+  box-shadow: var(--shadow-lg);
+  padding: 2rem 2.5rem;
   margin-bottom: 2rem;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
+  border: 1px solid var(--border-color);
+  backdrop-filter: blur(10px);
 }
 
-.status-card:hover, .serving-card:hover, .join-queue-card:hover, .form-card:hover, .stats-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.12);
+.status-card:hover,
+.serving-card:hover,
+.join-queue-card:hover,
+.form-card:hover,
+.stats-card:hover {
+  transform: translateY(-6px);
+  box-shadow: var(--shadow-xl);
 }
 
-/* Specific Card Headers and Titles */
+/* ===== Status Card ===== */
 .status-header {
   display: flex;
   align-items: center;
+  gap: 1rem;
   margin-bottom: 1.5rem;
-  border-bottom: 2px solid #ecf0f1;
   padding-bottom: 1rem;
+  border-bottom: 2px solid var(--border-color);
 }
 
 .status-icon {
-  font-size: 1.5rem;
-  color: #3498db;
-  margin-right: 1rem;
+  font-size: 2rem;
+  color: var(--search-primary);
 }
 
 .status-title {
+  font-weight: 700;
+  font-size: 1.5rem;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+/* Status body text */
+.status-body h5 {
+  color: var(--text-primary);
   font-weight: 600;
-  color: #34495e;
+}
+
+.status-body .text-muted {
+  color: var(--text-secondary) !important;
+}
+
+/* Cancel token button */
+.btn-outline-danger {
+  border: 2px solid var(--danger-color);
+  color: var(--danger-color);
+  background: transparent;
+  border-radius: 30px;
+  padding: 0.4rem 1.2rem;
+  font-weight: 600;
+  transition: all 0.3s;
+}
+
+.btn-outline-danger:hover {
+  background: var(--danger-color);
+  color: white;
+  transform: scale(1.05);
+  box-shadow: 0 0 15px rgba(231, 76, 60, 0.4);
+}
+
+/* Alerts inside status */
+.alert-info {
+  background: rgba(var(--search-primary-rgb), 0.15);
+  border: 1px solid var(--search-primary);
+  color: var(--text-primary);
+  border-radius: 12px;
+  padding: 1rem;
+}
+
+.alert-success {
+  background: rgba(var(--success-color-rgb), 0.15);
+  border: 1px solid var(--success-color);
+  color: var(--text-primary);
+  border-radius: 12px;
+}
+
+/* Group members list */
+.list-group {
+  background: transparent;
+}
+
+.list-group-item {
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  border-radius: 10px !important;
+  margin-bottom: 0.5rem;
+}
+
+/* User details card */
+.card {
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 15px;
+}
+
+.card-body {
+  color: var(--text-primary);
+}
+
+/* ===== Serving Card ===== */
+.serving-card .card-body {
+  text-align: center;
+  padding: 1rem;
 }
 
 .serving-token-id {
-  font-size: 4rem;
-  color: #2ecc71;
+  font-size: 4.5rem;
   font-weight: 900;
-  text-shadow: 2px 2px 4px rgba(46, 204, 113, 0.4);
+  background: linear-gradient(135deg, var(--success-color), #27ae60);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height: 1.2;
+  filter: drop-shadow(0 4px 6px rgba(46, 204, 113, 0.3));
 }
 
+/* ===== Join Queue Buttons ===== */
 .join-button {
   width: 100%;
-  max-width: 350px;
-  font-size: 1.1rem;
-  font-weight: 500;
-  padding: 0.8rem 1.5rem;
-  border-radius: 10px;
-  transition: transform 0.2s ease;
-}
-
-.join-button:hover {
-  transform: translateY(-2px);
-}
-
-/* Forms */
-.form-title {
+  max-width: 380px;
+  font-size: 1.2rem;
   font-weight: 600;
-  color: #34495e;
+  padding: 0.9rem 1.8rem;
+  border-radius: 60px;
+  transition: all 0.3s ease;
+  border: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  box-shadow: var(--shadow-md);
+}
+
+/* Primary button (Regular Token) */
+.join-button.btn-primary {
+  background: linear-gradient(145deg, var(--btn-primary-bg), var(--search-primary-hover));
+  color: var(--btn-primary-text);
+}
+
+.join-button.btn-primary:hover:not(:disabled) {
+  transform: translateY(-4px) scale(1.02);
+  box-shadow: 0 15px 30px rgba(var(--btn-primary-bg-rgb), 0.4);
+}
+
+/* Secondary button (Token with Details) */
+.join-button.btn-secondary {
+  background: linear-gradient(145deg, #6c757d, #5a6268);
+  color: white;
+}
+
+.join-button.btn-secondary:hover:not(:disabled) {
+  transform: translateY(-4px) scale(1.02);
+  box-shadow: 0 15px 30px rgba(108, 117, 125, 0.4);
+}
+
+/* Info button (Group Token) */
+.join-button.btn-info {
+  background: linear-gradient(145deg, var(--search-primary), #4a6fdc);
+  color: white;
+}
+
+.join-button.btn-info:hover:not(:disabled) {
+  transform: translateY(-4px) scale(1.02);
+  box-shadow: 0 15px 30px rgba(var(--search-primary-rgb), 0.4);
+}
+
+/* Danger button (Emergency Token) */
+.join-button.btn-danger {
+  background: linear-gradient(145deg, var(--danger-color), #c0392b);
+  color: white;
+}
+
+.join-button.btn-danger:hover:not(:disabled) {
+  transform: translateY(-4px) scale(1.02);
+  box-shadow: 0 15px 30px rgba(231, 76, 60, 0.4);
+}
+
+.join-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+/* ===== Group & Emergency Forms ===== */
+.form-card .card-body {
+  padding: 1.5rem;
+}
+
+.form-title {
+  font-weight: 700;
+  color: var(--text-primary);
+  font-size: 1.6rem;
+  margin-bottom: 0.5rem;
 }
 
 .form-subtitle {
-  font-size: 0.9rem;
-  color: #7f8c8d;
+  color: var(--text-secondary);
+  margin-bottom: 1.5rem;
+  font-size: 0.95rem;
 }
 
 .group-member-row {
   display: flex;
   gap: 1rem;
   align-items: center;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
 }
 
 .group-member-row .form-control {
-  flex: 1;
+  flex: 1 1 200px;
+  background: var(--input-bg);
+  border: 2px solid var(--border-color);
+  color: var(--input-text);
+  border-radius: 12px;
+  padding: 0.75rem 1rem;
+  transition: border-color 0.3s;
 }
 
-.group-member-row button {
-  width: auto;
+.group-member-row .form-control:focus {
+  border-color: var(--search-primary);
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(var(--search-primary-rgb), 0.2);
 }
 
-/* Stats Section */
+.group-member-row .btn-outline-danger {
+  border-radius: 50%;
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.btn-outline-primary {
+  border: 2px solid var(--search-primary);
+  color: var(--search-primary);
+  background: transparent;
+  border-radius: 30px;
+  padding: 0.6rem 1.5rem;
+  font-weight: 600;
+  transition: all 0.3s;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.btn-outline-primary:hover {
+  background: var(--search-primary);
+  color: white;
+  transform: scale(1.05);
+}
+
+.btn-success {
+  background: linear-gradient(145deg, var(--success-color), #27ae60);
+  border: none;
+  border-radius: 30px;
+  padding: 0.7rem 2rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  box-shadow: var(--shadow-sm);
+  transition: all 0.3s;
+}
+
+.btn-success:hover:not(:disabled) {
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 10px 25px rgba(var(--success-color-rgb), 0.4);
+}
+
+/* Textarea for emergency */
+.form-control {
+  background: var(--input-bg);
+  border: 2px solid var(--border-color);
+  color: var(--input-text);
+  border-radius: 15px;
+  padding: 1rem;
+  transition: border-color 0.3s;
+}
+
+.form-control:focus {
+  border-color: var(--search-primary);
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(var(--search-primary-rgb), 0.2);
+}
+
+/* ===== Stats Card ===== */
 .stat-item {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  margin-bottom: 1rem;
+  gap: 1.2rem;
+  padding: 1rem;
+  border-radius: 15px;
+  background: var(--bg-secondary);
+  transition: background 0.3s;
+}
+
+.stat-item:hover {
+  background: var(--border-color);
 }
 
 .stat-icon {
-  font-size: 2rem;
+  font-size: 2.5rem;
+  color: var(--search-primary);
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
 }
 
-/* Loading & Error Screens */
-.loading-screen, .error-screen {
+.stat-item h6 {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  margin-bottom: 0.2rem;
+}
+
+.stat-item p {
+  color: var(--text-primary);
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+/* ===== Loading & Error Screens ===== */
+.loading-screen,
+.error-screen {
   display: flex;
   flex-direction: column;
-  justify-content: center;
   align-items: center;
-  min-height: 100vh;
+  justify-content: center;
+  min-height: 80vh;
   text-align: center;
+  background: var(--bg-primary);
+  color: var(--text-primary);
 }
 
 .spinner-icon {
-  font-size: 3rem;
-  color: #3498db;
+  font-size: 4rem;
+  color: var(--search-primary);
   animation: spin 1s linear infinite;
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1));
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 .loading-text {
-  margin-top: 1rem;
-  font-size: 1.2rem;
-  color: #34495e;
+  margin-top: 1.5rem;
+  font-size: 1.3rem;
+  font-weight: 500;
+  color: var(--text-secondary);
 }
 
 .error-icon {
-  font-size: 4rem;
-  color: #e74c3c;
+  font-size: 5rem;
+  color: var(--danger-color);
+  margin-bottom: 1rem;
 }
 
 .error-title {
-  color: #34495e;
-  margin-top: 1rem;
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--text-primary);
 }
 
-/* Temporary Expired Token Message */
+/* ===== Expired Token Modal Overlay ===== */
 .expired-message {
   position: fixed;
   top: 0;
@@ -199,39 +486,230 @@ body {
   width: 100%;
   height: 100%;
   background-color: rgba(0, 0, 0, 0.7);
-  backdrop-filter: blur(8px);
+  backdrop-filter: blur(10px);
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 1000;
+  z-index: 1050;
+  animation: fadeIn 0.3s;
 }
 
 .expired-content {
-  background: #ffffff;
+  background: var(--card-bg);
   padding: 3rem 4rem;
-  border-radius: 20px;
+  border-radius: 40px;
   text-align: center;
-  box-shadow: 0 15px 50px rgba(0, 0, 0, 0.2);
-  transform: scale(1.1);
+  box-shadow: var(--shadow-xl);
+  border: 1px solid var(--border-color);
+  max-width: 500px;
+  width: 90%;
 }
 
 .expired-icon {
-  font-size: 4rem;
-  color: #2ecc71;
+  font-size: 5rem;
+  color: var(--success-color);
   margin-bottom: 1rem;
 }
 
 .expired-title {
-  font-weight: 700;
-  color: #2c3e50;
-  margin-bottom: 0.5rem;
+  font-weight: 800;
+  font-size: 2rem;
+  color: var(--text-primary);
+  margin-bottom: 0.75rem;
 }
 
 .expired-text {
-  color: #7f8c8d;
+  color: var(--text-secondary);
+  font-size: 1.1rem;
+  margin-bottom: 2rem;
 }
 
 .blurred-content {
-  filter: blur(5px);
+  filter: blur(8px);
   pointer-events: none;
+}
+
+/* ===== Modal Customization (React-Bootstrap overrides) ===== */
+.modal-content {
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 25px;
+  box-shadow: var(--shadow-xl);
+}
+
+.modal-header {
+  border-bottom-color: var(--border-color);
+}
+
+.modal-title {
+  color: var(--text-primary);
+  font-weight: 700;
+}
+
+.modal-footer {
+  border-top-color: var(--border-color);
+}
+
+/* Form checkboxes */
+.form-check-label {
+  color: var(--text-primary);
+}
+
+.form-check-input {
+  background-color: var(--input-bg);
+  border-color: var(--border-color);
+}
+
+.form-check-input:checked {
+  background-color: var(--search-primary);
+  border-color: var(--search-primary);
+}
+
+/* ===== Responsive Adjustments ===== */
+@media (max-width: 768px) {
+  .header-section {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .queue-title {
+    font-size: 1.8rem;
+  }
+
+  .status-card,
+  .serving-card,
+  .join-queue-card,
+  .form-card,
+  .stats-card {
+    padding: 1.5rem;
+  }
+
+  .join-button {
+    max-width: 100%;
+    font-size: 1rem;
+  }
+
+  .group-member-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .group-member-row .btn-outline-danger {
+    align-self: flex-end;
+  }
+
+  .expired-content {
+    padding: 2rem;
+  }
+}
+
+/* ===== Utility Animations ===== */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+/* ===== Fix for Modal Checkbox Labels (dark mode visibility) ===== */
+.modal-body .form-check-label {
+  color: var(--text-primary) !important; /* ensure visibility */
+}
+
+/* ===== Fix for Group Member Inputs ===== */
+.group-member-row .form-control {
+  background: var(--input-bg);
+  color: var(--input-text);
+  border: 2px solid var(--border-color);
+}
+
+/* Placeholder text color */
+.group-member-row .form-control::placeholder {
+  color: var(--text-secondary);
+  opacity: 0.7;
+}
+
+/* Focus state – keep dark mode background */
+.group-member-row .form-control:focus {
+  background: var(--input-bg) !important; /* override browser default white */
+  color: var(--input-text);
+  border-color: var(--search-primary);
+  box-shadow: 0 0 0 3px rgba(var(--search-primary-rgb), 0.2);
+}
+
+/* Ensure autofill background doesn't break dark mode */
+.group-member-row .form-control:-webkit-autofill,
+.group-member-row .form-control:-webkit-autofill:hover,
+.group-member-row .form-control:-webkit-autofill:focus,
+.group-member-row .form-control:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 30px var(--input-bg) inset !important;
+  -webkit-text-fill-color: var(--input-text) !important;
+}
+
+/* ===== Group Form Buttons (consistent with theme) ===== */
+.group-member-row .btn-outline-danger {
+  border-color: var(--danger-color);
+  color: var(--danger-color);
+}
+.group-member-row .btn-outline-danger:hover {
+  background: var(--danger-color);
+  color: white;
+}
+
+.btn-outline-primary {
+  border-color: var(--search-primary);
+  color: var(--search-primary);
+}
+.btn-outline-primary:hover {
+  background: var(--search-primary);
+  color: white;
+}
+
+/* Submit button in group form */
+.form-card .btn-success {
+  background: linear-gradient(145deg, var(--success-color), #27ae60);
+  border: none;
+  color: white;
+}
+
+/* ===== Fix Group Members & User Details Sections in Dark Mode ===== */
+
+/* Ensure group members list items use theme colors */
+.customer-queue-container .list-group-item {
+    background-color: var(--bg-secondary) !important;
+    color: var(--text-primary) !important;
+    border-color: var(--border-color) !important;
+}
+
+/* Ensure the inner user details card (Your Details) is visible */
+.customer-queue-container .status-body .card {
+    background-color: var(--bg-secondary) !important;
+    border-color: var(--border-color) !important;
+}
+.customer-queue-container .status-body .card .card-body {
+    background-color: var(--bg-secondary) !important;
+    color: var(--text-primary) !important;
+}
+.customer-queue-container .status-body .card small.text-muted {
+    color: var(--text-secondary) !important;
+}
+
+
+/* Tablet adjustments (768px - 992px) */
+@media (min-width: 768px) and (max-width: 992px) {
+  .join-queue-card {
+    padding: 1.5rem;
+  }
+  .join-button {
+    font-size: 1rem;
+    padding: 0.7rem 1.2rem;
+    max-width: 320px;
+  }
+  .btn-back-home {
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+  }
 }

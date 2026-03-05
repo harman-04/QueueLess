@@ -14,7 +14,6 @@ const FeedbackForm = ({ show, onHide, tokenId, queueId, onFeedbackSubmitted }) =
     waitTimeRating: 0
   });
   const [submitting, setSubmitting] = useState(false);
-  const [hoveredRating, setHoveredRating] = useState(0);
 
   const ratingLabels = {
     1: 'Poor',
@@ -71,32 +70,36 @@ const FeedbackForm = ({ show, onHide, tokenId, queueId, onFeedbackSubmitted }) =
       serviceRating: 0,
       waitTimeRating: 0
     });
-    setHoveredRating(0);
   };
 
-  const StarRating = ({ rating, setRating, label, size = 'md' }) => (
-    <div className="star-rating-group">
-      <label>{label}</label>
-      <div className={`stars stars-${size}`}>
-        {[1, 2, 3, 4, 5].map((star) => (
-          <div
-            key={star}
-            className="star-container"
-            onMouseEnter={() => setHoveredRating(star)}
-            onMouseLeave={() => setHoveredRating(0)}
-          >
-            <FaStar
-              className={star <= (hoveredRating || rating) ? 'star filled' : 'star'}
-              onClick={() => setRating(star)}
-            />
-          </div>
-        ))}
+  // Independent star rating component with its own hover state
+  const StarRating = ({ rating, setRating, label, size = 'md' }) => {
+    const [hovered, setHovered] = useState(0);
+
+    return (
+      <div className="star-rating-group">
+        <label>{label}</label>
+        <div className={`stars stars-${size}`}>
+          {[1, 2, 3, 4, 5].map((star) => (
+            <div
+              key={star}
+              className="star-container"
+              onMouseEnter={() => setHovered(star)}
+              onMouseLeave={() => setHovered(0)}
+            >
+              <FaStar
+                className={star <= (hovered || rating) ? 'star filled' : 'star'}
+                onClick={() => setRating(star)}
+              />
+            </div>
+          ))}
+        </div>
+        <div className="rating-label">
+          {rating > 0 && ratingLabels[rating]}
+        </div>
       </div>
-      <div className="rating-label">
-        {rating > 0 && ratingLabels[rating]}
-      </div>
-    </div>
-  );
+    );
+  };
 
   const RatingEmoji = ({ rating }) => {
     if (rating >= 4) return <FaSmile className="text-success me-2" />;
