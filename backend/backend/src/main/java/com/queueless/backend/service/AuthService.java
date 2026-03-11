@@ -4,6 +4,7 @@ import com.queueless.backend.dto.JwtResponse;
 import com.queueless.backend.dto.LoginRequest;
 import com.queueless.backend.dto.RegisterRequest;
 import com.queueless.backend.enums.Role;
+import com.queueless.backend.exception.InvalidTokenException;
 import com.queueless.backend.model.OtpDocument;
 import com.queueless.backend.model.Token;
 import com.queueless.backend.model.User;
@@ -87,35 +88,35 @@ public class AuthService {
         if (request.getRole() == Role.ADMIN || request.getRole() == Role.PROVIDER) {
             if (request.getToken() == null || request.getToken().isEmpty()) {
                 log.error("Registration failed - Token required for role: {}", request.getRole());
-                throw new RuntimeException("Token is required for role " + request.getRole());
+                throw new InvalidTokenException("Token is required for role " + request.getRole());
             }
 
             token = tokenRepository.findByTokenValue(request.getToken())
                     .orElseThrow(() -> {
                         log.error("Registration failed - Invalid token for email: {}", request.getEmail());
-                        return new RuntimeException("Invalid token");
+                        return new InvalidTokenException("Invalid token");
                     });
 
             if (token.isUsed()) {
                 log.error("Registration failed - Token already used: {}", request.getToken());
-                throw new RuntimeException("Token already used");
+                throw new InvalidTokenException("Token already used");
             }
 
             if (token.getExpiryDate().isBefore(LocalDateTime.now())) {
                 log.error("Registration failed - Token expired: {}", request.getToken());
-                throw new RuntimeException("Token expired");
+                throw new InvalidTokenException("Token expired");
             }
 
             if (!token.getRole().equals(request.getRole())) {
                 log.error("Registration failed - Token role mismatch. Token role: {}, Request role: {}",
                         token.getRole(), request.getRole());
-                throw new RuntimeException("Token not valid for this role");
+                throw new InvalidTokenException("Token not valid for this role");
             }
 
             if (!token.getCreatedForEmail().equals(request.getEmail())) {
                 log.error("Registration failed - Token tied to different email. Expected: {}, Provided: {}",
                         token.getCreatedForEmail(), request.getEmail());
-                throw new RuntimeException("Token is tied to a different email");
+                throw new InvalidTokenException("Token is tied to a different email");
             }
 
             token.setUsed(true);

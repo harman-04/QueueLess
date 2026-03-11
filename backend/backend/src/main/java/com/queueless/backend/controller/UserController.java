@@ -3,6 +3,7 @@ package com.queueless.backend.controller;
 import com.queueless.backend.dto.PasswordChangeRequest;
 import com.queueless.backend.dto.PlaceDTO;
 import com.queueless.backend.dto.UserProfileUpdateRequest;
+import com.queueless.backend.dto.UserTokenHistoryDTO;
 import com.queueless.backend.model.Place;
 import com.queueless.backend.service.PlaceService;
 import com.queueless.backend.service.UserService;
@@ -14,6 +15,9 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -219,5 +223,17 @@ public class UserController {
         String userId = getCurrentUserId();
         userService.removeFcmToken(userId, token);
         return ResponseEntity.ok("Token removed");
+    }
+
+    @GetMapping("/tokens")
+    @Authenticated
+    @Operation(summary = "Get user token history", description = "Returns list of completed/cancelled tokens with details.")
+    @ApiResponse(responseCode = "200", description = "Token history")
+    public ResponseEntity<List<UserTokenHistoryDTO>> getUserTokenHistory(
+            @RequestParam(defaultValue = "30") int days,
+            @PageableDefault(size = 20, sort = "issuedAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        String userId = getCurrentUserId();
+        List<UserTokenHistoryDTO> history = userService.getUserTokenHistoryOptimized(userId, days, pageable);
+        return ResponseEntity.ok(history);
     }
 }

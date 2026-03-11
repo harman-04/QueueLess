@@ -19,7 +19,8 @@ import {
   FaHandPointRight,
   FaInfoCircle,
   FaFileMedical,
-  FaQrcode
+  FaQrcode,
+   FaMapPin
 } from "react-icons/fa";
 import { Modal, Button, Form } from "react-bootstrap";
 import { normalizeQueue } from "../utils/normalizeQueue";
@@ -59,7 +60,7 @@ const CustomerQueue = () => {
   const [showExpiredMessage, setShowExpiredMessage] = useState(false);
   const [showNotification, setShowNotification] = useState(false);
   const [notification, setNotification] = useState({ title: '', message: '', variant: 'danger' });
-
+const [userPosition, setUserPosition] = useState(null);
   useEffect(() => {
     if (!queueId) {
       navigate("/");
@@ -172,6 +173,23 @@ const CustomerQueue = () => {
     };
     checkFeedbackEligibility();
   }, [userToken, token]);
+
+  useEffect(() => {
+  if (userToken && userId) {
+    const fetchPosition = async () => {
+      try {
+        const response = await axiosInstance.get(`/queues/${queueId}/position/${userId}`);
+        setUserPosition(response.data);
+      } catch (err) {
+        console.error('Failed to fetch position:', err);
+      }
+    };
+    fetchPosition();
+    // Optionally refresh periodically
+    const interval = setInterval(fetchPosition, 10000);
+    return () => clearInterval(interval);
+  }
+}, [userToken, queueId, userId]);
 
   const handleAddToken = async (isGroup = false, isEmergency = false, withDetails = false) => {
     if (!userId || !token) {
@@ -350,18 +368,18 @@ const CustomerQueue = () => {
     );
   }
 
-  const calculatePosition = () => {
-    if (!userToken) return null;
-    const waitingTokens = queue.tokens.filter(
-      (t) => t.status === "WAITING" || t.status === "IN_SERVICE"
-    );
-    const userIndex = waitingTokens.findIndex(
-      (t) => t.tokenId === userToken.tokenId
-    );
-    return userIndex >= 0 ? userIndex + 1 : null;
-  };
+  // const calculatePosition = () => {
+  //   if (!userToken) return null;
+  //   const waitingTokens = queue.tokens.filter(
+  //     (t) => t.status === "WAITING" || t.status === "IN_SERVICE"
+  //   );
+  //   const userIndex = waitingTokens.findIndex(
+  //     (t) => t.tokenId === userToken.tokenId
+  //   );
+  //   return userIndex >= 0 ? userIndex + 1 : null;
+  // };
 
-  const position = calculatePosition();
+  // const position = calculatePosition();
   const currentServing = queue.tokens.find((t) => t.status === "IN_SERVICE");
 
   const ExpiredTokenMessage = () => (
@@ -451,16 +469,16 @@ const CustomerQueue = () => {
                 )}
               </div>
 
-              {userToken.status === "WAITING" && position && (
-                <div className="alert alert-info">
-                  <FaClock className="me-2" />
-                  Your position in queue: <strong>{position}</strong> of{" "}
-                  {queue.tokens.filter((t) => t.status === "WAITING").length}
-                  {queue.estimatedWaitTime > 0 && (
-                    <span> • ~{queue.estimatedWaitTime} minutes</span>
-                  )}
-                </div>
-              )}
+{userToken?.status === 'WAITING' && userPosition && userPosition.position && (
+  <div className="alert alert-info">
+    <FaMapPin className="me-2" />
+    Your position in queue: <strong>{userPosition.position}</strong> of{' '}
+    {queue.tokens.filter((t) => t.status === 'WAITING').length}
+    {queue.estimatedWaitTime > 0 && (
+      <span> • ~{queue.estimatedWaitTime} minutes estimated wait</span>
+    )}
+  </div>
+)}
 
               {userToken.status === "IN_SERVICE" && (
                 <div className="alert alert-success animate__animated animate__pulse animate__infinite">

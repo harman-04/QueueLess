@@ -6,6 +6,7 @@ import com.queueless.backend.dto.RegisterRequest;
 import com.queueless.backend.enums.Role;
 import com.queueless.backend.model.Token;
 import com.queueless.backend.model.User;
+import com.queueless.backend.repository.OtpRepository;
 import com.queueless.backend.repository.TokenRepository;
 import com.queueless.backend.repository.UserRepository;
 import com.queueless.backend.security.JwtTokenProvider;
@@ -39,6 +40,12 @@ class AuthServiceTest {
 
     @Mock
     private TokenRepository tokenRepository;
+
+    @Mock
+    private OtpRepository otpRepository;
+
+    @Mock
+    private EmailService emailService;
 
     @InjectMocks
     private AuthService authService;
@@ -143,8 +150,7 @@ class AuthServiceTest {
         when(passwordEncoder.matches(loginRequest.getPassword(), testUser.getPassword())).thenReturn(true);
 
         RuntimeException exception = assertThrows(RuntimeException.class, () -> authService.login(loginRequest));
-        assertEquals("Account not verified. Please contact administrator.", exception.getMessage());
-    }
+        assertEquals("Account not verified. Please check your email.", exception.getMessage());    }
 
     // ================= REGISTER TESTS =================
 
@@ -157,6 +163,10 @@ class AuthServiceTest {
         String result = authService.register(registerRequest);
 
         assertEquals("User registered successfully!", result);
+        // Verify OTP logic was triggered
+        verify(otpRepository).deleteByEmail(registerRequest.getEmail());
+        verify(otpRepository).save(any());
+        verify(emailService).sendVerificationOtpEmail(eq(registerRequest.getEmail()), anyString());
         verify(userRepository).existsByEmail(registerRequest.getEmail());
         verify(passwordEncoder).encode(registerRequest.getPassword());
         verify(userRepository).save(argThat(user -> {
@@ -306,5 +316,65 @@ class AuthServiceTest {
 
         RuntimeException exception = assertThrows(RuntimeException.class, () -> authService.register(registerRequest));
         assertEquals("Token is tied to a different email", exception.getMessage());
+    }
+
+    // ================= VERIFY EMAIL TESTS =================
+
+    @Test
+    void verifyEmailSuccess() {
+        String email = "jane@example.com";
+        String otp = "123456";
+
+        com.queueless.backend.model.OtpDocument otpDoc = com.queueless.backend.model.OtpDocument.builder()
+                .email(email)
+                .otp(otp)
+                .expiryTime(LocalDateTime.now().plusMinutes(5))
+                .build();
+
+        when(otpRepository.findByEmail(email)).thenReturn(Optional.of(otpDoc));
+        when(userRepository.findByEmail(email)).thenReturn(Optional.of(testUser));
+        when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        String result = authService.verifyEmail(email, otp);
+
+        assertEquals("Email verified successfully", result);
+        assertTrue(testUser.getIsVerified());
+        verify(otpRepository).delete(otpDoc);
+        verify(userRepository).save(testUser);
+    }
+
+    @Test
+    void verifyEmailInvalidOtp() {
+        String email = "jane@example.com";
+        com.queueless.backend.model.OtpDocument otpDoc = com.queueless.backend.model.OtpDocument.builder()
+                .email(email)
+                .otp("123456")
+                .expiryTime(LocalDateTime.now().plusMinutes(5))
+                .build();
+
+        when(otpRepository.findByEmail(email)).thenReturn(Optional.of(otpDoc));
+
+        RuntimeException exception = assertThrows(RuntimeException.class,
+                () -> authService.verifyEmail(email, "wrong-otp"));
+
+        assertEquals("Invalid OTP", exception.getMessage());
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
+    void verifyEmailExpiredOtp() {
+        String email = "jane@example.com";
+        com.queueless.backend.model.OtpDocument otpDoc = com.queueless.backend.model.OtpDocument.builder()
+                .email(email)
+                .otp("123456")
+                .expiryTime(LocalDateTime.now().minusMinutes(1)) // Expired
+                .build();
+
+        when(otpRepository.findByEmail(email)).thenReturn(Optional.of(otpDoc));
+
+        RuntimeException exception = assertThrows(RuntimeException.class,
+                () -> authService.verifyEmail(email, "123456"));
+
+        assertEquals("OTP expired", exception.getMessage());
     }
 }

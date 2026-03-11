@@ -40,18 +40,35 @@ body {
 }
 
 .search-btn {
-    border-radius: 0 12px 12px 0 !important;
-    background-color: var(--search-primary);
-    border: none;
-    transition: background-color 0.3s ease, transform 0.2s ease;
-    font-weight: 600;
-    padding: 12px 25px;
-    color: white;
+  background: linear-gradient(145deg, var(--search-primary), var(--search-primary-hover));
+  border: none;
+  border-radius: 0 12px 12px 0 !important;
+  padding: 12px 25px;
+  font-weight: 600;
+  color: white;
+  transition: all 0.3s ease;
+  box-shadow: var(--shadow-sm);
+  position: relative;
+  overflow: hidden;
 }
 
-.search-btn:hover {
-    background-color: var(--search-primary-hover);
-    transform: translateY(-2px);
+.search-btn:hover:not(:disabled) {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 8px 20px rgba(var(--search-primary-rgb), 0.4);
+}
+
+.search-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+/* Optional shine animation (matches navbar buttons) */
+
+
+.search-btn:hover:not(:disabled)::after {
+  transform: rotate(30deg) translateX(100%);
 }
 
 /* Filter & Clear Buttons */

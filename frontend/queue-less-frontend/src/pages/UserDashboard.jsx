@@ -29,6 +29,7 @@ import "animate.css/animate.min.css";
 import axiosInstance from "../utils/axiosInstance";
 import UserDashboardSkeleton from "../components/UserDashboardSkeleton";
 import UserTokenHistoryChart from "../components/UserTokenHistoryChart";
+import UserTokenHistoryList from "../components/UserTokenHistoryList";
 import './UserDashboard.css';
 const UserDashboard = () => {
     const dispatch = useDispatch();
@@ -221,6 +222,8 @@ const UserDashboard = () => {
                 </div>
             </div>
 
+                    
+
             {/* Your Active Queues Section */}
             <div className="user-dashboard-card animate__animated animate__fadeInUp">
                 <div className="card-body p-4">
@@ -365,6 +368,11 @@ const UserDashboard = () => {
                     )}
                 </div>
             </div>
+
+                {/* Token History Section */}
+<UserTokenHistoryList days={30} />
+
+
 
             {/* Favorite Places Section */}
             <div className="user-dashboard-card animate__animated animate__fadeInUp">

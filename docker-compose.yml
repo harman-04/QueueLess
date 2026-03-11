@@ -1,0 +1,110 @@
+services:
+  backend:
+    build:
+      context: ./backend/backend
+      dockerfile: Dockerfile
+    container_name: queueless-backend
+    environment:
+      - REDIS_HOST=redis
+      - MONGODB_URI=${MONGODB_URI}
+      - SSL_KEY_STORE=file:/app/localhost.p12
+      - SSL_KEY_STORE_PASSWORD=${SSL_KEY_STORE_PASSWORD}
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_EXPIRATION=${JWT_EXPIRATION}
+      - RAZORPAY_KEY=${RAZORPAY_KEY}
+      - RAZORPAY_SECRET=${RAZORPAY_SECRET}
+      - MAIL_USERNAME=${MAIL_USERNAME}
+      - MAIL_PASSWORD=${MAIL_PASSWORD}
+    ports:
+      - "8443:8443"
+    networks:
+      - queueless-net
+
+
+
+  frontend:
+    build:
+      context: ./frontend/queue-less-frontend
+      dockerfile: DockerFile
+    container_name: queueless-frontend
+    ports:
+      - "5173:443"
+    depends_on:
+      - backend
+    networks:
+      - queueless-net
+  
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: queueless-prometheus
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
+    ports:
+      - "9090:9090"
+    networks:
+      - queueless-net
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: queueless-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana-data:/var/lib/grafana
+    networks:
+      - queueless-net
+    depends_on:
+      - prometheus
+
+  loki:
+    image: grafana/loki:latest
+    container_name: queueless-loki
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./loki/loki-config.yaml:/etc/loki/loki-config.yaml
+    command: -config.file=/etc/loki/loki-config.yaml
+    networks:
+      - queueless-net
+
+  promtail:
+    image: grafana/promtail:latest
+    container_name: queueless-promtail
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - ./promtail/promtail-config.yaml:/etc/promtail/promtail-config.yaml
+    command: -config.file=/etc/promtail/promtail-config.yaml
+    networks:
+      - queueless-net
+    depends_on:
+      - loki
+
+    ports:
+      - "9080:9080"
+
+  redis:
+    image: redis:7-alpine
+    container_name: queueless-redis
+    ports:
+      - "6379:6379"
+    networks:
+      - queueless-net
+    volumes:
+      - redis-data:/data
+
+networks:
+  queueless-net:
+    driver: bridge
+
+volumes:
+  prometheus-data:
+  grafana-data:
+  redis-data:

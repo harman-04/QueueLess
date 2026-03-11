@@ -683,4 +683,21 @@ public class QueueController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("message", e.getMessage()));
         }
     }
+
+    @GetMapping("/{queueId}/position/{userId}")
+    @Authenticated
+    @Operation(summary = "Get user position in queue")
+    @ApiResponse(responseCode = "200", description = "Position info",
+            content = @Content(schema = @Schema(implementation = UserPositionDTO.class)))
+    public ResponseEntity<UserPositionDTO> getUserPosition(
+            @PathVariable String queueId,
+            @PathVariable String userId) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (!authentication.getName().equals(userId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
+        UserPositionDTO position = queueService.getUserPosition(queueId, userId);
+        return ResponseEntity.ok(position);
+    }
 }

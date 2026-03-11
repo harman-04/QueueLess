@@ -1,14 +1,9 @@
 package com.queueless.backend.service;
 
 import com.queueless.backend.dto.AdminQueueDTO;
-import com.queueless.backend.model.Payment;
-import com.queueless.backend.model.Place;
+import com.queueless.backend.model.*;
 import com.queueless.backend.model.Queue;
-import com.queueless.backend.model.User;
-import com.queueless.backend.repository.PaymentRepository;
-import com.queueless.backend.repository.PlaceRepository;
-import com.queueless.backend.repository.QueueRepository;
-import com.queueless.backend.repository.UserRepository;
+import com.queueless.backend.repository.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -37,6 +32,9 @@ class AdminServiceTest {
 
     @Mock
     private PaymentRepository paymentRepository;
+
+    @Mock
+    private FeedbackRepository feedbackRepository;
 
     @InjectMocks
     private AdminService adminService;
@@ -115,19 +113,29 @@ class AdminServiceTest {
 
     @Test
     void getProvidersWithQueuesSuccess() {
+        // 1. Setup Mock Data
         List<User> providers = List.of(testProvider);
         when(userRepository.findAll()).thenReturn(providers);
+
+        // The service calls findByProviderId multiple times (once for main list, once for cancellation rate)
         when(queueRepository.findByProviderId(providerId)).thenReturn(List.of(testQueue));
 
-        List<Map<String, Object>> result = adminService.getProvidersWithQueues(adminId);
+        // Mock feedback to prevent NullPointerException during getAverageRatingForProvider
+        when(feedbackRepository.findByProviderId(providerId)).thenReturn(Collections.emptyList());
 
+        // 2. Call the Service
+        List<com.queueless.backend.dto.ProviderPerformanceDTO> result = adminService.getProvidersWithQueues(adminId);
+
+        // 3. Assertions
         assertEquals(1, result.size());
-        Map<String, Object> providerData = result.get(0);
-        assertEquals(testProvider, providerData.get("provider"));
-        assertEquals(List.of(testQueue), providerData.get("queues"));
-        assertNotNull(providerData.get("stats"));
-    }
+        com.queueless.backend.dto.ProviderPerformanceDTO dto = result.get(0);
 
+        assertEquals(testProvider.getId(), dto.getId());
+        assertEquals(testProvider.getName(), dto.getName());
+        assertEquals(1, dto.getTotalQueues());
+        assertEquals(1, dto.getActiveQueues()); // testQueue.setIsActive(true) was set in @BeforeEach
+        assertEquals(0.0, dto.getAverageRating());
+    }
     // ================= ADMIN QUEUES WITH DETAILS =================
 
     @Test
@@ -184,5 +192,53 @@ class AdminServiceTest {
         assertTrue(result.isEmpty());
         verify(paymentRepository, never()).findByCreatedByAdminId(any());
         verify(paymentRepository, never()).findByCreatedForEmail(any());
+    }
+
+    @Test
+    void getAdminReportSuccess() {
+        // 1. Setup Mock Data
+        User admin = User.builder()
+                .id(adminId)
+                .name("Admin Name")
+                .email("admin@test.com")
+                .build();
+
+        // Create a completed token to test wait time and served counts
+        QueueToken completedToken = new QueueToken();
+        completedToken.setStatus("COMPLETED");
+        completedToken.setIssuedAt(LocalDateTime.now().minusMinutes(30));
+        completedToken.setServedAt(LocalDateTime.now().minusMinutes(10)); // 20 min wait
+        completedToken.setCompletedAt(LocalDateTime.now().minusMinutes(5));
+
+        testQueue.setTokens(List.of(completedToken));
+
+        // Create feedback
+        Feedback feedback = new Feedback();
+        feedback.setRating( 4);
+
+        // 2. Mocking Repository Calls
+        when(userRepository.findById(adminId)).thenReturn(Optional.of(admin));
+        when(placeRepository.findByAdminId(adminId)).thenReturn(List.of(testPlace));
+        when(queueRepository.findByPlaceId(placeId)).thenReturn(List.of(testQueue));
+        when(feedbackRepository.findByPlaceId(placeId)).thenReturn(List.of(feedback));
+
+        // 3. Execute
+        com.queueless.backend.dto.AdminReportDTO report = adminService.getAdminReport(adminId);
+
+        // 4. Assertions
+        assertNotNull(report);
+        assertEquals("Admin Name", report.getAdminName());
+
+        // Global Summary Assertions
+        assertEquals(1, report.getSummary().getTotalPlaces());
+        assertEquals(1, report.getSummary().getTotalTokensServedToday());
+        assertEquals(4, report.getSummary().getAverageRatingOverall());
+        assertEquals(20.0, report.getSummary().getAverageWaitTimeOverall()); // 30 - 10 = 20
+
+        // Place Specific Assertions
+        assertEquals(1, report.getPlaces().size());
+        var placeSummary = report.getPlaces().get(0);
+        assertEquals("Test Place", placeSummary.getPlaceName());
+        assertEquals(1, placeSummary.getTotalQueues());
     }
 }

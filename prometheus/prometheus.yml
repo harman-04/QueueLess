@@ -1,0 +1,17 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: 'spring-boot'
+    metrics_path: '/actuator/prometheus'
+    scheme: https
+    tls_config:
+      insecure_skip_verify: true
+    static_configs:
+      - targets: ['backend:8443']
+        labels:
+          application: 'queueless-backend'
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']

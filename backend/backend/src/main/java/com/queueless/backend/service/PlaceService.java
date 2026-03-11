@@ -6,6 +6,8 @@ import com.queueless.backend.repository.PlaceRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.bson.types.ObjectId;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -24,6 +26,7 @@ public class PlaceService {
 
     private final PlaceRepository placeRepository;
 
+    @CacheEvict(value = {"places", "placesByAdmin"}, allEntries = true)
     public Place createPlace(PlaceDTO placeDTO) {
         log.debug("Creating new place: {}", placeDTO);
 
@@ -54,6 +57,7 @@ public class PlaceService {
         return placeRepository.save(place);
     }
 
+    @Cacheable(value = "places", key = "#id")
     public Place getPlaceById(String id) {
         log.debug("Fetching place with ID: {}", id);
         return placeRepository.findById(id)
@@ -63,6 +67,7 @@ public class PlaceService {
                 });
     }
 
+    @Cacheable(value = "placesByAdmin", key = "#adminId")
     public List<Place> getPlacesByAdminId(String adminId) {
         log.debug("Fetching places by admin ID: {}", adminId);
         List<Place> places = placeRepository.findByAdminId(adminId);
@@ -90,6 +95,7 @@ public class PlaceService {
         return places;
     }
 
+    @CacheEvict(value = {"places", "placesByAdmin"}, allEntries = true)
     public Place updatePlace(String id, PlaceDTO placeDTO) {
         log.info("Updating place with ID: {}", id);
         Place place = getPlaceById(id);
@@ -113,6 +119,7 @@ public class PlaceService {
         return updated;
     }
 
+    @CacheEvict(value = {"places", "placesByAdmin"}, allEntries = true)
     public void deletePlace(String id) {
         log.warn("Deleting place with ID: {}", id);
         Place place = getPlaceById(id);

@@ -1,0 +1,199 @@
+/* UserTokenHistoryList.css – Premium UI/UX with Dark Mode */
+
+.user-token-history-card {
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 20px;
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+  margin-bottom: 2rem;
+}
+
+.user-token-history-card .card-header {
+  background: linear-gradient(135deg, var(--bg-secondary), var(--border-color));
+  border-bottom: 1px solid var(--border-color);
+  color: var(--text-primary);
+  font-weight: 600;
+  padding: 1rem 1.5rem;
+}
+
+.user-token-history-card .card-header h5 {
+  margin: 0;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Table container with scroll */
+.user-token-history-card .table-responsive {
+  max-height: 400px;
+  overflow-y: auto;
+  overflow-x: auto;
+  border-radius: 0 0 16px 16px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-color) var(--bg-secondary);
+}
+
+.user-token-history-card .table-responsive::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+.user-token-history-card .table-responsive::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
+}
+.user-token-history-card .table-responsive::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 4px;
+}
+.user-token-history-card .table-responsive::-webkit-scrollbar-thumb:hover {
+  background: var(--text-secondary);
+}
+
+/* Table styling */
+.token-history-table {
+  color: var(--text-primary);
+  background-color: transparent;
+  margin-bottom: 0;
+  min-width: 800px; /* Ensures horizontal scroll on small screens */
+}
+
+.token-history-table thead th {
+  background-color: var(--bg-secondary);
+  color: var(--text-secondary);
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.8rem;
+  letter-spacing: 0.5px;
+  border-bottom: 2px solid var(--border-color);
+  padding: 1rem;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--bg-secondary); /* re‑affirm for sticky */
+}
+
+.token-history-table tbody tr {
+  background-color: var(--bg-secondary) !important;
+  transition: background-color 0.2s;
+}
+
+.token-history-table tbody tr:hover {
+  background-color: var(--border-color) !important;
+}
+
+.token-history-table tbody td {
+  padding: 1rem;
+  vertical-align: middle;
+  border-top: 1px solid var(--border-color);
+  color: var(--text-primary);
+  background-color: var(--bg-secondary);
+}
+
+/* Badges inside table */
+.token-history-table .badge {
+  padding: 0.4rem 0.8rem;
+  border-radius: 30px;
+  font-weight: 500;
+  font-size: 0.75rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  border: 1px solid transparent;
+}
+
+.token-history-table .badge.bg-success {
+  background: linear-gradient(135deg, var(--success-color), #27ae60) !important;
+  color: white !important;
+}
+.token-history-table .badge.bg-danger {
+  background: linear-gradient(135deg, var(--danger-color), #c0392b) !important;
+  color: white !important;
+}
+.token-history-table .badge.bg-secondary {
+  background: var(--text-secondary) !important;
+  color: white !important;
+}
+
+/* Icons */
+.token-history-table .fa-star.text-warning {
+  color: #ffc107;
+}
+.token-history-table .fa-star.text-muted {
+  color: var(--text-secondary);
+}
+.token-history-table svg {
+  vertical-align: middle;
+}
+
+/* Load More button */
+.user-token-history-card .btn-outline-primary {
+  border: 2px solid var(--search-primary);
+  color: var(--search-primary);
+  background: transparent;
+  border-radius: 40px;
+  padding: 0.6rem 2rem;
+  font-weight: 600;
+  transition: all 0.2s;
+  margin: 1rem 0;
+}
+.user-token-history-card .btn-outline-primary:hover:not(:disabled) {
+  background: var(--search-primary);
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(var(--search-primary-rgb), 0.3);
+}
+
+/* Empty state – matches dashboard's empty alert */
+.user-token-history-card .card-body.text-center {
+  background-color: rgba(var(--search-primary-rgb), 0.15);
+  border: 1px solid var(--border-color);
+  border-left: 4px solid var(--search-primary);
+  color: var(--text-primary);
+  border-radius: 12px;
+  margin: 1rem;
+  padding: 2rem;
+}
+.user-token-history-card .card-body.text-center h5 {
+  color: var(--text-primary);
+}
+.user-token-history-card .card-body.text-center p {
+  color: var(--text-secondary);
+}
+.user-token-history-card .card-body.text-center svg {
+  color: var(--search-primary);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .user-token-history-card .table-responsive {
+    max-height: 300px;
+  }
+  .user-token-history-card .btn-outline-primary {
+    padding: 0.5rem 1.5rem;
+    font-size: 0.9rem;
+  }
+}
+
+/* Skeleton styles – inherits card styles from .user-token-history-card */
+.user-token-history-card.skeleton .card-header h5 {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.user-token-history-card.skeleton .placeholder {
+  background-color: var(--bg-tertiary, #404040);
+  opacity: 0.7;
+  animation: placeholder-glow 2s ease-in-out infinite;
+}
+
+@keyframes placeholder-glow {
+  50% { opacity: 0.4; }
+}
+
+/* Ensure table cells in skeleton have proper background */
+.user-token-history-card.skeleton .token-history-table tbody td {
+  background-color: var(--bg-secondary);
+  border-color: var(--border-color);
+}

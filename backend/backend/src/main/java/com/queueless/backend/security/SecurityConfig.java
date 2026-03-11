@@ -110,7 +110,9 @@ public class SecurityConfig {
                                 "/api/payment/confirm-provider",
                                 "/api/payment/confirm-provider-bulk",
                                 "/api/search/**",
-                                "/api/public/**"
+                                "/api/public/**",
+                                "/actuator/health",
+                                "/actuator/prometheus"
                         ).permitAll()
                         .requestMatchers(
                                 HttpMethod.POST,
@@ -165,6 +167,7 @@ public class SecurityConfig {
                         ).permitAll()
                         // User endpoints
                         .requestMatchers("/api/queues/*/add-token").hasRole("USER")
+                        .requestMatchers(HttpMethod.GET, "/api/user/tokens").authenticated()
                         .requestMatchers("/api/user/**").hasAnyRole("USER", "ADMIN", "PROVIDER")
                         // Provider endpoints
                         .requestMatchers("/api/providers/**").hasRole("PROVIDER")

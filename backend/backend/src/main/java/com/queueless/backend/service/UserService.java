@@ -2,22 +2,28 @@ package com.queueless.backend.service;
 
 import com.queueless.backend.dto.PasswordChangeRequest;
 import com.queueless.backend.dto.UserProfileUpdateRequest;
+import com.queueless.backend.dto.UserTokenHistoryDTO;
 import com.queueless.backend.enums.TokenStatus;
+import com.queueless.backend.model.*;
 import com.queueless.backend.model.Queue;
-import com.queueless.backend.model.User;
+import com.queueless.backend.repository.FeedbackRepository;
 import com.queueless.backend.repository.QueueRepository;
 import com.queueless.backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.aggregation.Aggregation;
+import org.springframework.data.mongodb.core.aggregation.AggregationResults;
+import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -28,6 +34,9 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final QueueRepository queueRepository;
+    private final FeedbackRepository feedbackRepository;
+    private final PlaceService placeService;
+    private final MongoTemplate mongoTemplate;
 
     public void updateUserProfile(String userId, UserProfileUpdateRequest request) {
         log.info("Attempting to update user profile for user ID: {}", userId);
@@ -219,4 +228,64 @@ public class UserService {
             log.info("FCM token removed for user {}", userId);
         }
     }
+
+    public List<UserTokenHistoryDTO> getUserTokenHistoryOptimized(String userId, int days, Pageable pageable) {
+        LocalDateTime cutoff = LocalDateTime.now().minusDays(days);
+
+        // Aggregation pipeline
+        Aggregation agg = Aggregation.newAggregation(
+                Aggregation.unwind("tokens"),
+                Aggregation.match(Criteria.where("tokens.userId").is(userId)
+                        .and("tokens.issuedAt").gte(cutoff)
+                        .and("tokens.status").in(TokenStatus.COMPLETED.toString(), TokenStatus.CANCELLED.toString())),
+                Aggregation.sort(Sort.by(Sort.Direction.DESC, "tokens.issuedAt")),
+                Aggregation.skip(pageable.getOffset()),
+                Aggregation.limit(pageable.getPageSize()),
+                Aggregation.project()
+                        .and("tokens.tokenId").as("tokenId")
+                        .and("_id").as("queueId")
+                        .and("serviceName").as("serviceName")
+                        .and("placeId").as("placeId")
+                        .and("tokens.status").as("status")
+                        .and("tokens.issuedAt").as("issuedAt")
+                        .and("tokens.servedAt").as("servedAt")
+                        .and("tokens.completedAt").as("completedAt")
+                        .and("tokens.serviceDurationMinutes").as("serviceDurationMinutes")
+        );
+
+        AggregationResults<UserTokenHistoryDTO> results = mongoTemplate.aggregate(agg, "queues", UserTokenHistoryDTO.class);
+        List<UserTokenHistoryDTO> history = results.getMappedResults();
+
+        if (history.isEmpty()) {
+            return history;
+        }
+
+        // Batch load place names
+        Set<String> placeIds = history.stream()
+                .map(UserTokenHistoryDTO::getPlaceId)
+                .collect(Collectors.toSet());
+        Map<String, String> placeNames = placeService.getPlacesByIds(new ArrayList<>(placeIds)).stream()
+                .collect(Collectors.toMap(Place::getId, Place::getName));
+
+        // Batch load ratings
+        Set<String> tokenIds = history.stream()
+                .map(UserTokenHistoryDTO::getTokenId)
+                .collect(Collectors.toSet());
+        Map<String, Integer> ratings = feedbackRepository.findByTokenIdIn(tokenIds).stream()
+                .collect(Collectors.toMap(Feedback::getTokenId, Feedback::getRating));
+
+        // Enrich DTOs
+        history.forEach(dto -> {
+            dto.setPlaceName(placeNames.get(dto.getPlaceId()));
+            dto.setRating(ratings.get(dto.getTokenId()));
+
+            // Calculate wait time minutes if needed
+            if (dto.getServedAt() != null && dto.getIssuedAt() != null) {
+                dto.setWaitTimeMinutes(Duration.between(dto.getIssuedAt(), dto.getServedAt()).toMinutes());
+            }
+        });
+
+        return history;
+    }
+
 }

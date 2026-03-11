@@ -8,6 +8,7 @@ import userReducer from '../redux/userSlice';
 import adminAnalyticsReducer from '../redux/adminAnalyticsSlice';
 import providerAnalyticsReducer from '../redux/providerAnalyticsSlice'; 
 import userAnalyticsReducer from '../redux/userAnalyticsSlice';
+import userTokenHistoryReducer from '../redux/userTokenHistorySlice';
 
 const store = configureStore({
   reducer: {
@@ -20,6 +21,8 @@ const store = configureStore({
     adminAnalytics: adminAnalyticsReducer,
     providerAnalytics: providerAnalyticsReducer, 
     userAnalytics: userAnalyticsReducer,
+    userTokenHistory: userTokenHistoryReducer,
+
     
   },
   middleware: (getDefaultMiddleware) =>

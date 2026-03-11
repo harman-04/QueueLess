@@ -18,7 +18,8 @@ import java.util.Map;
         @CompoundIndex(name = "provider_id_index", def = "{'providerId': 1}"),
         @CompoundIndex(name = "place_id_index", def = "{'placeId': 1}"),
         @CompoundIndex(name = "service_id_index", def = "{'serviceId': 1}"),
-        @CompoundIndex(name = "active_status_index", def = "{'isActive': 1}")
+        @CompoundIndex(name = "active_status_index", def = "{'isActive': 1}"),
+        @CompoundIndex(name = "tokens_userId_idx", def = "{'tokens.userId': 1}")
 })
 @Data
 @NoArgsConstructor

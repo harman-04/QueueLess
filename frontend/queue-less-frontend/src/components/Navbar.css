@@ -531,3 +531,453 @@
     background-color: var(--dropdown-hover-bg) !important;
     color: var(--dropdown-text) !important;
 }
+/* ===== Tablet Optimizations (992px - 1199px) ===== */
+@media (min-width: 992px) and (max-width: 1199px) {
+  /* Reduce button padding and font size */
+  .ql-nav-btn,
+  .ql-nav-btn-outline,
+  .ql-nav-btn-warning,
+  .ql-nav-btn-info {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.75rem;
+    height: 34px;
+  }
+
+  /* Shrink icon margins */
+  .ql-nav-btn i,
+  .ql-nav-btn svg,
+  .ql-nav-btn-outline i,
+  .ql-nav-btn-outline svg {
+    margin-right: 0.2rem !important;
+  }
+
+  /* Condense the button group spacing */
+  .ql-navbar .d-flex.flex-lg-row {
+    gap: 0.25rem !important;
+  }
+
+  /* Profile dropdown – limit name width and ensure dropdown stays on screen */
+  .ql-profile-name-text {
+    max-width: 80px;
+    font-size: 0.8rem;
+  }
+
+  .ql-profile-dropdown-btn .dropdown-menu {
+    right: 0;
+    left: auto;
+    min-width: 180px;
+    max-width: 90vw;
+  }
+
+  /* Adjust dropdown header text */
+  .ql-dropdown-header h6 {
+    font-size: 0.9rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .ql-dropdown-header small {
+    font-size: 0.7rem;
+  }
+}
+
+/* ===== Small Tablets / Large Phones (768px - 991px) ===== */
+@media (max-width: 991px) {
+  /* Already handled by Bootstrap collapse, but we can fine-tune */
+  .ql-profile-name-text {
+    display: none !important; /* Hide profile name in collapsed view */
+  }
+
+  .ql-navbar-collapse {
+    max-height: 80vh;
+    overflow-y: auto;
+  }
+
+  /* Improve dropdown appearance in collapsed menu */
+  .ql-profile-dropdown-btn .dropdown-menu {
+    position: static !important;
+    transform: none !important;
+    width: 100%;
+    margin-top: 0.5rem;
+    box-shadow: var(--shadow-md);
+  }
+}
+
+/* ===== Extra Small Devices ===== */
+@media (max-width: 576px) {
+  .ql-nav-btn,
+  .ql-nav-btn-outline,
+  .ql-nav-btn-warning,
+  .ql-nav-btn-info {
+    padding: 0.3rem 0.5rem;
+    font-size: 0.7rem;
+  }
+}
+
+/* --- Button Shine Animation --- */
+.ql-nav-btn,
+.ql-nav-btn-outline,
+.ql-nav-btn-warning,
+.ql-nav-btn-info {
+  position: relative;
+  overflow: hidden;
+}
+
+.ql-nav-btn::after,
+.ql-nav-btn-outline::after,
+.ql-nav-btn-warning::after,
+.ql-nav-btn-info::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(
+    to right,
+    rgba(255,255,255,0) 0%,
+    rgba(255,255,255,0.3) 50%,
+    rgba(255,255,255,0) 100%
+  );
+  transform: rotate(30deg) translateX(-100%);
+  transition: transform 0.6s ease;
+  pointer-events: none;
+}
+
+.ql-nav-btn:hover::after,
+.ql-nav-btn-outline:hover::after,
+.ql-nav-btn-warning:hover::after,
+.ql-nav-btn-info:hover::after {
+  transform: rotate(30deg) translateX(100%);
+}
+
+/* --- Active Dropdown Toggle State --- */
+.ql-profile-dropdown-btn .dropdown-toggle[aria-expanded="true"] {
+  background: rgba(255, 255, 255, 0.25) !important;
+}
+
+.dark-mode .ql-profile-dropdown-btn .dropdown-toggle[aria-expanded="true"] {
+  background: rgba(255, 255, 255, 0.15) !important;
+}
+
+/* --- Enhanced Navbar Buttons (Premium) --- */
+.ql-nav-btn,
+.ql-nav-btn-outline,
+.ql-nav-btn-warning,
+.ql-nav-btn-info {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  box-shadow: var(--shadow-sm);
+}
+
+.ql-nav-btn:hover,
+.ql-nav-btn-outline:hover,
+.ql-nav-btn-warning:hover,
+.ql-nav-btn-info:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+}
+
+/* Primary button (solid) */
+.ql-nav-btn {
+  background: linear-gradient(145deg, var(--search-primary), var(--search-primary-hover));
+  color: white;
+  border: none;
+}
+
+.ql-nav-btn:hover {
+  background: linear-gradient(145deg, var(--search-primary-hover), var(--search-primary));
+}
+
+/* Outline button */
+.ql-nav-btn-outline {
+  background: transparent;
+  border: 2px solid rgba(255, 255, 255, 0.6);
+  color: var(--navbar-text);
+}
+
+.ql-nav-btn-outline:hover {
+  background: linear-gradient(145deg, var(--search-primary), var(--search-primary-hover));
+  border-color: transparent;
+  color: white;
+}
+
+/* Warning button */
+.ql-nav-btn-warning {
+  background: linear-gradient(145deg, #f59e0b, #f97316);
+  color: white;
+  border: none;
+}
+.ql-nav-btn-warning:hover {
+  background: linear-gradient(145deg, #f97316, #f59e0b);
+}
+
+/* Info button */
+.ql-nav-btn-info {
+  background: linear-gradient(145deg, #0ea5e9, #3b82f6);
+  color: white;
+  border: none;
+}
+.ql-nav-btn-info:hover {
+  background: linear-gradient(145deg, #3b82f6, #0ea5e9);
+}
+
+/* Shine animation for all buttons */
+.ql-nav-btn::after,
+.ql-nav-btn-outline::after,
+.ql-nav-btn-warning::after,
+.ql-nav-btn-info::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(
+    to right,
+    rgba(255,255,255,0) 0%,
+    rgba(255,255,255,0.3) 50%,
+    rgba(255,255,255,0) 100%
+  );
+  transform: rotate(30deg) translateX(-100%);
+  transition: transform 0.6s ease;
+  pointer-events: none;
+}
+
+.ql-nav-btn:hover::after,
+.ql-nav-btn-outline:hover::after,
+.ql-nav-btn-warning:hover::after,
+.ql-nav-btn-info:hover::after {
+  transform: rotate(30deg) translateX(100%);
+}
+
+/* Dark mode adjustments */
+.dark-mode .ql-nav-btn-outline {
+  border-color: rgba(255, 255, 255, 0.3);
+}
+.dark-mode .ql-nav-btn-outline:hover {
+  border-color: transparent;
+}
+
+/* ===== Enhanced Mobile Toggle Animation ===== */
+.ql-toggler {
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.ql-toggler-icon {
+  transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+/* ===== Dropdown Arrow Styling ===== */
+.ql-profile-dropdown-btn .dropdown-toggle::after {
+  display: inline-block;
+  margin-left: 0.5rem;
+  vertical-align: middle;
+  content: "";
+  border-top: 0.3em solid;
+  border-right: 0.3em solid transparent;
+  border-bottom: 0;
+  border-left: 0.3em solid transparent;
+  transition: transform 0.3s ease;
+  color: var(--navbar-text);
+}
+
+.ql-profile-dropdown-btn .dropdown-toggle[aria-expanded="true"]::after {
+  transform: rotate(180deg);
+}
+
+/* ===== Dropdown Open State Enhancement ===== */
+.ql-profile-dropdown-btn.show .dropdown-toggle {
+  background: rgba(255, 255, 255, 0.25) !important;
+  border-radius: 50px;
+}
+
+.dark-mode .ql-profile-dropdown-btn.show .dropdown-toggle {
+  background: rgba(255, 255, 255, 0.15) !important;
+}
+
+/* --- Live Badge Styles --- */
+.ql-live-badge {
+  background: linear-gradient(145deg, #f8f9fa, #e9ecef) !important;
+  color: #0d6e4a !important;
+  border: 1px solid #0d6e4a !important;
+  font-size: 0.8rem !important;
+  padding: 4px 8px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  animation: ql-pulse 2s infinite !important;
+  position: relative;
+  overflow: hidden;
+  font-weight: 600;
+}
+
+.ql-live-dot {
+  width: 6px;
+  height: 6px;
+  background: #0d6e4a !important;
+  border-radius: 50%;
+  display: inline-block;
+  animation: ql-pulse 2s infinite;
+}
+
+.ql-live-badge::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(
+    to right,
+    rgba(13, 110, 74, 0) 0%,
+    rgba(13, 110, 74, 0.2) 50%,
+    rgba(13, 110, 74, 0) 100%
+  );
+  transform: rotate(30deg) translateX(-100%);
+  animation: ql-badge-shine 3s infinite;
+  pointer-events: none;
+}
+
+/* Dark mode overrides */
+.dark-mode .ql-live-badge {
+  background: linear-gradient(145deg, #2d2d2d, #1a1a1a) !important;
+  color: #34d399 !important;
+  border-color: #34d399 !important;
+}
+
+.dark-mode .ql-live-dot {
+  background: #34d399 !important;
+}
+
+.dark-mode .ql-live-badge::after {
+  background: linear-gradient(
+    to right,
+    rgba(52, 211, 153, 0) 0%,
+    rgba(52, 211, 153, 0.2) 50%,
+    rgba(52, 211, 153, 0) 100%
+  );
+}
+
+@keyframes ql-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(13, 110, 74, 0.7); }
+  70% { box-shadow: 0 0 0 6px rgba(13, 110, 74, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(13, 110, 74, 0); }
+}
+
+.dark-mode .ql-live-badge {
+  animation: ql-pulse-dark 2s infinite;
+}
+
+@keyframes ql-pulse-dark {
+  0% { box-shadow: 0 0 0 0 rgba(52, 211, 153, 0.7); }
+  70% { box-shadow: 0 0 0 6px rgba(52, 211, 153, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(52, 211, 153, 0); }
+}
+
+@keyframes ql-badge-shine {
+  0% { transform: rotate(30deg) translateX(-100%); }
+  20% { transform: rotate(30deg) translateX(100%); }
+  100% { transform: rotate(30deg) translateX(100%); }
+}
+
+/* ===== Scroll Effect Enhancement ===== */
+.ql-navbar.scrolled {
+  backdrop-filter: blur(12px);
+  background: var(--navbar-bg); /* fallback */
+  background: linear-gradient(
+    90deg,
+    rgba(var(--navbar-bg-start-rgb), 0.95),
+    rgba(var(--navbar-bg-end-rgb), 0.95)
+  );
+  padding: 0.3rem 0;
+  box-shadow: 0 4px 25px rgba(0, 0, 0, 0.2);
+}
+
+:root {
+  --navbar-bg-start-rgb: 37, 99, 235;
+  --navbar-bg-end-rgb: 79, 70, 229;
+}
+
+.dark-mode {
+  --navbar-bg-start-rgb: 30, 58, 138;
+  --navbar-bg-end-rgb: 49, 46, 129;
+}
+
+/* ===== Logo Animation Refinement ===== */
+.ql-logo-animation-container {
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.ql-logo-animation-container:hover {
+  transform: translateY(-3px) scale(1.02);
+}
+
+.ql-logo-circle {
+  animation: ql-rotate 20s linear infinite;
+}
+
+.ql-logo-person {
+  animation: ql-movePerson 4s ease-in-out infinite;
+}
+
+/* ===== Ensure dropdown menu has proper z-index and shadow ===== */
+.ql-profile-dropdown-btn .dropdown-menu {
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--border-color);
+  z-index: 1031;
+  margin-top: 0.5rem;
+  min-width: 240px;
+}
+
+/* ===== Responsive touch improvements ===== */
+@media (max-width: 991px) {
+  .ql-navbar-collapse {
+    max-height: 80vh;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-color) var(--bg-secondary);
+  }
+
+  .ql-navbar-collapse::-webkit-scrollbar {
+    width: 5px;
+  }
+
+  .ql-navbar-collapse::-webkit-scrollbar-track {
+    background: var(--bg-secondary);
+  }
+
+  .ql-navbar-collapse::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 10px;
+  }
+
+  .ql-navbar-collapse::-webkit-scrollbar-thumb:hover {
+    background: var(--text-secondary);
+  }
+
+  /* Better spacing for mobile menu */
+  .ql-nav-btn,
+  .ql-nav-btn-outline,
+  .ql-nav-btn-warning,
+  .ql-nav-btn-info {
+    margin-bottom: 0.5rem;
+    padding: 0.7rem 1rem;
+    justify-content: flex-start;
+    border-radius: 12px;
+  }
+}
+
+/* ===== Ensure consistent icon sizing ===== */
+.ql-nav-btn i,
+.ql-nav-btn-outline i,
+.ql-nav-btn-warning i,
+.ql-nav-btn-info i,
+.ql-nav-btn svg,
+.ql-nav-btn-outline svg,
+.ql-nav-btn-warning svg,
+.ql-nav-btn-info svg {
+  font-size: 1.1rem;
+}

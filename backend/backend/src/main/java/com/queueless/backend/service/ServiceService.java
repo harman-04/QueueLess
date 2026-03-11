@@ -5,6 +5,8 @@ import com.queueless.backend.model.Service;
 import com.queueless.backend.repository.ServiceRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 
 
 import java.util.List;
@@ -18,12 +20,10 @@ public class ServiceService {
     private final ServiceRepository serviceRepository;
     private final PlaceService placeService;
 
-
+    @CacheEvict(value = {"services", "servicesByPlace"}, allEntries = true)
     public Service createService(ServiceDTO serviceDTO) {
         log.debug("Creating new service: {}", serviceDTO);
 
-        // Verify the place exists and belongs to the admin
-        // This would need to be implemented based on your authentication context
 
         Service service = new Service();
         service.setPlaceId(serviceDTO.getPlaceId());
@@ -50,6 +50,7 @@ public class ServiceService {
         return false;
     }
 
+    @Cacheable(value = "services", key = "#id")
     public Service getServiceById(String id) {
         log.debug("Looking up service with ID: {}", id);
         return serviceRepository.findById(id)
@@ -59,6 +60,7 @@ public class ServiceService {
                 });
     }
 
+    @Cacheable(value = "servicesByPlace", key = "#placeId")
     public List<Service> getServicesByPlaceId(String placeId) {
         log.debug("Fetching services by place ID: {}", placeId);
         List<Service> services = serviceRepository.findByPlaceId(placeId);

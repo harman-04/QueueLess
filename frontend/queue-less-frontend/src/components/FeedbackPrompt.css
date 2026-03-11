@@ -150,3 +150,20 @@
     width: 100%;
   }
 }
+
+/* Force card background to use theme variable */
+.feedback-prompt {
+  background-color: var(--card-bg) !important;
+}
+
+/* Ensure heading is visible */
+.prompt-text h5 {
+  color: var(--text-primary) !important;
+  font-weight: 600;
+  margin-bottom: 0.2rem;
+}
+
+/* Improve icon background contrast in dark mode */
+.dark-mode .prompt-icon {
+  background: rgba(var(--search-primary-rgb), 0.25);
+}

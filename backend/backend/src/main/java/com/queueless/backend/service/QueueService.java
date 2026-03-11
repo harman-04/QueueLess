@@ -1,15 +1,9 @@
 package com.queueless.backend.service;
 
-import com.queueless.backend.dto.QueueResetRequestDTO;
-import com.queueless.backend.dto.QueueResetResponseDTO;
-import com.queueless.backend.dto.TokenRequestDTO;
-import com.queueless.backend.dto.UserDetailsResponseDTO;
+import com.queueless.backend.dto.*;
 import com.queueless.backend.enums.Role;
 import com.queueless.backend.enums.TokenStatus;
-import com.queueless.backend.exception.AccessDeniedException;
-import com.queueless.backend.exception.QueueInactiveException;
-import com.queueless.backend.exception.ResourceNotFoundException;
-import com.queueless.backend.exception.UserAlreadyInQueueException;
+import com.queueless.backend.exception.*;
 import com.queueless.backend.model.*;
 import com.queueless.backend.model.Queue;
 import com.queueless.backend.repository.FeedbackRepository;
@@ -19,6 +13,8 @@ import com.queueless.backend.repository.UserRepository;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 
@@ -251,6 +247,7 @@ public class QueueService {
         return response;
     }
 
+    @CacheEvict(value = {"queues", "queuesByPlace"}, allEntries = true)
     public QueueToken addNewToken(String queueId, String userId) {
         Queue queue = getQueueOrThrow(queueId);
 
@@ -278,7 +275,7 @@ public class QueueService {
                 .count();
 
         if (queue.getMaxCapacity() != null && waitingAndInServiceTokens >= queue.getMaxCapacity()) {
-            throw new IllegalStateException("Queue has reached its maximum capacity. Please try again later.");
+            throw new QueueFullException("Queue has reached its maximum capacity. Please try again later.");
         }
 
         int nextToken = queue.getTokenCounter() + 1;
@@ -472,18 +469,28 @@ public class QueueService {
         messagingTemplate.convertAndSend("/topic/places/" + queue.getPlaceId() + "/queues", queue);
     }
 
+    @CacheEvict(value = {"queues", "queuesByPlace"}, allEntries = true)
     public Queue serveNextToken(String queueId) {
         Queue queue = getQueueOrThrow(queueId);
 
-        queue.getTokens().stream()
+        // Complete previous in-service token, if any
+        Optional<QueueToken> previousInService = queue.getTokens().stream()
                 .filter(t -> TokenStatus.IN_SERVICE.toString().equals(t.getStatus()))
-                .findFirst()
-                .ifPresent(inServiceToken -> {
-                    inServiceToken.setStatus(TokenStatus.COMPLETED.toString());
-                    inServiceToken.setCompletedAt(LocalDateTime.now());
-                    log.info("Completed previous in-service token: {}", inServiceToken.getTokenId());
-                });
+                .findFirst();
 
+        previousInService.ifPresent(inServiceToken -> {
+            inServiceToken.setStatus(TokenStatus.COMPLETED.toString());
+            inServiceToken.setCompletedAt(LocalDateTime.now());
+            log.info("Completed previous in-service token: {}", inServiceToken.getTokenId());
+
+            // ✅ Clear the user's active token
+            User user = getUserOrThrow(inServiceToken.getUserId());
+            user.setActiveTokenId(null);
+            user.setLastQueueJoinTime(null);
+            userRepository.save(user);
+        });
+
+        // Find next waiting token (with highest priority)
         Optional<QueueToken> nextToken = queue.getTokens().stream()
                 .filter(t -> TokenStatus.WAITING.toString().equals(t.getStatus()))
                 .max((t1, t2) -> Integer.compare(t1.getPriority(), t2.getPriority()));
@@ -569,6 +576,7 @@ public class QueueService {
         return queueRepository.save(newQueue);
     }
 
+    @CacheEvict(value = {"queues", "queuesByPlace"}, allEntries = true)
     public Queue createNewQueue(String providerId, String serviceName, String placeId, String serviceId,
                                 Integer maxCapacity, Boolean supportsGroupToken, Boolean emergencySupport,
                                 Integer emergencyPriorityWeight, Boolean requiresEmergencyApproval,
@@ -653,6 +661,7 @@ public class QueueService {
         return queues;
     }
 
+    @Cacheable(value = "queuesByPlace", key = "#placeId")
     public List<Queue> getQueuesByPlaceId(String placeId) {
         log.info("Fetching queues for placeId={}", placeId);
         return queueRepository.findByPlaceId(placeId);
@@ -663,6 +672,7 @@ public class QueueService {
         return queueRepository.findByServiceId(serviceId);
     }
 
+    @Cacheable(value = "queues", key = "#queueId")
     public Queue getQueueById(String queueId) {
         return getQueueOrThrow(queueId);
     }
@@ -672,6 +682,7 @@ public class QueueService {
         return queueRepository.findByIsActive(true);
     }
 
+    @CacheEvict(value = {"queues", "queuesByPlace"}, allEntries = true)
     public Queue completeToken(String queueId, String tokenId) {
         Queue queue = getQueueOrThrow(queueId);
 
@@ -735,32 +746,28 @@ public class QueueService {
         }
     }
 
+    @CacheEvict(value = {"queues", "queuesByPlace"}, allEntries = true)
     public Queue cancelToken(String queueId, String tokenId, String reason) {
         Queue queue = getQueueOrThrow(queueId);
 
-        Optional<QueueToken> tokenToCancel = queue.getTokens().stream()
+        // First check in regular tokens
+        Optional<QueueToken> tokenOpt = queue.getTokens().stream()
                 .filter(t -> t.getTokenId().equals(tokenId))
                 .findFirst();
 
-        boolean removed = queue.getTokens().removeIf(t -> t.getTokenId().equals(tokenId));
-        if (!removed) {
-            removed = queue.getPendingEmergencyTokens().removeIf(t -> t.getTokenId().equals(tokenId));
-
-            if (!removed) {
-                log.error("Token not found for cancellation: {}", tokenId);
-                throw new ResourceNotFoundException("Token not found with id " + tokenId);
-            }
-        }
-
-        if (tokenToCancel.isPresent()) {
-            QueueToken token = tokenToCancel.get();
+        if (tokenOpt.isPresent()) {
+            QueueToken token = tokenOpt.get();
+            token.setStatus(TokenStatus.CANCELLED.toString());
             token.setCancellationReason(reason);
+            token.setCompletedAt(LocalDateTime.now()); // optional: use completedAt as cancellation time
 
-            User user = getUserOrThrow(tokenToCancel.get().getUserId());
+            // Clear user's active token
+            User user = getUserOrThrow(token.getUserId());
             user.setActiveTokenId(null);
             user.setLastQueueJoinTime(null);
             userRepository.save(user);
 
+            // Notify user
             messagingTemplate.convertAndSendToUser(
                     token.getUserId(),
                     "/queue/token-cancelled",
@@ -770,11 +777,18 @@ public class QueueService {
                             "reason", reason != null ? reason : "Your token was cancelled by the provider."
                     )
             );
+        } else {
+            // Check pending emergency tokens
+            boolean removed = queue.getPendingEmergencyTokens().removeIf(t -> t.getTokenId().equals(tokenId));
+            if (!removed) {
+                log.error("Token not found for cancellation: {}", tokenId);
+                throw new ResourceNotFoundException("Token not found with id " + tokenId);
+            }
+            // For pending tokens, no user state to clear (they never became active)
         }
 
         Queue updatedQueue = queueRepository.save(queue);
         broadcastQueueUpdate(queueId, updatedQueue);
-
         log.info("Token {} cancelled", tokenId);
         return updatedQueue;
     }
@@ -813,6 +827,8 @@ public class QueueService {
                         if (!foundFirst) {
                             foundFirst = true;
                         } else {
+
+
                             token.setStatus(TokenStatus.COMPLETED.toString());
                             needsUpdate = true;
                         }
@@ -910,5 +926,48 @@ public class QueueService {
         }
     }
 
+    // In QueueService.java
 
+    public UserPositionDTO getUserPosition(String queueId, String userId) {
+        Queue queue = getQueueOrThrow(queueId);
+
+        // Find token belonging to user
+        QueueToken userToken = queue.getTokens().stream()
+                .filter(t -> t.getUserId().equals(userId))
+                .findFirst()
+                .orElse(null);
+
+        if (userToken == null) {
+            return new UserPositionDTO(queueId, userId, null, null, null, queue.getEstimatedWaitTime());
+        }
+
+        // Compute position among waiting tokens (only WAITING tokens count)
+        List<QueueToken> waitingTokens = queue.getTokens().stream()
+                .filter(t -> TokenStatus.WAITING.toString().equals(t.getStatus()))
+                .sorted((t1, t2) -> {
+                    // Priority first, then issue time
+                    if (!t1.getPriority().equals(t2.getPriority())) {
+                        return t2.getPriority() - t1.getPriority();
+                    }
+                    return t1.getIssuedAt().compareTo(t2.getIssuedAt());
+                })
+                .collect(Collectors.toList());
+
+        int position = -1;
+        for (int i = 0; i < waitingTokens.size(); i++) {
+            if (waitingTokens.get(i).getTokenId().equals(userToken.getTokenId())) {
+                position = i + 1; // 1‑based
+                break;
+            }
+        }
+
+        return new UserPositionDTO(
+                queueId,
+                userId,
+                userToken.getTokenId(),
+                position > 0 ? position : null,
+                userToken.getStatus(),
+                queue.getEstimatedWaitTime()
+        );
+    }
 }

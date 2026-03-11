@@ -1,6 +1,6 @@
 package com.queueless.backend.service;
 
-import com.queueless.backend.dto.TokenRequestDTO;
+import com.queueless.backend.dto.*;
 import com.queueless.backend.enums.Role;
 import com.queueless.backend.enums.TokenStatus;
 import com.queueless.backend.exception.QueueInactiveException;
@@ -25,9 +25,7 @@ import java.util.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
-import com.queueless.backend.dto.QueueResetRequestDTO;
-import com.queueless.backend.dto.QueueResetResponseDTO;
-import com.queueless.backend.dto.UserDetailsResponseDTO;
+
 import com.queueless.backend.exception.AccessDeniedException;
 import com.queueless.backend.model.*;
 import com.queueless.backend.model.Queue;
@@ -116,7 +114,7 @@ class QueueServiceTest {
         QueueToken token = queueService.addNewToken(queueId, userId);
 
         assertNotNull(token);
-        assertEquals("T-001", token.getTokenId());
+        assertEquals("queue123-T-001", token.getTokenId());
 
         verify(queueRepository).findById(queueId);
         // Updated to times(2) because getUserOrThrow is called twice in the current logic
@@ -157,8 +155,6 @@ class QueueServiceTest {
 
     @Test
     void addNewTokenQueueFull() {
-        // FIX: Add 10 tokens using DIFFERENT user IDs so we don't trigger
-        // the "UserAlreadyInQueueException" before the "QueueFull" check.
         for (int i = 0; i < 10; i++) {
             testQueue.getTokens().add(new QueueToken("T-" + i, "otherUser" + i, "Other",
                     TokenStatus.WAITING.toString(), LocalDateTime.now()));
@@ -167,7 +163,9 @@ class QueueServiceTest {
         when(queueRepository.findById(queueId)).thenReturn(Optional.of(testQueue));
         when(userRepository.findById(userId)).thenReturn(Optional.of(testUser));
 
-        assertThrows(IllegalStateException.class, () -> queueService.addNewToken(queueId, userId));
+        assertThrows(com.queueless.backend.exception.QueueFullException.class,
+                () -> queueService.addNewToken(queueId, userId));
+
         verify(queueRepository, never()).save(any());
     }
 
@@ -190,7 +188,7 @@ class QueueServiceTest {
         QueueToken token = queueService.addNewTokenWithDetails(queueId, userId, details);
 
         assertNotNull(token);
-        assertEquals("T-001", token.getTokenId());
+        assertEquals("queue123-T-001", token.getTokenId());
         assertEquals(TokenStatus.WAITING.toString(), token.getStatus());
         assertNotNull(token.getUserDetails());
         assertEquals("Consultation", token.getUserDetails().getPurpose());
@@ -217,7 +215,7 @@ class QueueServiceTest {
         QueueToken token = queueService.addGroupToken(queueId, userId, members);
 
         assertNotNull(token);
-        assertEquals("G-001", token.getTokenId());
+        assertEquals("queue123-G-001", token.getTokenId());
         assertTrue(token.getIsGroup());
         assertEquals(2, token.getGroupSize());
         assertEquals(members, token.getGroupMembers());
@@ -255,7 +253,7 @@ class QueueServiceTest {
         QueueToken token = queueService.addEmergencyToken(queueId, userId, emergencyDetails);
 
         assertNotNull(token);
-        assertEquals("E-001", token.getTokenId());
+        assertEquals("queue123-E-001", token.getTokenId());
         assertTrue(token.getIsEmergency());
         assertEquals(emergencyDetails, token.getEmergencyDetails());
         assertEquals(10, token.getPriority());
@@ -274,7 +272,7 @@ class QueueServiceTest {
         QueueToken token = queueService.addEmergencyToken(queueId, userId, emergencyDetails);
 
         assertNotNull(token);
-        assertEquals("E-001", token.getTokenId());
+        assertEquals("queue123-E-001", token.getTokenId());
         assertEquals(TokenStatus.PENDING.toString(), token.getStatus());
         assertEquals(1, testQueue.getPendingEmergencyTokens().size());
         verify(userRepository, never()).save(any()); // user not activated yet
@@ -382,6 +380,8 @@ class QueueServiceTest {
         testQueue.setTokens(Arrays.asList(inService, waiting));
 
         when(queueRepository.findById(queueId)).thenReturn(Optional.of(testQueue));
+        // The method will call getUserOrThrow for the user of the in-service token (userId)
+        when(userRepository.findById(userId)).thenReturn(Optional.of(testUser));
         when(queueRepository.save(any(Queue.class))).thenAnswer(inv -> inv.getArgument(0));
 
         Queue updated = queueService.serveNextToken(queueId);
@@ -397,6 +397,9 @@ class QueueServiceTest {
                 .filter(t -> TokenStatus.IN_SERVICE.toString().equals(t.getStatus()) &&
                         t.getTokenId().equals("T-002")).findFirst();
         assertTrue(newInService.isPresent());
+
+        // Verify user's active token was cleared for the completed token
+        verify(userRepository).save(argThat(user -> user.getActiveTokenId() == null));
     }
 
     @Test
@@ -504,16 +507,20 @@ class QueueServiceTest {
         when(queueRepository.save(any(Queue.class))).thenAnswer(inv -> inv.getArgument(0));
 
         // Act
-        // Added the 3rd parameter "reason"
         Queue updated = queueService.cancelToken(queueId, "T-001", reason);
 
-        // Assert
-        assertTrue(updated.getTokens().stream().noneMatch(t -> t.getTokenId().equals("T-001")));
+        // Assert – token should still exist with status CANCELLED
+        Optional<QueueToken> cancelledToken = updated.getTokens().stream()
+                .filter(t -> t.getTokenId().equals("T-001"))
+                .findFirst();
+        assertTrue(cancelledToken.isPresent());
+        assertEquals(TokenStatus.CANCELLED.toString(), cancelledToken.get().getStatus());
+        assertEquals(reason, cancelledToken.get().getCancellationReason());
 
         // Verify User state was cleared
         verify(userRepository).save(argThat(user -> user.getActiveTokenId() == null));
 
-        // Verify WebSocket notification was sent to the specific user
+        // Verify WebSocket notification was sent
         verify(messagingTemplate).convertAndSendToUser(
                 eq(userId),
                 eq("/queue/token-cancelled"),
@@ -845,5 +852,36 @@ class QueueServiceTest {
         stat.setHour(hour);
         stat.setWaitingCount(count);
         return stat;
+    }
+
+    @Test
+    void getUserPosition_UserInWaitingQueue_ReturnsCorrectPosition() {
+        // Arrange
+        QueueToken token1 = createTestToken("T-001", TokenStatus.WAITING.toString());
+        QueueToken token2 = createTestToken("T-002", TokenStatus.WAITING.toString());
+        token2.setUserId("user2");
+        QueueToken token3 = createTestToken("T-003", TokenStatus.WAITING.toString());
+        token3.setUserId("user3");
+
+        testQueue.getTokens().addAll(List.of(token1, token2, token3));
+
+        when(queueRepository.findById(queueId)).thenReturn(Optional.of(testQueue));
+
+        // Act
+        UserPositionDTO position = queueService.getUserPosition(queueId, userId);
+
+        // Assert
+        assertEquals(1, position.getPosition());
+        assertEquals("T-001", position.getTokenId());
+    }
+
+    @Test
+    void getUserPosition_UserNotInQueue_ReturnsNullPosition() {
+        when(queueRepository.findById(queueId)).thenReturn(Optional.of(testQueue));
+
+        UserPositionDTO position = queueService.getUserPosition(queueId, "nonExistentUser");
+
+        assertNull(position.getPosition());
+        assertNull(position.getTokenId());
     }
 }
