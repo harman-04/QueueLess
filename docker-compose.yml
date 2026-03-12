@@ -20,6 +20,9 @@ services:
     networks:
       - queueless-net
 
+    volumes:
+      - ./backend/backend/src/main/resources/localhost.p12:/app/localhost.p12:ro
+
 
 
   frontend:
