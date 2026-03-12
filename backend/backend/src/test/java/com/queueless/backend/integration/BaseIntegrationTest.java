@@ -41,6 +41,7 @@ public abstract class BaseIntegrationTest {
         registry.add("server.ssl.enabled", () -> "false");
         registry.add("spring.data.redis.host", () -> "localhost");
         registry.add("spring.data.redis.port", () -> "6379");
+        registry.add("spring.cache.type", () -> "none");
     }
 
 
