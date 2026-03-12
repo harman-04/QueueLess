@@ -25,7 +25,7 @@ services:
   frontend:
     build:
       context: ./frontend/queue-less-frontend
-      dockerfile: DockerFile
+      dockerfile: Dockerfile
     container_name: queueless-frontend
     ports:
       - "5173:443"
