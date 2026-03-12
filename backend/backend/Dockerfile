@@ -1,16 +1,13 @@
-# backend/Dockerfile
-FROM eclipse-temurin:25-jre-alpine
-
-# Copy the keystore into the image (you can also mount it as a volume)
-COPY src/main/resources/localhost.p12 /app/localhost.p12
-
-# Copy the built JAR
-COPY target/backend-0.0.1-SNAPSHOT.jar /app/app.jar
-
+# Build stage
+FROM maven:3.9-eclipse-temurin-25 AS builder
 WORKDIR /app
+COPY pom.xml .
+COPY src ./src
+RUN mvn clean package -DskipTests
 
-# Expose the HTTPS port
+# Run stage
+FROM eclipse-temurin:25-jre-alpine
+WORKDIR /app
+COPY --from=builder /app/target/backend-0.0.1-SNAPSHOT.jar app.jar
 EXPOSE 8443
-
-# Run the application
 ENTRYPOINT ["java", "-jar", "app.jar"]
