@@ -99,12 +99,18 @@ public class QueueFlowIntegrationTest extends BaseIntegrationTest {
         ResponseEntity<String> adminRegResponse = restTemplate.postForEntity("/api/auth/register", adminReq, String.class);
         assertThat(adminRegResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
 
+
+        // Manually verify admin
+        var adminUser = userRepository.findByEmail("admin@example.com").orElseThrow();
+        adminUser.setIsVerified(true);
+        userRepository.save(adminUser);
+        adminId = adminUser.getId();
         // 4. Login as ADMIN
         LoginRequest adminLogin = new LoginRequest("admin@example.com", "AdminPass123");
         ResponseEntity<JwtResponse> adminLoginResponse = restTemplate.postForEntity("/api/auth/login", adminLogin, JwtResponse.class);
         assertThat(adminLoginResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
         adminToken = adminLoginResponse.getBody().getToken();
-        adminId = adminLoginResponse.getBody().getUserId();
+
 
         // 5. Create a place
         PlaceDTO placeDto = new PlaceDTO();
@@ -163,6 +169,10 @@ public class QueueFlowIntegrationTest extends BaseIntegrationTest {
         assertThat(providerRegResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
         providerEmail = "provider@example.com";
 
+        // Manually verify provider
+        var providerUser = userRepository.findByEmail("provider@example.com").orElseThrow();
+        providerUser.setIsVerified(true);
+        userRepository.save(providerUser);
         // 9. Login as PROVIDER
         LoginRequest providerLogin = new LoginRequest(providerEmail, "ProvPass123");
         ResponseEntity<JwtResponse> providerLoginResponse = restTemplate.postForEntity("/api/auth/login", providerLogin, JwtResponse.class);

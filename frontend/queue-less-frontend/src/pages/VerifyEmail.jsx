@@ -1,5 +1,5 @@
 // src/pages/VerifyEmail.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import AuthFormWrapper from '../components/AuthFormWrapper';
 import OtpInput from '../components/OtpInput';
@@ -14,10 +14,10 @@ const VerifyEmail = () => {
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [timer, setTimer] = useState(60);
   const [resending, setResending] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     if (!email) {
-      // No email in state – redirect to register
       navigate('/register');
     }
   }, [email, navigate]);
@@ -35,15 +35,18 @@ const VerifyEmail = () => {
     return () => clearInterval(countdown);
   }, []);
 
-  const handleVerify = async (otpValue) => {
+  const handleVerify = useCallback(async (otpValue) => {
+    if (submitting) return;
+    setSubmitting(true);
     try {
       await axiosInstance.post('/auth/verify-email', { email, otp: otpValue });
       toast.success('Email verified! You can now log in.');
       navigate('/login');
     } catch (err) {
       toast.error(err.response?.data || 'Verification failed');
+      setSubmitting(false); // allow retry on failure
     }
-  };
+  }, [email, navigate, submitting]);
 
   const handleResend = async () => {
     setResending(true);
@@ -61,7 +64,7 @@ const VerifyEmail = () => {
 
   return (
     <AuthFormWrapper title="Verify Your Email">
-      <div className="verify-email-container"> {/* <-- wrapper */}
+      <div className="verify-email-container">
         <p>
           We've sent a 6‑digit code to <strong>{email}</strong>. Enter it below.
         </p>

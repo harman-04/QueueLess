@@ -1,5 +1,6 @@
 package com.queueless.backend.dto;
 
+import jakarta.validation.constraints.Positive;
 import lombok.Data;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
@@ -20,6 +21,7 @@ public class SearchRequestDTO {
     @Min(0) @Max(5)
     private Double minRating = 0.0;
 
+    @Positive
     private Integer maxWaitTime;
     private Boolean supportsGroupToken;
     private Boolean emergencySupport;
@@ -27,6 +29,8 @@ public class SearchRequestDTO {
 
     private Double longitude;
     private Double latitude;
+
+    @Positive
     private Double radius = 5.0; // in kilometers
 
     private Boolean searchPlaces = true;

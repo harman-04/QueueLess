@@ -205,7 +205,6 @@ public class UserController {
         return ResponseEntity.ok(data);
     }
 
-    // In UserController.java
 
     @PostMapping("/fcm-token")
     @Authenticated

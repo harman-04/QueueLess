@@ -11,6 +11,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -20,6 +22,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -30,6 +33,7 @@ import java.util.stream.Collectors;
 @RequestMapping("/api/places")
 @RequiredArgsConstructor
 @Tag(name = "Places", description = "Endpoints for managing places")
+@Validated
 public class PlaceController {
 
     private final PlaceService placeService;
@@ -161,7 +165,7 @@ public class PlaceController {
     public ResponseEntity<List<PlaceDTO>> getNearbyPlaces(
             @Parameter(description = "Longitude") @RequestParam double longitude,
             @Parameter(description = "Latitude") @RequestParam double latitude,
-            @Parameter(description = "Radius in kilometers") @RequestParam(defaultValue = "5") double radius) {
+            @Parameter(description = "Radius in kilometers") @RequestParam(defaultValue = "5") @Positive @Max(50) double radius) {
         log.debug("Searching nearby places [lon={}, lat={}, radius={}km]", longitude, latitude, radius);
         List<Place> places = placeService.getNearbyPlaces(longitude, latitude, radius);
         log.info("Found {} nearby places", places.size());

@@ -81,10 +81,8 @@ public class AuthService {
             throw new RuntimeException("Email already registered");
         }
 
-        boolean isVerifiedAutomatically = false;
+        // Token validation for ADMIN and PROVIDER
         Token token = null;
-
-        // For ADMIN or PROVIDER, validate the token
         if (request.getRole() == Role.ADMIN || request.getRole() == Role.PROVIDER) {
             if (request.getToken() == null || request.getToken().isEmpty()) {
                 log.error("Registration failed - Token required for role: {}", request.getRole());
@@ -122,7 +120,6 @@ public class AuthService {
             token.setUsed(true);
             tokenRepository.save(token);
             log.debug("Token {} marked as used for {}", token.getTokenValue(), request.getEmail());
-            isVerifiedAutomatically = true;
         }
 
         // Build user preferences
@@ -161,6 +158,7 @@ public class AuthService {
             }
         }
 
+        // Build user – isVerified is always false initially
         User user = User.builder()
                 .name(request.getName())
                 .email(request.getEmail())
@@ -169,7 +167,7 @@ public class AuthService {
                 .role(request.getRole())
                 .placeId(request.getPlaceId())
                 .profileImageUrl(null)
-                .isVerified(isVerifiedAutomatically)
+                .isVerified(false)   // <-- changed: always false
                 .preferences(userPreferences)
                 .ownedPlaceIds(new ArrayList<>())
                 .adminId(adminId)
@@ -178,14 +176,13 @@ public class AuthService {
                 .build();
 
         userRepository.save(user);
-        if (request.getRole() == Role.USER) {
-            sendVerificationOtp(request.getEmail());
-        }
+
+        // Send verification OTP for ALL roles
+        sendVerificationOtp(request.getEmail());
+
         log.info("Registration successful for email: {} | Role: {}", user.getEmail(), user.getRole());
-
-        return "User registered successfully!";
+        return "User registered successfully! Please verify your email.";
     }
-
     private void sendVerificationOtp(String email) {
         // Clean previous OTPs
         otpRepository.deleteByEmail(email);

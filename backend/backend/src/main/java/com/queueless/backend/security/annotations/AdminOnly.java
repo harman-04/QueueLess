@@ -1,4 +1,3 @@
-// Create security annotations package
 package com.queueless.backend.security.annotations;
 
 import org.springframework.security.access.prepost.PreAuthorize;

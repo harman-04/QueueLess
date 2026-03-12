@@ -162,7 +162,7 @@ class AuthServiceTest {
 
         String result = authService.register(registerRequest);
 
-        assertEquals("User registered successfully!", result);
+        assertEquals("User registered successfully! Please verify your email.", result);
         // Verify OTP logic was triggered
         verify(otpRepository).deleteByEmail(registerRequest.getEmail());
         verify(otpRepository).save(any());
@@ -200,16 +200,25 @@ class AuthServiceTest {
         when(passwordEncoder.encode(registerRequest.getPassword())).thenReturn("encodedPassword");
         when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
 
+        // Mock OTP sending to avoid real email
+        doNothing().when(otpRepository).deleteByEmail(anyString());
+        when(otpRepository.save(any())).thenReturn(null);
+        doNothing().when(emailService).sendVerificationOtpEmail(anyString(), anyString());
+
         String result = authService.register(registerRequest);
 
-        assertEquals("User registered successfully!", result);
+        assertEquals("User registered successfully! Please verify your email.", result);
         verify(tokenRepository).findByTokenValue("ADMIN_TOKEN");
-        verify(tokenRepository).save(argThat(t -> t.isUsed()));
+        verify(tokenRepository).save(argThat(Token::isUsed));
         verify(userRepository).save(argThat(user -> {
             assertEquals(Role.ADMIN, user.getRole());
-            assertTrue(user.getIsVerified()); // Admin is auto-verified
+            assertFalse(user.getIsVerified());   // now false
             return true;
         }));
+        // Verify OTP was sent
+        verify(otpRepository).deleteByEmail(registerRequest.getEmail());
+        verify(otpRepository).save(any());
+        verify(emailService).sendVerificationOtpEmail(eq(registerRequest.getEmail()), anyString());
     }
 
     @Test
@@ -233,20 +242,28 @@ class AuthServiceTest {
         when(passwordEncoder.encode(registerRequest.getPassword())).thenReturn("encodedPassword");
         when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
 
+        doNothing().when(otpRepository).deleteByEmail(anyString());
+        when(otpRepository.save(any())).thenReturn(null);
+        doNothing().when(emailService).sendVerificationOtpEmail(anyString(), anyString());
+
         String result = authService.register(registerRequest);
 
-        assertEquals("User registered successfully!", result);
+        assertEquals("User registered successfully! Please verify your email.", result);
         // Verify that findByTokenValue was called at least once (it's called twice currently)
         verify(tokenRepository, atLeastOnce()).findByTokenValue("PROVIDER_TOKEN");
         // Verify that the token was saved with used=true
         verify(tokenRepository).save(argThat(t -> t.isUsed() && t.getTokenValue().equals("PROVIDER_TOKEN")));
         verify(userRepository).save(argThat(user -> {
             assertEquals(Role.PROVIDER, user.getRole());
-            assertTrue(user.getIsVerified());
+            assertFalse(user.getIsVerified());
             assertEquals("admin123", user.getAdminId());
             assertTrue(user.getManagedPlaceIds().contains("place123"));
             return true;
         }));
+        verify(otpRepository).deleteByEmail(registerRequest.getEmail());
+        verify(otpRepository).save(any());
+        verify(emailService).sendVerificationOtpEmail(eq(registerRequest.getEmail()), anyString());
+
     }
 
     @Test

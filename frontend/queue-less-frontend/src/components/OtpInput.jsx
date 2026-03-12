@@ -1,4 +1,4 @@
-//src/components/OtpInput.jsx
+// src/components/OtpInput.jsx
 import { useEffect, useRef } from 'react';
 
 const OtpInput = ({ otp, setOtp, autoSubmit }) => {
@@ -24,10 +24,14 @@ const OtpInput = ({ otp, setOtp, autoSubmit }) => {
   }, []);
 
   useEffect(() => {
+    let active = true;
     if (otp.every((digit) => digit !== '')) {
-      autoSubmit(otp.join(''));
+      if (active) {
+        autoSubmit(otp.join(''));
+      }
     }
-  }, [otp, autoSubmit]); // ✅ Included autoSubmit in dependency array
+    return () => { active = false; };
+  }, [otp, autoSubmit]);
 
   return (
     <div className="d-flex gap-2 justify-content-center">

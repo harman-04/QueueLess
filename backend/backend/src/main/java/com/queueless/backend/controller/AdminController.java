@@ -26,6 +26,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
@@ -39,6 +40,7 @@ import java.util.Optional;
 @RequestMapping("/api/admin")
 @RequiredArgsConstructor
 @Tag(name = "Admin", description = "Endpoints for admin dashboard and management")
+@Validated
 public class AdminController {
 
     private final PaymentRepository paymentRepository;
@@ -94,23 +96,6 @@ public class AdminController {
             throw new RuntimeException("Failed to fetch dashboard statistics");
         }
     }
-
-//    @GetMapping("/providers")
-//    @AdminOnly
-//    @Operation(summary = "Get providers with their queues", description = "Returns all providers under this admin, along with their queues and statistics.")
-//    @ApiResponse(responseCode = "200", description = "List of provider data")
-//    @ApiResponse(responseCode = "500", description = "Internal server error")
-//    public List<Map<String, Object>> getProvidersWithQueues() {
-//        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-//        String adminId = authentication.getName();
-//
-//        try {
-//            return adminService.getProvidersWithQueues(adminId);
-//        } catch (Exception e) {
-//            log.error("Failed to fetch providers with queues for adminId: {}", adminId, e);
-//            throw new RuntimeException("Failed to fetch providers data");
-//        }
-//    }
 
     @GetMapping("/queues")
     @AdminOnly
