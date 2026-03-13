@@ -23,4 +23,5 @@ public class ApiError {
         this.path = path;
         this.timestamp = LocalDateTime.now();
     }
+
 }

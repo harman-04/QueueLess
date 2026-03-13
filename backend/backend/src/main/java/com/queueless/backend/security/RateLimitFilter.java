@@ -11,6 +11,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -26,22 +28,21 @@ public class RateLimitFilter extends OncePerRequestFilter {
 
     private final RateLimitConfig rateLimitConfig;
 
-    @Value("${rate.limit.paths:/api/auth/**,/api/password/**,/api/queues/*/add-token,/api/places/**}")
+    @Value("${rate.limit.paths:/api/auth/**,/api/password/**,/api/queues/*/add-token,/api/queues/*/add-group-token,/api/queues/*/add-emergency-token,/api/queues/*/add-token-with-details,/api/search/**}")
     private List<String> limitedPaths;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
         String requestURI = request.getRequestURI();
+        String endpointGroup = determineEndpointGroup(requestURI);
 
-        if (isPathLimited(requestURI)) {
-            String ipAddress = request.getRemoteAddr();
-            String key = ipAddress + ":" + request.getRequestURI();
-
-            log.debug("Rate limiting request for key: {}", key);
+        if (endpointGroup != null) {
+            String key = buildKey(request);
+            log.debug("Rate limiting request for key: {} (group: {})", key, endpointGroup);
 
             try {
-                Bucket bucket = rateLimitConfig.resolveBucket(key);
+                Bucket bucket = rateLimitConfig.resolveBucket(key, endpointGroup);
                 ConsumptionProbe probe = bucket.tryConsumeAndReturnRemaining(1);
 
                 if (probe.isConsumed()) {
@@ -63,6 +64,37 @@ public class RateLimitFilter extends OncePerRequestFilter {
         } else {
             filterChain.doFilter(request, response);
         }
+    }
+
+    private String buildKey(HttpServletRequest request) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String userId = null;
+        if (authentication != null && authentication.isAuthenticated()
+                && !"anonymousUser".equals(authentication.getPrincipal())) {
+            userId = authentication.getName(); // principal is the user ID
+        }
+        String ip = request.getRemoteAddr();
+        String uri = request.getRequestURI();
+        return userId != null ? userId + ":" + uri : ip + ":" + uri;
+    }
+
+    private String determineEndpointGroup(String uri) {
+        // Token creation endpoints
+        if (matches(uri, "/api/queues/*/add-token") ||
+                matches(uri, "/api/queues/*/add-group-token") ||
+                matches(uri, "/api/queues/*/add-emergency-token") ||
+                matches(uri, "/api/queues/*/add-token-with-details")) {
+            return "token";
+        }
+        // Search endpoints
+        if (matches(uri, "/api/search/**")) {
+            return "search";
+        }
+        // If the path is in the limitedPaths list but not specifically token/search, use default
+        if (isPathLimited(uri)) {
+            return "default";
+        }
+        return null; // not limited
     }
 
     private boolean isPathLimited(String uri) {
