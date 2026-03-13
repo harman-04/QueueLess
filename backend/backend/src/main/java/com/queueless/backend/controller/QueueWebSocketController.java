@@ -10,6 +10,7 @@ import com.queueless.backend.security.annotations.Authenticated;
 import com.queueless.backend.security.annotations.AdminOrProviderOnly;
 import com.queueless.backend.security.annotations.AdminOnly;
 import com.queueless.backend.security.annotations.UserOnly;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.messaging.handler.annotation.MessageMapping;
@@ -24,16 +25,11 @@ import java.util.Optional;
 
 @Controller
 @Slf4j
+@RequiredArgsConstructor
 public class QueueWebSocketController {
 
     private final SimpMessagingTemplate messagingTemplate;
     private final QueueService queueService;
-
-    @Autowired
-    public QueueWebSocketController(SimpMessagingTemplate messagingTemplate, QueueService queueService) {
-        this.messagingTemplate = messagingTemplate;
-        this.queueService = queueService;
-    }
 
     @MessageMapping("/queue/connect")
     @Authenticated

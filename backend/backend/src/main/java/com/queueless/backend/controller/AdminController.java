@@ -17,6 +17,8 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.ByteArrayResource;
@@ -146,14 +148,12 @@ public class AdminController {
         return ResponseEntity.ok(history);
     }
 
-    // In AdminController.java
-
     @GetMapping("/analytics/tokens-over-time")
     @AdminOnly
     @Operation(summary = "Get token volume over time", description = "Returns daily token counts for the last N days (default 30).")
     @ApiResponse(responseCode = "200", description = "Map with dates and counts")
     public ResponseEntity<Map<String, Object>> getTokensOverTime(
-            @RequestParam(defaultValue = "30") int days) {
+            @RequestParam(defaultValue = "30") @Min(1) @Max(365) int days) {
         String adminId = SecurityContextHolder.getContext().getAuthentication().getName();
         Map<String, Object> data = adminService.getTokensOverTime(adminId, days);
         return ResponseEntity.ok(data);
@@ -169,16 +169,12 @@ public class AdminController {
         return ResponseEntity.ok(data);
     }
 
-    // In AdminController.java – update endpoint return type
-
     @GetMapping("/providers")
     @AdminOnly
     public ResponseEntity<List<ProviderPerformanceDTO>> getProvidersWithQueues() {
         String adminId = SecurityContextHolder.getContext().getAuthentication().getName();
         return ResponseEntity.ok(adminService.getProvidersWithQueues(adminId));
     }
-
-    // In AdminController.java
 
     @GetMapping("/places-with-queues")
     @AdminOnly
@@ -188,8 +184,6 @@ public class AdminController {
         String adminId = SecurityContextHolder.getContext().getAuthentication().getName();
         return ResponseEntity.ok(adminService.getPlacesWithQueueStats(adminId));
     }
-
-    // In AdminController.java
 
     @GetMapping("/report/pdf")
     @AdminOnly
@@ -229,8 +223,6 @@ public class AdminController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
-
-    // In AdminController.java
 
     @PostMapping("/alert-config")
     @AdminOnly

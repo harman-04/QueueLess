@@ -14,6 +14,7 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -45,7 +46,7 @@ public class FeedbackController {
     @ApiResponse(responseCode = "409", description = "Feedback already exists for this token")
     @ApiResponse(responseCode = "404", description = "Queue not found")
     @ApiResponse(responseCode = "500", description = "Internal server error")
-    public ResponseEntity<Feedback> submitFeedback(@RequestBody FeedbackDTO feedbackDTO, Authentication authentication) {
+    public ResponseEntity<Feedback> submitFeedback(@Valid @RequestBody FeedbackDTO feedbackDTO, Authentication authentication) {
         String userId = authentication.getName();
         log.info("Received feedback submission request from user {} for token {}", userId, feedbackDTO.getTokenId());
 

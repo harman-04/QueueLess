@@ -1,7 +1,6 @@
 package com.queueless.backend.integration;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.queueless.backend.controller.QueueController;
 import com.queueless.backend.dto.*;
 import com.queueless.backend.enums.Role;
 import com.queueless.backend.model.Queue;
@@ -180,7 +179,7 @@ public class QueueFlowIntegrationTest extends BaseIntegrationTest {
         providerToken = providerLoginResponse.getBody().getToken();
 
         // 10. Provider creates a queue
-        QueueController.CreateQueueRequest queueReq = new QueueController.CreateQueueRequest();
+        CreateQueueRequest queueReq = new CreateQueueRequest();
         queueReq.setServiceName("Test Queue");
         queueReq.setPlaceId(placeId);
         queueReq.setServiceId(serviceId);
@@ -192,7 +191,7 @@ public class QueueFlowIntegrationTest extends BaseIntegrationTest {
         HttpHeaders providerHeaders = new HttpHeaders();
         providerHeaders.setBearerAuth(providerToken);
         providerHeaders.setContentType(MediaType.APPLICATION_JSON);
-        HttpEntity<QueueController.CreateQueueRequest> queueRequest = new HttpEntity<>(queueReq, providerHeaders);
+        HttpEntity<CreateQueueRequest> queueRequest = new HttpEntity<>(queueReq, providerHeaders);
         ResponseEntity<Queue> queueResponse = restTemplate.postForEntity("/api/queues/create", queueRequest, Queue.class);
         assertThat(queueResponse.getStatusCode()).isEqualTo(HttpStatus.CREATED);
         queueId = queueResponse.getBody().getId();

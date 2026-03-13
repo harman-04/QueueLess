@@ -15,11 +15,11 @@ import com.queueless.backend.security.annotations.UserOnly;
 import com.queueless.backend.service.QRCodeService;
 import com.queueless.backend.service.QueueService;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
@@ -45,66 +45,13 @@ public class QueueController {
     private final QueueService queueService;
     private final QRCodeService qrCodeService;
 
-    // ==== REQUEST DTOs ====
-
-    public static class CreateQueueRequest {
-        private String providerId;
-        private String serviceName;
-        private String placeId;
-        private String serviceId;
-        private Integer maxCapacity;
-        private Boolean supportsGroupToken;
-        private Boolean emergencySupport;
-        private Integer emergencyPriorityWeight;
-        private Boolean requiresEmergencyApproval;
-        private Boolean autoApproveEmergency;
-
-        // Getters and setters (omitted for brevity, but should be present)
-        public String getProviderId() { return providerId; }
-        public void setProviderId(String providerId) { this.providerId = providerId; }
-        public String getServiceName() { return serviceName; }
-        public void setServiceName(String serviceName) { this.serviceName = serviceName; }
-        public String getPlaceId() { return placeId; }
-        public void setPlaceId(String placeId) { this.placeId = placeId; }
-        public String getServiceId() { return serviceId; }
-        public void setServiceId(String serviceId) { this.serviceId = serviceId; }
-        public Integer getMaxCapacity() { return maxCapacity; }
-        public void setMaxCapacity(Integer maxCapacity) { this.maxCapacity = maxCapacity; }
-        public Boolean getSupportsGroupToken() { return supportsGroupToken; }
-        public void setSupportsGroupToken(Boolean supportsGroupToken) { this.supportsGroupToken = supportsGroupToken; }
-        public Boolean getEmergencySupport() { return emergencySupport; }
-        public void setEmergencySupport(Boolean emergencySupport) { this.emergencySupport = emergencySupport; }
-        public Integer getEmergencyPriorityWeight() { return emergencyPriorityWeight; }
-        public void setEmergencyPriorityWeight(Integer emergencyPriorityWeight) { this.emergencyPriorityWeight = emergencyPriorityWeight; }
-        public Boolean getRequiresEmergencyApproval() { return requiresEmergencyApproval; }
-        public void setRequiresEmergencyApproval(Boolean requiresEmergencyApproval) { this.requiresEmergencyApproval = requiresEmergencyApproval; }
-        public Boolean getAutoApproveEmergency() { return autoApproveEmergency; }
-        public void setAutoApproveEmergency(Boolean autoApproveEmergency) { this.autoApproveEmergency = autoApproveEmergency; }
-    }
-
-    public static class AddGroupTokenRequest {
-        private List<QueueToken.GroupMember> groupMembers;
-
-        public List<QueueToken.GroupMember> getGroupMembers() { return groupMembers; }
-        public void setGroupMembers(List<QueueToken.GroupMember> groupMembers) { this.groupMembers = groupMembers; }
-    }
-
-    public static class AddEmergencyTokenRequest {
-        private String emergencyDetails;
-
-        public String getEmergencyDetails() { return emergencyDetails; }
-        public void setEmergencyDetails(String emergencyDetails) { this.emergencyDetails = emergencyDetails; }
-    }
-
-    // ==== ENDPOINTS ====
-
     @PostMapping("/create")
     @AdminOrProviderOnly
     @Operation(summary = "Create a new queue", description = "Creates a new queue. Only provider or admin can create.")
     @ApiResponse(responseCode = "201", description = "Queue created",
             content = @Content(schema = @Schema(implementation = Queue.class)))
     @ApiResponse(responseCode = "500", description = "Internal server error")
-    public ResponseEntity<Queue> createNewQueue(@RequestBody CreateQueueRequest request) {
+    public ResponseEntity<Queue> createNewQueue(@Valid @RequestBody CreateQueueRequest request) {
         try {
             String providerId = SecurityContextHolder.getContext().getAuthentication().getName();
             log.info("Creating new queue for providerId={}, serviceName={}, placeId={}, serviceId={}, maxCapacity={}",
@@ -255,7 +202,7 @@ public class QueueController {
     @ApiResponse(responseCode = "201", description = "Group token created",
             content = @Content(schema = @Schema(implementation = QueueToken.class)))
     @ApiResponse(responseCode = "400", description = "Bad request")
-    public ResponseEntity<QueueToken> addGroupTokenToQueue(@PathVariable String queueId, @RequestBody AddGroupTokenRequest request) {
+    public ResponseEntity<QueueToken> addGroupTokenToQueue(@PathVariable String queueId, @Valid @RequestBody AddGroupTokenRequest request) {
         try {
             String userId = SecurityContextHolder.getContext().getAuthentication().getName();
             log.info("Adding group token to queueId={} for userId={}", queueId, userId);
@@ -274,7 +221,7 @@ public class QueueController {
     @ApiResponse(responseCode = "201", description = "Emergency token created",
             content = @Content(schema = @Schema(implementation = QueueToken.class)))
     @ApiResponse(responseCode = "400", description = "Bad request")
-    public ResponseEntity<QueueToken> addEmergencyTokenToQueue(@PathVariable String queueId, @RequestBody AddEmergencyTokenRequest request) {
+    public ResponseEntity<QueueToken> addEmergencyTokenToQueue(@PathVariable String queueId, @Valid @RequestBody AddEmergencyTokenRequest request) {
         try {
             String userId = SecurityContextHolder.getContext().getAuthentication().getName();
             log.info("Adding emergency token to queueId={} for userId={}", queueId, userId);
@@ -555,7 +502,7 @@ public class QueueController {
     @ApiResponse(responseCode = "409", description = "Conflict (user already in queue)")
     public ResponseEntity<?> addTokenWithDetails(
             @PathVariable String queueId,
-            @RequestBody TokenRequestDTO tokenRequest) {
+            @Valid @RequestBody TokenRequestDTO tokenRequest) {
         try {
             String userId = SecurityContextHolder.getContext().getAuthentication().getName();
             log.info("Adding token with details to queueId={} for userId={}", queueId, userId);
@@ -612,7 +559,7 @@ public class QueueController {
     @ApiResponse(responseCode = "403", description = "Access denied")
     public ResponseEntity<QueueResetResponseDTO> resetQueueWithOptions(
             @PathVariable String queueId,
-            @RequestBody QueueResetRequestDTO resetRequest) {
+            @Valid @RequestBody QueueResetRequestDTO resetRequest) {
         try {
             String requesterId = SecurityContextHolder.getContext().getAuthentication().getName();
             QueueResetResponseDTO response = queueService.resetQueueWithOptions(queueId, resetRequest, requesterId);
@@ -670,7 +617,7 @@ public class QueueController {
     @ApiResponse(responseCode = "201", description = "Token created")
     @ApiResponse(responseCode = "400", description = "Invalid request or queue inactive")
     @ApiResponse(responseCode = "409", description = "User already in queue")
-    public ResponseEntity<?> joinByQr(@RequestBody JoinQrRequest request) {
+    public ResponseEntity<?> joinByQr(@Valid @RequestBody JoinQrRequest request) {
         try {
             String userId = SecurityContextHolder.getContext().getAuthentication().getName();
             QueueToken token = queueService.addTokenByType(request.getQueueId(), userId, request.getTokenType());

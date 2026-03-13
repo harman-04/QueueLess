@@ -2,6 +2,7 @@ package com.queueless.backend.dto;
 
 import com.queueless.backend.model.Place;
 import com.queueless.backend.model.Place.BusinessHours;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -37,6 +38,8 @@ public class PlaceDTO {
     private Double rating;
     private Integer totalRatings;
     private Map<String, String> contactInfo;
+
+    @Valid
     private List<BusinessHours> businessHours;
 
     @NotNull(message = "Is active field is required")

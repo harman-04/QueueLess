@@ -22,6 +22,7 @@ public class ServiceDTO {
 
     private String description;
 
+    @NotNull(message = "Average service time is required")
     @Min(value = 1, message = "Average service time must be at least 1 minute")
     private Integer averageServiceTime;
 

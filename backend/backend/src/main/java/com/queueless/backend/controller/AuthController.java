@@ -3,6 +3,7 @@ package com.queueless.backend.controller;
 import com.queueless.backend.dto.JwtResponse;
 import com.queueless.backend.dto.LoginRequest;
 import com.queueless.backend.dto.RegisterRequest;
+import com.queueless.backend.dto.VerifyEmailRequest;
 import com.queueless.backend.service.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -13,6 +14,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -21,14 +23,11 @@ import org.springframework.web.bind.annotation.*;
 @Slf4j
 @RestController
 @RequestMapping("/api/auth")
+@RequiredArgsConstructor
 @Tag(name = "Authentication", description = "Endpoints for user registration and login")
 public class AuthController {
 
     private final AuthService authService;
-
-    public AuthController(AuthService authService) {
-        this.authService = authService;
-    }
 
     @PostMapping("/register")
     @Operation(summary = "Register a new user", description = "Creates a new user account. For ADMIN or PROVIDER roles, a valid token is required.")
@@ -64,15 +63,6 @@ public class AuthController {
         }
     }
 
-
-    @Data
-    public static class VerifyEmailRequest {
-        @NotBlank @Email
-        private String email;
-        @NotBlank
-        private String otp;
-        // getters/setters
-    }
 
     @PostMapping("/verify-email")
     @Operation(summary = "Verify email with OTP")
