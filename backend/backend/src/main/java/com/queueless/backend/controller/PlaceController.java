@@ -38,13 +38,6 @@ public class PlaceController {
 
     private final PlaceService placeService;
 
-    private String getUserIdFromAuthentication(Authentication authentication) {
-        if (authentication != null && authentication.getPrincipal() instanceof String) {
-            return (String) authentication.getPrincipal();
-        }
-        return null;
-    }
-
     @PostMapping
     @AdminOnly
     @Operation(summary = "Create a new place", description = "Creates a new place. Only accessible by admin.")
@@ -55,10 +48,10 @@ public class PlaceController {
     @ApiResponse(responseCode = "500", description = "Internal server error")
     public ResponseEntity<PlaceDTO> createPlace(@Valid @RequestBody PlaceDTO placeDTO) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String adminId = getUserIdFromAuthentication(authentication);
+        String adminId = authentication.getName();
 
-        if (authentication == null || authentication.getName() == null) {
-            log.error("Authentication is null for createPlace");
+        if (adminId == null) {
+            log.error("Admin ID not found in authentication");
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
@@ -103,7 +96,7 @@ public class PlaceController {
     @ApiResponse(responseCode = "401", description = "Unauthorized")
     public ResponseEntity<List<PlaceDTO>> getMyPlaces() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String adminId = getUserIdFromAuthentication(authentication);
+        String adminId = authentication.getName();
 
         if (adminId == null) {
             log.error("Admin ID not found in authentication");
@@ -127,13 +120,14 @@ public class PlaceController {
     @ApiResponse(responseCode = "403", description = "Forbidden – admin ID mismatch")
     public ResponseEntity<List<PlaceDTO>> getPlacesByAdmin(@PathVariable String adminId) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null) {
-            log.error("Authentication is null for getPlacesByAdmin");
+        String currentAdminId = authentication.getName();
+
+        if (currentAdminId == null) {
+            log.error("Admin ID not found in authentication");
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
-        String currentAdminId = getUserIdFromAuthentication(authentication);
-        if (currentAdminId == null || !adminId.equals(currentAdminId)) {
+        if (!adminId.equals(currentAdminId)) {
             log.warn("Unauthorized attempt to access places of adminId={} by {}", adminId, currentAdminId);
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
@@ -182,12 +176,13 @@ public class PlaceController {
     @ApiResponse(responseCode = "404", description = "Place not found")
     public ResponseEntity<PlaceDTO> updatePlace(@PathVariable String id, @Valid @RequestBody PlaceDTO placeDTO) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || authentication.getName() == null) {
-            log.error("Authentication is null for updatePlace");
+        String adminId = authentication.getName();
+
+        if (adminId == null) {
+            log.error("Admin ID not found in authentication");
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
-        String adminId = authentication.getName();
         log.info("Updating place with ID: {} | Data: {} by admin: {}", id, placeDTO, adminId);
 
         try {
@@ -214,12 +209,13 @@ public class PlaceController {
     @ApiResponse(responseCode = "404", description = "Place not found")
     public ResponseEntity<Void> deletePlace(@PathVariable String id) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || authentication.getName() == null) {
-            log.error("Authentication is null for deletePlace");
+        String adminId = authentication.getName();
+
+        if (adminId == null) {
+            log.error("Admin ID not found in authentication");
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
-        String adminId = authentication.getName();
         log.warn("Request received to delete place with ID: {} by admin: {}", id, adminId);
 
         try {
