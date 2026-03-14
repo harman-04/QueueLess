@@ -50,3 +50,6 @@ firebase-service-account.json
 Thumbs.db
 
 .env
+
+# Ignore uploaded files
+uploads/
