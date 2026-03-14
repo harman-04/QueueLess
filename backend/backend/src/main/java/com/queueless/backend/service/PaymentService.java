@@ -16,6 +16,8 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -25,6 +27,7 @@ public class PaymentService {
 
     private final PaymentRepository paymentRepository;
     private final TokenRepository tokenRepository;
+    private final AuditLogService auditLogService;
 
     @Value("${razorpay.key}")
     private String RAZORPAY_KEY;
@@ -125,6 +128,17 @@ public class PaymentService {
 
         log.info("Payment confirmed successfully | orderId={}, paymentId={}, email={}", orderId, paymentId, payment.getCreatedForEmail());
 
+        // Audit log for payment completion
+        Map<String, Object> details = new HashMap<>();
+        details.put("orderId", orderId);
+        details.put("paymentId", paymentId);
+        details.put("amount", payment.getAmount());
+        details.put("email", payment.getCreatedForEmail());
+        details.put("role", payment.getRole() != null ? payment.getRole().name() : "UNKNOWN");
+
+        auditLogService.logEvent("PAYMENT_COMPLETED",
+                "Payment completed for " + (payment.getRole() != null ? payment.getRole() : "UNKNOWN"),
+                details);
         return "Payment confirmed";
     }
 

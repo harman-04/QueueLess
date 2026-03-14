@@ -81,38 +81,6 @@ public class AdminService {
         return stats;
     }
 
-//    public List<Map<String, Object>> getProvidersWithQueues(String adminId) {
-//        log.info("Fetching providers with queues for admin: {}", adminId);
-//        // Get all providers for this admin
-//        List<User> providers = userRepository.findAll().stream()
-//                .filter(user -> adminId.equals(user.getAdminId()) && "PROVIDER".equals(user.getRole().name()))
-//                .collect(Collectors.toList());
-//        log.debug("Found {} providers", providers.size());
-//
-//        return providers.stream().map(provider -> {
-//            Map<String, Object> providerData = new HashMap<>();
-//            providerData.put("provider", provider);
-//
-//            // Get queues managed by this provider
-//            List<Queue> providerQueues = queueRepository.findByProviderId(provider.getId());
-//            providerData.put("queues", providerQueues);
-//
-//            // Calculate provider stats
-//            Map<String, Object> providerStats = new HashMap<>();
-//            providerStats.put("totalQueues", providerQueues.size());
-//            providerStats.put("activeQueues", providerQueues.stream().filter(Queue::getIsActive).count());
-//            providerStats.put("tokensServedToday", providerQueues.stream()
-//                    .flatMap(queue -> queue.getTokens().stream())
-//                    .filter(token -> "COMPLETED".equals(token.getStatus()))
-//                    .filter(token -> token.getCompletedAt() != null &&
-//                            token.getCompletedAt().toLocalDate().equals(LocalDate.now()))
-//                    .count());
-//
-//            providerData.put("stats", providerStats);
-//            log.debug("Processed provider: {} with {} queues", provider.getEmail(), providerQueues.size());
-//            return providerData;
-//        }).collect(Collectors.toList());
-//    }
 
     private List<Map<String, Object>> getRecentActivity(List<Queue> queues) {
         return queues.stream()
@@ -203,8 +171,6 @@ public class AdminService {
         return sorted;
     }
 
-    // In AdminService.java
-
     public Map<String, Object> getTokensOverTime(String adminId, int days) {
         log.info("Fetching token volume over last {} days for admin: {}", days, adminId);
         LocalDateTime start = LocalDateTime.now().minusDays(days).withHour(0).withMinute(0).withSecond(0);
@@ -271,7 +237,6 @@ public class AdminService {
         return result;
     }
 
-
     private Double getAverageRatingForProvider(String providerId) {
         List<Feedback> feedbacks = feedbackRepository.findByProviderId(providerId);
         if (feedbacks.isEmpty()) return 0.0;
@@ -321,9 +286,6 @@ public class AdminService {
         }).collect(Collectors.toList());
     }
 
-
-// In AdminService.java
-
     public List<PlaceWithQueueDTO> getPlacesWithQueueStats(String adminId) {
         log.info("Fetching places with queue stats for admin: {}", adminId);
         List<Place> adminPlaces = placeRepository.findByAdminId(adminId);
@@ -341,8 +303,6 @@ public class AdminService {
             return new PlaceWithQueueDTO(place, waiting, inService);
         }).collect(Collectors.toList());
     }
-
-    // In AdminService.java
 
     public AdminReportDTO getAdminReport(String adminId) {
         log.info("Generating admin report for admin: {}", adminId);

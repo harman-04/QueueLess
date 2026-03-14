@@ -18,10 +18,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.Random;
+import java.util.*;
 
 @Slf4j
 @Service
@@ -34,6 +31,7 @@ public class AuthService {
     private final TokenRepository tokenRepository;
     private final OtpRepository otpRepository;
     private final EmailService emailService;
+    private final AuditLogService auditLogService;
 
     public JwtResponse login(LoginRequest request) {
         log.info("Login attempt for email: {}", request.getEmail());
@@ -59,6 +57,10 @@ public class AuthService {
 
         String jwtToken = jwtProvider.generateToken(user);
         log.info("Login successful for email: {} | Role: {}", user.getEmail(), user.getRole());
+
+        auditLogService.logEvent("USER_LOGIN",
+                "User logged in",
+                Map.of("email", request.getEmail()));
 
         return new JwtResponse(
                 jwtToken,
@@ -181,6 +183,11 @@ public class AuthService {
         sendVerificationOtp(request.getEmail());
 
         log.info("Registration successful for email: {} | Role: {}", user.getEmail(), user.getRole());
+
+        auditLogService.logEvent("USER_REGISTERED",
+                "User registered with role: " + request.getRole(),
+                Map.of("email", request.getEmail(), "role", request.getRole().name()));
+
         return "User registered successfully! Please verify your email.";
     }
     private void sendVerificationOtp(String email) {

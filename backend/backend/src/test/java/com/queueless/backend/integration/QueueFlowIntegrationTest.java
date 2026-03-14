@@ -8,8 +8,10 @@ import com.queueless.backend.model.QueueToken;
 import com.queueless.backend.model.Token;
 import com.queueless.backend.repository.TokenRepository;
 import com.queueless.backend.repository.UserRepository;
+import com.queueless.backend.service.AuditLogService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.http.*;
@@ -17,7 +19,6 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -41,6 +42,9 @@ public class QueueFlowIntegrationTest extends BaseIntegrationTest {
 
     @MockitoBean
     private com.razorpay.RazorpayClient razorpayClient;
+
+    @Mock
+    private AuditLogService auditLogService;
 
     private String adminToken;
     private String adminId;

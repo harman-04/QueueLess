@@ -45,6 +45,9 @@ class AuthServiceTest {
     private OtpRepository otpRepository;
 
     @Mock
+    private AuditLogService auditLogService;
+
+    @Mock
     private EmailService emailService;
 
     @InjectMocks

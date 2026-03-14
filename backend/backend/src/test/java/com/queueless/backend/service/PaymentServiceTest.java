@@ -33,6 +33,9 @@ class PaymentServiceTest {
     @Mock
     private TokenRepository tokenRepository;
 
+    @Mock
+    private AuditLogService auditLogService;
+
     @InjectMocks
     private PaymentService paymentService;
 

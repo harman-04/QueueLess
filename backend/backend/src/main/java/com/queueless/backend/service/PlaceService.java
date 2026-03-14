@@ -14,9 +14,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.core.geo.GeoJsonPoint;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -25,6 +23,7 @@ import java.util.stream.Collectors;
 public class PlaceService {
 
     private final PlaceRepository placeRepository;
+    private final AuditLogService auditLogService;
 
     @CacheEvict(value = {"places", "placesByAdmin"}, allEntries = true)
     public Place createPlace(PlaceDTO placeDTO) {
@@ -54,7 +53,16 @@ public class PlaceService {
         place.setBusinessHours(placeDTO.getBusinessHours());
         place.setIsActive(placeDTO.getIsActive() != null ? placeDTO.getIsActive() : true);
 
-        return placeRepository.save(place);
+        Place savedPlace = placeRepository.save(place); // save first
+
+        Map<String, Object> details = new HashMap<>();
+        details.put("placeId", savedPlace.getId());
+        details.put("adminId", placeDTO.getAdminId());
+        auditLogService.logEvent("PLACE_CREATED",
+                "Place created: " + placeDTO.getName(),
+                details);
+
+        return savedPlace;
     }
 
     @Cacheable(value = "places", key = "#id")

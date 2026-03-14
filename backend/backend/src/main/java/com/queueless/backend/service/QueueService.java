@@ -32,11 +32,11 @@ public class QueueService {
     private final UserRepository userRepository;
     private final PlaceService placeService;
     private final ServiceService serviceService;
-    private final FeedbackService feedbackService;
     private final FeedbackRepository feedbackRepository;
     private final ExportService exportService;
     private final ExportCacheService exportCacheService;
     private final QueueHourlyStatsRepository statsRepository;
+    private final AuditLogService auditLogService;
 
     private User getUserOrThrow(String userId) {
         return userRepository.findById(userId)
@@ -294,6 +294,11 @@ public class QueueService {
         broadcastQueueUpdate(queueId, updatedQueue);
 
         log.debug("Token {} added to queueId={}", tokenId, queueId);
+
+        auditLogService.logEvent("QUEUE_JOIN",
+                "User joined queue",
+                Map.of("queueId", queueId, "tokenId", token.getTokenId(), "userId", userId));
+
         return token;
     }
 
@@ -350,6 +355,10 @@ public class QueueService {
         broadcastQueueUpdate(queueId, updatedQueue);
 
         log.debug("Group token {} added to queueId={} with {} members", tokenId, queueId, groupMembers.size());
+        auditLogService.logEvent("QUEUE_JOIN",
+                "User joined queue with group",
+                Map.of("queueId", queueId, "tokenId", token.getTokenId(), "userId", userId));
+
         return token;
     }
 
@@ -402,6 +411,10 @@ public class QueueService {
         broadcastQueueUpdate(queueId, updatedQueue);
 
         log.debug("Emergency token {} added to queueId={}", tokenId, queueId);
+        auditLogService.logEvent("QUEUE_JOIN",
+                "User's Emergency Token Added to Queue",
+                Map.of("queueId", queueId, "tokenId", token.getTokenId(), "userId", userId));
+
         return token;
     }
 
@@ -503,6 +516,11 @@ public class QueueService {
             Queue updatedQueue = queueRepository.save(queue);
             broadcastQueueUpdate(queueId, updatedQueue);
             log.info("Token {} moved to IN_SERVICE", token.getTokenId());
+
+            auditLogService.logEvent("TOKEN_SERVED",
+                    "Token moved to IN_SERVICE",
+                    Map.of("queueId", queueId, "tokenId", token.getTokenId()));
+
 
             return updatedQueue;
         }
@@ -613,7 +631,17 @@ public class QueueService {
         newQueue.setRequiresEmergencyApproval(requiresEmergencyApproval != null ? requiresEmergencyApproval : false);
         newQueue.setAutoApproveEmergency(autoApproveEmergency != null ? autoApproveEmergency : false);
 
-        return queueRepository.save(newQueue);
+        Queue savedQueue = queueRepository.save(newQueue); // save first
+
+        Map<String, Object> details = new HashMap<>();
+        details.put("queueId", savedQueue.getId());
+        details.put("placeId", placeId);
+        details.put("serviceId", serviceId);
+        auditLogService.logEvent("QUEUE_CREATED",
+                "Queue created for service: " + serviceName,
+                details);
+
+        return savedQueue;
     }
 
     public Queue createNewQueue(String providerId, String serviceName, String placeId, String serviceId,
@@ -711,6 +739,10 @@ public class QueueService {
         broadcastQueueUpdate(queueId, updatedQueue);
 
         log.info("Token {} marked COMPLETED", tokenId);
+
+        auditLogService.logEvent("TOKEN_COMPLETED",
+                "Token completed",
+                Map.of("queueId", queueId, "tokenId", tokenId));
         return updatedQueue;
     }
 
@@ -790,6 +822,10 @@ public class QueueService {
         Queue updatedQueue = queueRepository.save(queue);
         broadcastQueueUpdate(queueId, updatedQueue);
         log.info("Token {} cancelled", tokenId);
+
+        auditLogService.logEvent("TOKEN_CANCELLED",
+                "Token cancelled" + (reason != null ? ": " + reason : ""),
+                Map.of("queueId", queueId, "tokenId", tokenId, "reason", reason));
         return updatedQueue;
     }
 

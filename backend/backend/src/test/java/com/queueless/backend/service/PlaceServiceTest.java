@@ -27,6 +27,9 @@ class PlaceServiceTest {
     @Mock
     private PlaceRepository placeRepository;
 
+    @Mock
+    private AuditLogService auditLogService;
+
     @InjectMocks
     private PlaceService placeService;
 

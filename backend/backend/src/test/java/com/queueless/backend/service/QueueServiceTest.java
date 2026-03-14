@@ -64,6 +64,9 @@ class QueueServiceTest {
     @Mock
     private ExportCacheService exportCacheService;
 
+    @Mock
+    private AuditLogService auditLogService;
+
     @InjectMocks
     private QueueService queueService;
 
