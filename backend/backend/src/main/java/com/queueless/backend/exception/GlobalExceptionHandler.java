@@ -86,9 +86,23 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
     }
 
-    @ExceptionHandler(AccessDeniedException.class)
-    public ResponseEntity<ApiError> handleAccessDenied(AccessDeniedException ex, HttpServletRequest request) {
+    // Custom AccessDeniedException
+    @ExceptionHandler(com.queueless.backend.exception.AccessDeniedException.class)
+    public ResponseEntity<ApiError> handleCustomAccessDenied(com.queueless.backend.exception.AccessDeniedException ex, HttpServletRequest request) {
         log.warn("Access denied: {} - {}", request.getRequestURI(), ex.getMessage());
+        ApiError error = new ApiError(
+                HttpStatus.FORBIDDEN.value(),
+                HttpStatus.FORBIDDEN.getReasonPhrase(),
+                "You do not have permission to access this resource",
+                request.getRequestURI()
+        );
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(error);
+    }
+
+    // Spring Security AccessDeniedException
+    @ExceptionHandler(org.springframework.security.access.AccessDeniedException.class)
+    public ResponseEntity<ApiError> handleSpringAccessDenied(org.springframework.security.access.AccessDeniedException ex, HttpServletRequest request) {
+        log.warn("Spring Security access denied: {} - {}", request.getRequestURI(), ex.getMessage());
         ApiError error = new ApiError(
                 HttpStatus.FORBIDDEN.value(),
                 HttpStatus.FORBIDDEN.getReasonPhrase(),

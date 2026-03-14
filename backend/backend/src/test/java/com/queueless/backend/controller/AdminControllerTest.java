@@ -1,7 +1,9 @@
 package com.queueless.backend.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.itextpdf.text.DocumentException;
 import com.queueless.backend.dto.*;
+import com.queueless.backend.exception.AccessDeniedException;
 import com.queueless.backend.exception.ResourceNotFoundException;
 import com.queueless.backend.model.*;
 import com.queueless.backend.repository.PaymentRepository;
@@ -30,8 +32,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -44,6 +45,9 @@ class AdminControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
+
+    @Autowired
+    private ObjectMapper objectMapper;
 
     @MockitoBean
     private PaymentRepository paymentRepository;
@@ -67,6 +71,7 @@ class AdminControllerTest {
     private AlertConfigService alertConfigService;
 
     private final String adminId = "admin123";
+    private final String providerId = "provider123";
     private final String adminEmail = "admin@example.com";
 
     private User createAdminUser() {
@@ -387,5 +392,173 @@ class AdminControllerTest {
         mockMvc.perform(put("/api/admin/alert-config/toggle")
                         .param("enabled", "true"))
                 .andExpect(status().isOk());
+    }
+
+    @Test
+    @WithMockUser(username = adminId, roles = {"ADMIN"})
+    void getProviderDetails_Success() throws Exception {
+        ProviderDetailsDTO dto = ProviderDetailsDTO.builder()
+                .id(providerId)
+                .name("Provider")
+                .email("prov@test.com")
+                .isActive(true)
+                .build();
+
+        when(adminService.getProviderById(providerId, adminId)).thenReturn(dto);
+
+        mockMvc.perform(get("/api/admin/providers/{providerId}", providerId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(providerId))
+                .andExpect(jsonPath("$.name").value("Provider"));
+    }
+
+    @Test
+    @WithMockUser(username = adminId, roles = {"ADMIN"})
+    void getProviderDetails_NotFound() throws Exception {
+        when(adminService.getProviderById(providerId, adminId))
+                .thenThrow(new ResourceNotFoundException("Not found"));
+
+        mockMvc.perform(get("/api/admin/providers/{providerId}", providerId))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @WithMockUser(username = adminId, roles = {"ADMIN"})
+    void getProviderDetails_Forbidden() throws Exception {
+        when(adminService.getProviderById(providerId, adminId))
+                .thenThrow(new AccessDeniedException("Access denied"));
+
+        mockMvc.perform(get("/api/admin/providers/{providerId}", providerId))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(username = adminId, roles = {"ADMIN"})
+    void updateProvider_Success() throws Exception {
+        ProviderUpdateRequest request = new ProviderUpdateRequest();
+        request.setName("Updated Provider");
+        request.setEmail("updated@test.com");
+        request.setPhoneNumber("1234567890");
+        request.setManagedPlaceIds(List.of("place1", "place2"));
+        request.setIsActive(true);
+
+        ProviderDetailsDTO responseDto = ProviderDetailsDTO.builder()
+                .id(providerId)
+                .name("Updated Provider")
+                .email("updated@test.com")
+                .phoneNumber("1234567890")
+                .managedPlaceIds(List.of("place1", "place2"))
+                .isActive(true)
+                .build();
+
+        when(adminService.updateProvider(eq(providerId), any(ProviderUpdateRequest.class), eq(adminId)))
+                .thenReturn(responseDto);
+
+        mockMvc.perform(put("/api/admin/providers/{providerId}", providerId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(providerId))
+                .andExpect(jsonPath("$.name").value("Updated Provider"));
+    }
+
+    @Test
+    @WithMockUser(username = adminId, roles = {"ADMIN"})
+    void updateProvider_NotFound() throws Exception {
+        ProviderUpdateRequest request = new ProviderUpdateRequest();
+        request.setName("Test");
+
+        when(adminService.updateProvider(eq(providerId), any(ProviderUpdateRequest.class), eq(adminId)))
+                .thenThrow(new ResourceNotFoundException("Not found"));
+
+        mockMvc.perform(put("/api/admin/providers/{providerId}", providerId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @WithMockUser(username = adminId, roles = {"ADMIN"})
+    void updateProvider_Forbidden() throws Exception {
+        ProviderUpdateRequest request = new ProviderUpdateRequest();
+        request.setName("Test");
+
+        when(adminService.updateProvider(eq(providerId), any(ProviderUpdateRequest.class), eq(adminId)))
+                .thenThrow(new AccessDeniedException("Access denied"));
+
+        mockMvc.perform(put("/api/admin/providers/{providerId}", providerId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(username = adminId, roles = {"ADMIN"})
+    void toggleProviderStatus_Success() throws Exception {
+        ProviderDetailsDTO responseDto = ProviderDetailsDTO.builder()
+                .id(providerId)
+                .name("Provider")
+                .isActive(false)
+                .build();
+
+        when(adminService.toggleProviderStatus(providerId, false, adminId)).thenReturn(responseDto);
+
+        mockMvc.perform(patch("/api/admin/providers/{providerId}/status", providerId)
+                        .param("active", "false"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(providerId))
+                .andExpect(jsonPath("$.isActive").value(false));
+    }
+
+    @Test
+    @WithMockUser(username = adminId, roles = {"ADMIN"})
+    void toggleProviderStatus_NotFound() throws Exception {
+        when(adminService.toggleProviderStatus(providerId, false, adminId))
+                .thenThrow(new ResourceNotFoundException("Not found"));
+
+        mockMvc.perform(patch("/api/admin/providers/{providerId}/status", providerId)
+                        .param("active", "false"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @WithMockUser(username = adminId, roles = {"ADMIN"})
+    void toggleProviderStatus_Forbidden() throws Exception {
+        when(adminService.toggleProviderStatus(providerId, false, adminId))
+                .thenThrow(new AccessDeniedException("Access denied"));
+
+        mockMvc.perform(patch("/api/admin/providers/{providerId}/status", providerId)
+                        .param("active", "false"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(username = adminId, roles = {"ADMIN"})
+    void resetProviderPassword_Success() throws Exception {
+        doNothing().when(adminService).resetProviderPassword(providerId, adminId);
+
+        mockMvc.perform(post("/api/admin/providers/{providerId}/reset-password", providerId))
+                .andExpect(status().isOk())
+                .andExpect(content().string("Password reset email sent to provider"));
+    }
+
+    @Test
+    @WithMockUser(username = adminId, roles = {"ADMIN"})
+    void resetProviderPassword_NotFound() throws Exception {
+        doThrow(new ResourceNotFoundException("Not found"))
+                .when(adminService).resetProviderPassword(providerId, adminId);
+
+        mockMvc.perform(post("/api/admin/providers/{providerId}/reset-password", providerId))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @WithMockUser(username = adminId, roles = {"ADMIN"})
+    void resetProviderPassword_Forbidden() throws Exception {
+        doThrow(new AccessDeniedException("Access denied"))
+                .when(adminService).resetProviderPassword(providerId, adminId);
+
+        mockMvc.perform(post("/api/admin/providers/{providerId}/reset-password", providerId))
+                .andExpect(status().isForbidden());
     }
 }

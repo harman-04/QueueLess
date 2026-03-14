@@ -32,25 +32,26 @@ import ErrorBoundary from './components/ErrorBoundary';
 import VerifyEmail from './pages/VerifyEmail';
 import useFcmToken from './hooks/useFcmToken';
 import NotFound from './pages/NotFound';
+import AdminProviderDetail from './pages/AdminProviderDetail';
 
 function App() {
   const { token, role } = useSelector((state) => state.auth);
   const { darkMode } = useSelector((state) => state.auth.preferences);
   const dispatch = useDispatch();
 
-  const { token: authToken, id: userId , preferences} = useSelector((state) => state.auth);
-const isLoggedIn = !!authToken;
-const pushEnabled = preferences?.pushNotifications ?? true; // default true if undefined
-useFcmToken(userId, isLoggedIn, pushEnabled);
+  const { token: authToken, id: userId, preferences } = useSelector((state) => state.auth);
+  const isLoggedIn = !!authToken;
+  const pushEnabled = preferences?.pushNotifications ?? true; // default true if undefined
+  useFcmToken(userId, isLoggedIn, pushEnabled);
 
 
   useEffect(() => {
-  if (darkMode) {
-    document.body.classList.add('dark-mode');
-  } else {
-    document.body.classList.remove('dark-mode');
-  }
-}, [darkMode]);
+    if (darkMode) {
+      document.body.classList.add('dark-mode');
+    } else {
+      document.body.classList.remove('dark-mode');
+    }
+  }, [darkMode]);
 
   useEffect(() => {
     // 1. Check Token Expiry
@@ -108,92 +109,98 @@ useFcmToken(userId, isLoggedIn, pushEnabled);
   return (
     <BrowserRouter>
       <Navbar />
-            <ErrorBoundary>
-               <main className="app-main">
-                      <Routes>
-        <Route path='/' element={<Home />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/verify-otp" element={<VerifyOtp />} />
-        <Route path="/reset-password" element={<ResetPassword />} />
-        <Route path="/pricing" element={<PricingPage />} />
-        <Route path="/customer/queue/:queueId" element={<CustomerQueue />} />
-        <Route path="/search" element={<AdvancedSearch />} />
-        <Route path="/favorites" element={<ProtectedRoute><FavoritesPage /></ProtectedRoute>} />
-        <Route path="/verify-email" element={<VerifyEmail />} />
+      <ErrorBoundary>
+        <main className="app-main">
+          <Routes>
+            <Route path='/' element={<Home />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/verify-otp" element={<VerifyOtp />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/pricing" element={<PricingPage />} />
+            <Route path="/customer/queue/:queueId" element={<CustomerQueue />} />
+            <Route path="/search" element={<AdvancedSearch />} />
+            <Route path="/favorites" element={<ProtectedRoute><FavoritesPage /></ProtectedRoute>} />
+            <Route path="/verify-email" element={<VerifyEmail />} />
 
-        <Route path='/profile' element={
-          <ProtectedRoute allowedRoles={['USER', 'ADMIN', 'PROVIDER']}>
-            <UserProfile />
-          </ProtectedRoute>
-        } />
+            <Route path='/profile' element={
+              <ProtectedRoute allowedRoles={['USER', 'ADMIN', 'PROVIDER']}>
+                <UserProfile />
+              </ProtectedRoute>
+            } />
 
-        <Route path='/provider-pricing' element={
-          <ProtectedRoute allowedRoles={['ADMIN']}>
-            <ProviderPricingPage />
-          </ProtectedRoute>
-        } />
+            <Route path='/provider-pricing' element={
+              <ProtectedRoute allowedRoles={['ADMIN']}>
+                <ProviderPricingPage />
+              </ProtectedRoute>
+            } />
 
-        <Route path="/user/dashboard" element={
-          <ProtectedRoute allowedRoles={['USER']}>
-            <UserDashboard />
-          </ProtectedRoute>
-        } />
+            <Route path="/user/dashboard" element={
+              <ProtectedRoute allowedRoles={['USER']}>
+                <UserDashboard />
+              </ProtectedRoute>
+            } />
 
-        <Route path="/provider/queues" element={
-          <ProtectedRoute allowedRoles={['PROVIDER', 'ADMIN']}>
-            <ProviderQueueManagement />
-          </ProtectedRoute>
-        } />
+            <Route path="/provider/queues" element={
+              <ProtectedRoute allowedRoles={['PROVIDER', 'ADMIN']}>
+                <ProviderQueueManagement />
+              </ProtectedRoute>
+            } />
 
-        <Route path="/provider/dashboard/:queueId" element={
-          <ProtectedRoute allowedRoles={['PROVIDER', 'ADMIN']}>
-            <ProviderDashboard />
-          </ProtectedRoute>
-        } />
+            <Route path="/provider/dashboard/:queueId" element={
+              <ProtectedRoute allowedRoles={['PROVIDER', 'ADMIN']}>
+                <ProviderDashboard />
+              </ProtectedRoute>
+            } />
 
-        <Route path="/provider/dashboard" element={<Navigate to="/provider/queues" />} />
+            <Route path="/provider/dashboard" element={<Navigate to="/provider/queues" />} />
 
-        <Route path="/admin/dashboard" element={
-          <ProtectedRoute allowedRoles={['ADMIN']}>
-            <AdminDashboard />
-          </ProtectedRoute>
-        } />
+            <Route path="/admin/dashboard" element={
+              <ProtectedRoute allowedRoles={['ADMIN']}>
+                <AdminDashboard />
+              </ProtectedRoute>
+            } />
 
-        <Route path="/admin/places" element={
-          <ProtectedRoute allowedRoles={['ADMIN']}>
-            <AdminPlaces />
-          </ProtectedRoute>
-        } />
+            <Route path="/admin/places" element={
+              <ProtectedRoute allowedRoles={['ADMIN']}>
+                <AdminPlaces />
+              </ProtectedRoute>
+            } />
 
-        {/* Place routes */}
-        <Route path="/places" element={<PlaceList />} />
-        <Route path="/places/new" element={
-          <ProtectedRoute allowedRoles={['ADMIN']}>
-            <PlaceForm />
-          </ProtectedRoute>
-        } />
-        <Route path="/places/edit/:id" element={
-          <ProtectedRoute allowedRoles={['ADMIN']}>
-            <PlaceForm />
-          </ProtectedRoute>
-        } />
-        <Route path="/places/:id" element={<PlaceDetail />} />
+            {/* Place routes */}
+            <Route path="/places" element={<PlaceList />} />
+            <Route path="/places/new" element={
+              <ProtectedRoute allowedRoles={['ADMIN']}>
+                <PlaceForm />
+              </ProtectedRoute>
+            } />
+            <Route path="/places/edit/:id" element={
+              <ProtectedRoute allowedRoles={['ADMIN']}>
+                <PlaceForm />
+              </ProtectedRoute>
+            } />
+            <Route path="/places/:id" element={<PlaceDetail />} />
 
-        <Route path="/admin/places/:placeId/services" element={
-          <ProtectedRoute allowedRoles={['ADMIN']}>
-            <ServiceManagement />
-          </ProtectedRoute>
-        } />
+            <Route path="/admin/places/:placeId/services" element={
+              <ProtectedRoute allowedRoles={['ADMIN']}>
+                <ServiceManagement />
+              </ProtectedRoute>
+            } />
 
-        {/* Catch all route */}
-        {/* <Route path="*" element={<Navigate to="/" replace />} /> */}
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-      </main>
+            <Route path="/admin/providers/:providerId" element={
+              <ProtectedRoute allowedRoles={['ADMIN']}>
+                <AdminProviderDetail />
+              </ProtectedRoute>
+            } />
 
-            </ErrorBoundary>
+            {/* Catch all route */}
+            {/* <Route path="*" element={<Navigate to="/" replace />} /> */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </main>
+
+      </ErrorBoundary>
 
       <Footer />
     </BrowserRouter>

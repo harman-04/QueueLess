@@ -3,9 +3,12 @@ package com.queueless.backend.service;
 import com.queueless.backend.dto.*;
 import com.queueless.backend.enums.Role;
 import com.queueless.backend.enums.TokenStatus;
+import com.queueless.backend.exception.AccessDeniedException;
+import com.queueless.backend.exception.ResourceNotFoundException;
 import com.queueless.backend.model.*;
 import com.queueless.backend.model.Queue;
 import com.queueless.backend.repository.*;
+import jakarta.mail.MessagingException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -28,6 +31,8 @@ public class AdminService {
     private final QueueHourlyStatsRepository statsRepository;
     private final FeedbackRepository feedbackRepository;
     private final TokenRepository tokenRepository;
+    private final PlaceService placeService;
+    private final PasswordResetService passwordResetService;
 
     public Map<String, Object> getDashboardStats(String adminId) {
         log.info("Fetching dashboard stats for admin: {}", adminId);
@@ -482,4 +487,137 @@ public class AdminService {
         });
         return result;
     }
+
+    public ProviderDetailsDTO getProviderById(String providerId, String requestingAdminId) {
+        log.info("Fetching provider details for providerId: {} by admin: {}", providerId, requestingAdminId);
+
+        User provider = userRepository.findById(providerId)
+                .orElseThrow(() -> new ResourceNotFoundException("Provider not found with id: " + providerId));
+
+        // Ensure the requesting admin owns this provider
+        if (!requestingAdminId.equals(provider.getAdminId())) {
+            log.warn("Admin {} attempted to access provider {} not under their control", requestingAdminId, providerId);
+            throw new AccessDeniedException("You can only access providers under your administration");
+        }
+
+        // Build statistics
+        List<Queue> queues = queueRepository.findByProviderId(providerId);
+        int totalQueues = queues.size();
+        int activeQueues = (int) queues.stream().filter(Queue::getIsActive).count();
+
+        long tokensServedToday = queues.stream()
+                .flatMap(q -> q.getTokens().stream())
+                .filter(t -> "COMPLETED".equals(t.getStatus()))
+                .filter(t -> t.getCompletedAt() != null &&
+                        t.getCompletedAt().toLocalDate().equals(LocalDate.now()))
+                .count();
+
+        long tokensServedTotal = queues.stream()
+                .flatMap(q -> q.getTokens().stream())
+                .filter(t -> "COMPLETED".equals(t.getStatus()))
+                .count();
+
+        double avgRating = getAverageRatingForProvider(providerId);
+        double cancellationRate = getCancellationRateForProvider(providerId);
+
+        // Get managed places with details
+        List<Place> managedPlaces = placeService.getPlacesByIds(
+                provider.getManagedPlaceIds() != null ? provider.getManagedPlaceIds() : List.of());
+
+        return ProviderDetailsDTO.builder()
+                .id(provider.getId())
+                .name(provider.getName())
+                .email(provider.getEmail())
+                .phoneNumber(provider.getPhoneNumber())
+                .profileImageUrl(provider.getProfileImageUrl())
+                .isVerified(provider.getIsVerified())
+                .isActive(provider.getIsActive() != null ? provider.getIsActive() : true) // handle null from old users
+                .adminId(provider.getAdminId())
+                .managedPlaceIds(provider.getManagedPlaceIds())
+                .managedPlaces(managedPlaces.stream().map(PlaceDTO::fromEntity).collect(Collectors.toList()))
+                .totalQueues(totalQueues)
+                .activeQueues(activeQueues)
+                .tokensServedToday(tokensServedToday)
+                .tokensServedTotal(tokensServedTotal)
+                .averageRating(avgRating)
+                .cancellationRate(cancellationRate)
+                .build();
+    }
+
+    public ProviderDetailsDTO updateProvider(String providerId, ProviderUpdateRequest request, String requestingAdminId) {
+        log.info("Updating provider {} by admin {}", providerId, requestingAdminId);
+
+        User provider = userRepository.findById(providerId)
+                .orElseThrow(() -> new ResourceNotFoundException("Provider not found with id: " + providerId));
+
+        // Verify admin ownership
+        if (!requestingAdminId.equals(provider.getAdminId())) {
+            log.warn("Admin {} attempted to update provider {} not under their control", requestingAdminId, providerId);
+            throw new AccessDeniedException("You can only update providers under your administration");
+        }
+
+        // Update fields if provided
+        if (request.getName() != null) {
+            provider.setName(request.getName());
+        }
+        if (request.getEmail() != null) {
+            provider.setEmail(request.getEmail());
+        }
+        if (request.getPhoneNumber() != null) {
+            provider.setPhoneNumber(request.getPhoneNumber());
+        }
+        if (request.getManagedPlaceIds() != null) {
+            // Validate that all place IDs belong to this admin
+            List<Place> adminPlaces = placeRepository.findByAdminId(requestingAdminId);
+            Set<String> validPlaceIds = adminPlaces.stream().map(Place::getId).collect(Collectors.toSet());
+            for (String placeId : request.getManagedPlaceIds()) {
+                if (!validPlaceIds.contains(placeId)) {
+                    throw new IllegalArgumentException("Place " + placeId + " does not belong to your admin account");
+                }
+            }
+            provider.setManagedPlaceIds(request.getManagedPlaceIds());
+        }
+        if (request.getIsActive() != null) {
+            provider.setIsActive(request.getIsActive());
+        }
+
+        userRepository.save(provider);
+
+        // Return updated details (reuse getProviderById logic)
+        return getProviderById(providerId, requestingAdminId);
+    }
+
+    public ProviderDetailsDTO toggleProviderStatus(String providerId, boolean active, String requestingAdminId) {
+        log.info("Toggling provider {} status to {} by admin {}", providerId, active, requestingAdminId);
+
+        User provider = userRepository.findById(providerId)
+                .orElseThrow(() -> new ResourceNotFoundException("Provider not found with id: " + providerId));
+
+        if (!requestingAdminId.equals(provider.getAdminId())) {
+            log.warn("Admin {} attempted to toggle provider {} not under their control", requestingAdminId, providerId);
+            throw new AccessDeniedException("You can only update providers under your administration");
+        }
+
+        provider.setIsActive(active);
+        userRepository.save(provider);
+
+        // Return updated details
+        return getProviderById(providerId, requestingAdminId);
+    }
+
+    public void resetProviderPassword(String providerId, String requestingAdminId) throws MessagingException {
+        log.info("Admin {} requested password reset for provider {}", requestingAdminId, providerId);
+
+        User provider = userRepository.findById(providerId)
+                .orElseThrow(() -> new ResourceNotFoundException("Provider not found with id: " + providerId));
+
+        if (!requestingAdminId.equals(provider.getAdminId())) {
+            log.warn("Admin {} attempted to reset password for provider {} not under their control", requestingAdminId, providerId);
+            throw new AccessDeniedException("You can only reset passwords for providers under your administration");
+        }
+
+        ForgotPasswordRequest request = new ForgotPasswordRequest(provider.getEmail());
+        passwordResetService.sendOtp(request);
+    }
+
 }

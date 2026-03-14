@@ -17,6 +17,8 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.mail.MessagingException;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
@@ -264,5 +266,62 @@ public class AdminController {
         String adminId = SecurityContextHolder.getContext().getAuthentication().getName();
         alertConfigService.toggleEnabled(adminId, enabled);
         return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/providers/{providerId}")
+    @AdminOnly
+    @Operation(summary = "Get provider details", description = "Returns detailed information about a specific provider, including statistics and managed places.")
+    @ApiResponse(responseCode = "200", description = "Provider details",
+            content = @Content(schema = @Schema(implementation = ProviderDetailsDTO.class)))
+    @ApiResponse(responseCode = "403", description = "Forbidden – not the admin of this provider")
+    @ApiResponse(responseCode = "404", description = "Provider not found")
+    public ResponseEntity<ProviderDetailsDTO> getProviderDetails(@PathVariable String providerId) {
+        String adminId = SecurityContextHolder.getContext().getAuthentication().getName();
+        ProviderDetailsDTO details = adminService.getProviderById(providerId, adminId);
+        return ResponseEntity.ok(details);
+    }
+
+    @PutMapping("/providers/{providerId}")
+    @AdminOnly
+    @Operation(summary = "Update provider details", description = "Updates an existing provider's information. Only the owning admin can update.")
+    @ApiResponse(responseCode = "200", description = "Provider updated",
+            content = @Content(schema = @Schema(implementation = ProviderDetailsDTO.class)))
+    @ApiResponse(responseCode = "400", description = "Invalid input (e.g., place not owned)")
+    @ApiResponse(responseCode = "403", description = "Forbidden – not the admin of this provider")
+    @ApiResponse(responseCode = "404", description = "Provider not found")
+    public ResponseEntity<ProviderDetailsDTO> updateProvider(
+            @PathVariable String providerId,
+            @Valid @RequestBody ProviderUpdateRequest request) {
+        String adminId = SecurityContextHolder.getContext().getAuthentication().getName();
+        ProviderDetailsDTO updated = adminService.updateProvider(providerId, request, adminId);
+        return ResponseEntity.ok(updated);
+    }
+
+    @PatchMapping("/providers/{providerId}/status")
+    @AdminOnly
+    @Operation(summary = "Toggle provider active status", description = "Enable or disable a provider account.")
+    @ApiResponse(responseCode = "200", description = "Status updated",
+            content = @Content(schema = @Schema(implementation = ProviderDetailsDTO.class)))
+    @ApiResponse(responseCode = "403", description = "Forbidden – not the admin of this provider")
+    @ApiResponse(responseCode = "404", description = "Provider not found")
+    public ResponseEntity<ProviderDetailsDTO> toggleProviderStatus(
+            @PathVariable String providerId,
+            @RequestParam boolean active) {
+        String adminId = SecurityContextHolder.getContext().getAuthentication().getName();
+        ProviderDetailsDTO updated = adminService.toggleProviderStatus(providerId, active, adminId);
+        return ResponseEntity.ok(updated);
+    }
+
+    @PostMapping("/providers/{providerId}/reset-password")
+    @AdminOnly
+    @Operation(summary = "Reset provider password", description = "Sends a password reset email to the provider.")
+    @ApiResponse(responseCode = "200", description = "Reset email sent")
+    @ApiResponse(responseCode = "403", description = "Forbidden – not the admin of this provider")
+    @ApiResponse(responseCode = "404", description = "Provider not found")
+    @ApiResponse(responseCode = "500", description = "Email sending failed")
+    public ResponseEntity<?> resetProviderPassword(@PathVariable String providerId) throws MessagingException {
+        String adminId = SecurityContextHolder.getContext().getAuthentication().getName();
+        adminService.resetProviderPassword(providerId, adminId);
+        return ResponseEntity.ok("Password reset email sent to provider");
     }
 }

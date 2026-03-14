@@ -1,9 +1,9 @@
-// src/components/ProviderLeaderboard.jsx
 import React, { useState, useMemo } from 'react';
-import { Table, Badge, Button, OverlayTrigger, Tooltip, Form , Spinner, Alert } from 'react-bootstrap';
-import { FaSort, FaSortUp, FaSortDown, FaEye, FaCog } from 'react-icons/fa';
+import { Table, Badge, Button, OverlayTrigger, Tooltip, Form, Spinner, Alert } from 'react-bootstrap';
+import { FaSort, FaSortUp, FaSortDown, FaEye } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import './ProviderLeaderboard.css';
+
 const ProviderLeaderboard = ({ providers, loading, error }) => {
   const navigate = useNavigate();
   const [sortField, setSortField] = useState('name');
@@ -48,7 +48,6 @@ const ProviderLeaderboard = ({ providers, loading, error }) => {
   if (!providers || providers.length === 0) return <Alert variant="info">No providers found.</Alert>;
 
   return (
-    <>
     <div className="provider-leaderboard-container">
       <Form.Control
         type="text"
@@ -120,13 +119,12 @@ const ProviderLeaderboard = ({ providers, loading, error }) => {
               </td>
               <td>
                 <OverlayTrigger placement="top" overlay={<Tooltip>View Details</Tooltip>}>
-                  <Button variant="outline-primary" size="sm" className="me-2" onClick={() => navigate(`/admin/providers/${provider.id}`)}>
+                  <Button
+                    variant="outline-primary"
+                    size="sm"
+                    onClick={() => navigate(`/admin/providers/${provider.id}`)}
+                  >
                     <FaEye />
-                  </Button>
-                </OverlayTrigger>
-                <OverlayTrigger placement="top" overlay={<Tooltip>Manage</Tooltip>}>
-                  <Button variant="outline-secondary" size="sm" onClick={() => navigate(`/admin/providers/${provider.id}/edit`)}>
-                    <FaCog />
                   </Button>
                 </OverlayTrigger>
               </td>
@@ -134,8 +132,7 @@ const ProviderLeaderboard = ({ providers, loading, error }) => {
           ))}
         </tbody>
       </Table>
-      </div>
-    </>
+    </div>
   );
 };
 
