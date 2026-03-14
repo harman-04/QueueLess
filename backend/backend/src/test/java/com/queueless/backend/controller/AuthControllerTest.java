@@ -43,11 +43,12 @@ class AuthControllerTest {
                 "USER",
                 "user123",
                 "Test User",
-                null,
-                null,
-                true,
-                null,
-                null
+                null,          // phoneNumber
+                null,          // profileImageUrl
+                null,          // placeId
+                true,          // isVerified
+                null,          // preferences
+                null           // ownedPlaceIds
         );
 
         when(authService.login(any(LoginRequest.class))).thenReturn(response);

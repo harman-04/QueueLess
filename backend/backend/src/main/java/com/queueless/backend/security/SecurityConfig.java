@@ -165,6 +165,7 @@ public class SecurityConfig {
                                 "/api/queues/by-service/**",
                                 "/api/queues/{queueId}"
                         ).permitAll()
+                        .requestMatchers("/uploads/**").permitAll()
                         // User endpoints
                         .requestMatchers("/api/queues/*/add-token").hasRole("USER")
                         .requestMatchers(HttpMethod.GET, "/api/user/tokens").authenticated()

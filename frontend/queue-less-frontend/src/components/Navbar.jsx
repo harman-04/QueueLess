@@ -26,6 +26,7 @@ const Navbar = () => {
 
   const isAuthenticated = !!token;
   const { preferences } = useSelector((state) => state.auth);
+const apiBaseUrl = 'https://localhost:8443';
 
 
   useEffect(() => {
@@ -55,14 +56,24 @@ const handleLogout = async () => {
   }
 };
 
-  const getInitials = (fullName) =>
+const getInitials = (fullName) =>
     fullName
       ? fullName
-        .split(' ')
-        .map((n) => n[0])
-        .join('')
-        .toUpperCase()
+          .split(' ')
+          .map((n) => n[0])
+          .join('')
+          .toUpperCase()
       : '';
+
+  const getFallbackImage = () => {
+    const initials = getInitials(name);
+    return `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 36 36"><rect width="100%" height="100%" fill="%234f46e5"/><text x="50%" y="50%" font-family="Arial, sans-serif" font-size="16" fill="white" text-anchor="middle" dy=".3em">${initials}</text></svg>`;
+  };
+
+  // Construct full URL – only prepend backend if it's an uploaded image (starts with /uploads/)
+  const fullProfileImageUrl = profileImageUrl
+    ? (profileImageUrl.startsWith('/uploads/') ? `${apiBaseUrl}${profileImageUrl}` : profileImageUrl)
+    : null;
 
   return (
     <>
@@ -185,18 +196,9 @@ const handleLogout = async () => {
                       title={
                         <div className="d-flex align-items-center ql-profile-trigger-container">
                           <div className="ql-profile-avatar-wrapper me-2">
-                            <img
-                              src={
-                                profileImageUrl ||
-                                `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 36 36"><rect width="100%" height="100%" fill="%234f46e5"/><text x="50%" y="50%" font-family="Arial, sans-serif" font-size="16" fill="white" text-anchor="middle" dy=".3em">${getInitials(
-                                  name
-                                )}</text></svg>`
-                              }
-                              onError={(e) => {
-                                e.target.src = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 36 36"><rect width="100%" height="100%" fill="%234f46e5"/><text x="50%" y="50%" font-family="Arial, sans-serif" font-size="16" fill="white" text-anchor="middle" dy=".3em">${getInitials(
-                                  name
-                                )}</text></svg>`;
-                              }}
+                           <img
+                              src={fullProfileImageUrl ? `${fullProfileImageUrl}?t=${Date.now()}` : getFallbackImage()}
+                              onError={(e) => { e.target.src = getFallbackImage(); }}
                               alt="Profile"
                               className="rounded-circle ql-profile-avatar-img"
                             />

@@ -67,6 +67,7 @@ public class AuthService {
                 user.getRole().name(),
                 user.getId(),
                 user.getName(),
+                user.getPhoneNumber(),
                 user.getProfileImageUrl(),
                 user.getPlaceId(),
                 user.getIsVerified(),

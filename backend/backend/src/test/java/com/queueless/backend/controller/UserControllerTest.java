@@ -7,6 +7,7 @@ import com.queueless.backend.dto.UserProfileUpdateRequest;
 import com.queueless.backend.dto.UserTokenHistoryDTO;
 import com.queueless.backend.model.Place;
 import com.queueless.backend.model.User;
+import com.queueless.backend.service.FileStorageService;
 import com.queueless.backend.service.PlaceService;
 import com.queueless.backend.service.UserService;
 import org.junit.jupiter.api.Test;
@@ -16,9 +17,11 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.core.geo.GeoJsonPoint;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -44,6 +47,9 @@ class UserControllerTest {
 
     @MockitoBean
     private PlaceService placeService;
+
+    @MockitoBean
+    private FileStorageService fileStorageService;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -316,5 +322,25 @@ class UserControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].tokenId").value("token1"))
                 .andExpect(jsonPath("$[1].tokenId").value("token2"));
+    }
+
+    @Test
+    @WithMockUser(username = userId)
+    void uploadProfileImage_Success() throws Exception {
+        MockMultipartFile file = new MockMultipartFile(
+                "file",
+                "test.jpg",
+                "image/jpeg",
+                "test image content".getBytes()
+        );
+
+        String imageUrl = "/uploads/test.jpg";
+        when(fileStorageService.storeFile(any(MultipartFile.class), eq(userId))).thenReturn(imageUrl);
+        doNothing().when(userService).updateProfileImage(userId, imageUrl);
+
+        mockMvc.perform(multipart("/api/user/profile/image")
+                        .file(file))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.imageUrl").value(imageUrl));
     }
 }

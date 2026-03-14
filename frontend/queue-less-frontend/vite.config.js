@@ -19,6 +19,7 @@ export default defineConfig({
         changeOrigin: true,
         secure: false, // This is crucial for accepting your self-signed backend cert
       },
+       '/uploads': 'https://localhost:8443',
     },
   },
 })

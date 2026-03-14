@@ -288,4 +288,11 @@ public class UserService {
         return history;
     }
 
+    public void updateProfileImage(String userId, String imageUrl) {
+        User user = getUserOrThrow(userId);
+        user.setProfileImageUrl(imageUrl);
+        userRepository.save(user);
+        log.info("Profile image updated for user: {}", userId);
+    }
+
 }

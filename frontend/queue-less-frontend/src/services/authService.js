@@ -1,4 +1,3 @@
-// src/services/authService.js
 import axiosInstance from '../utils/axiosInstance';
 
 export const authService = {
@@ -6,12 +5,12 @@ export const authService = {
   register: (userData) => axiosInstance.post('/auth/register', userData),
   getProfile: () => axiosInstance.get('/auth/profile'),
   updateProfile: (userData) => axiosInstance.put('/user/profile', userData),
-  uploadProfileImage: (formData) => axiosInstance.post('/auth/upload-profile-image', formData, {
+  // Upload profile image – expects FormData
+  uploadProfileImage: (formData) => axiosInstance.post('/user/profile/image', formData, {
     headers: {
       'Content-Type': 'multipart/form-data'
     }
   }),
   changePassword: (passwordData) => axiosInstance.put('/user/password', passwordData),
-  // New method for account deletion
   deleteAccount: () => axiosInstance.delete('/user/account'),
 };

@@ -5,6 +5,7 @@ import com.queueless.backend.dto.PlaceDTO;
 import com.queueless.backend.dto.UserProfileUpdateRequest;
 import com.queueless.backend.dto.UserTokenHistoryDTO;
 import com.queueless.backend.model.Place;
+import com.queueless.backend.service.FileStorageService;
 import com.queueless.backend.service.PlaceService;
 import com.queueless.backend.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -23,6 +24,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 import com.queueless.backend.security.annotations.Authenticated;
 
@@ -39,6 +41,7 @@ public class UserController {
 
     private final UserService userService;
     private final PlaceService placeService;
+    private final FileStorageService fileStorageService;
 
     private String getCurrentUserId() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -234,5 +237,27 @@ public class UserController {
         String userId = getCurrentUserId();
         List<UserTokenHistoryDTO> history = userService.getUserTokenHistoryOptimized(userId, days, pageable);
         return ResponseEntity.ok(history);
+    }
+
+    @PostMapping("/profile/image")
+    @Authenticated
+    @Operation(summary = "Upload profile image", description = "Uploads a profile image for the authenticated user.")
+    @ApiResponse(responseCode = "200", description = "Image uploaded successfully")
+    @ApiResponse(responseCode = "400", description = "Invalid file")
+    @ApiResponse(responseCode = "401", description = "Unauthorized")
+    public ResponseEntity<?> uploadProfileImage(@RequestParam("file") MultipartFile file) {
+        String userId = getCurrentUserId();
+        log.info("Uploading profile image for userId: {}", userId);
+
+        try {
+            String imageUrl = fileStorageService.storeFile(file, userId);
+            userService.updateProfileImage(userId, imageUrl);
+            return ResponseEntity.ok(Map.of("imageUrl", imageUrl));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (Exception e) {
+            log.error("Failed to upload image for userId: {}", userId, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to upload image");
+        }
     }
 }

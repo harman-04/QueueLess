@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Card, Form, Button, Alert, Container, Row, Col, Modal } from 'react-bootstrap';
+import { Card, Form, Button, Alert, Container, Row, Col, Modal , Spinner} from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 import { logout, updatePreferences } from '../redux/authSlice'; // import updatePreferences
 import { authService } from '../services/authService';
@@ -11,7 +11,6 @@ const UserProfile = () => {
     const dispatch = useDispatch();
     const navigate = useNavigate();
     const { name: currentName, phoneNumber: currentPhoneNumber, profileImageUrl: currentProfileImageUrl, preferences: currentPreferences } = useSelector((state) => state.auth);
-
     const [name, setName] = useState(currentName || '');
     const [phoneNumber, setPhoneNumber] = useState(currentPhoneNumber || '');
     const [profileImageUrl, setProfileImageUrl] = useState(currentProfileImageUrl || '');
@@ -19,6 +18,7 @@ const UserProfile = () => {
     const [newPassword, setNewPassword] = useState('');
     const [confirmNewPassword, setConfirmNewPassword] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
+     const [uploadingImage, setUploadingImage] = useState(false);
     const [passwordError, setPasswordError] = useState('');
     const [deleteWarning, setDeleteWarning] = useState(false);
     const [showAvatarModal, setShowAvatarModal] = useState(false);
@@ -31,6 +31,30 @@ const UserProfile = () => {
         darkMode: false,
         favoritePlaceIds: []
     });
+
+     const apiBaseUrl =  'https://localhost:8443';
+// Helper to get initials
+    const getInitials = (fullName) =>
+        fullName
+            ? fullName
+                .split(' ')
+                .map((n) => n[0])
+                .join('')
+                .toUpperCase()
+            : '';
+
+    // Fallback image (initials on colored background)
+    const getFallbackImage = () => {
+        const initials = getInitials(name);
+        return `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="150" height="150" viewBox="0 0 150 150"><rect width="100%" height="100%" fill="%234f46e5"/><text x="50%" y="50%" font-family="Arial, sans-serif" font-size="40" fill="white" text-anchor="middle" dy=".3em">${initials}</text></svg>`;
+    };
+
+    // Construct full image URL – only prepend backend base if it's an uploaded image (starts with /uploads/)
+    const fullImageUrl = profileImageUrl
+        ? (profileImageUrl.startsWith('/uploads/')
+            ? `${apiBaseUrl}${profileImageUrl}`
+            : profileImageUrl)
+        : null;
 
     // Premium avatar collection
     const premiumAvatars = [
@@ -69,6 +93,37 @@ const UserProfile = () => {
         }
     };
 
+    const handleImageUpload = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        if (!file.type.startsWith('image/')) {
+            toast.error('Please select an image file');
+            return;
+        }
+        if (file.size > 2 * 1024 * 1024) {
+            toast.error('File size must be less than 2MB');
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        setUploadingImage(true);
+        try {
+            const response = await authService.uploadProfileImage(formData);
+            const newImageUrl = response.data.imageUrl;
+            setProfileImageUrl(newImageUrl);
+            dispatch({ type: 'auth/updateProfile', payload: { profileImageUrl: newImageUrl } });
+            toast.success('Profile image uploaded successfully');
+        } catch (error) {
+            toast.error(error.response?.data?.message || 'Failed to upload image');
+        } finally {
+            setUploadingImage(false);
+            e.target.value = '';
+        }
+    };
+
     const handleChangePassword = async (e) => {
         e.preventDefault();
         setPasswordError('');
@@ -77,7 +132,6 @@ const UserProfile = () => {
             setPasswordError('New passwords do not match.');
             return;
         }
-
         if (newPassword.length < 8) {
             setPasswordError('New password must be at least 8 characters.');
             return;
@@ -125,8 +179,6 @@ const UserProfile = () => {
     const handleSavePreferences = async () => {
         setIsSubmitting(true);
         try {
-            // Update preferences via authService (you may need to add an endpoint or reuse updateProfile)
-            // For now, we'll dispatch updatePreferences action (only updates local state and localStorage)
             dispatch(updatePreferences(preferences));
             toast.success('Preferences saved!');
         } catch (error) {
@@ -135,7 +187,7 @@ const UserProfile = () => {
             setIsSubmitting(false);
         }
     };
-
+    
     return (
         <Container className="user-profile-container">
             <h1 className="text-center mb-4 profile-title">My Profile</h1>
@@ -148,9 +200,10 @@ const UserProfile = () => {
                             <div className="text-center mb-4">
                                 <div className="avatar-preview-wrapper">
                                     <img
-                                        src={profileImageUrl || 'https://via.placeholder.com/150'}
+                                        src={fullImageUrl ? `${fullImageUrl}?t=${Date.now()}` : getFallbackImage()}
                                         alt="Profile"
                                         className="profile-img-preview"
+                                        onError={(e) => { e.target.src = getFallbackImage(); }}
                                     />
                                     <div className="avatar-overlay" onClick={() => setShowAvatarModal(true)}>
                                         <i className="fas fa-camera"></i>
@@ -160,14 +213,28 @@ const UserProfile = () => {
 
                             <div className="d-grid gap-2">
                                 <Button
-                                    variant="outline-primary"
-                                    className="avatar-select-btn"
-                                    onClick={() => setShowAvatarModal(true)}
-                                >
-                                    <i className="fas fa-user-circle me-2"></i>Choose from Premium Avatars
-                                </Button>
+    variant="outline-primary"
+    className="avatar-select-btn"
+    onClick={() => setShowAvatarModal(true)}
+>
+    <i className="fas fa-user-circle me-2"></i>Choose from Premium Avatars
+</Button>
                             </div>
-
+                            <input
+                                type="file"
+                                id="profile-image-upload"
+                                accept="image/*"
+                                style={{ display: 'none' }}
+                                onChange={handleImageUpload}
+                            />
+                           <Button
+    onClick={() => document.getElementById('profile-image-upload').click()}
+    disabled={uploadingImage}
+    className="w-100 mt-3 upload-btn"
+>
+    {uploadingImage ? <Spinner animation="border" size="sm" /> : <i className="fas fa-upload me-2"></i>}
+    {uploadingImage ? 'Uploading...' : 'Upload New Image'}
+</Button>
                             <div className="divider">
                                 <span>OR</span>
                             </div>
@@ -356,7 +423,7 @@ const UserProfile = () => {
             </Row>
 
             {/* Avatar Selection Modal */}
-            <Modal show={showAvatarModal} onHide={() => setShowAvatarModal(false)} size="lg" centered>
+             <Modal show={showAvatarModal} onHide={() => setShowAvatarModal(false)} size="lg" centered>
                 <Modal.Header closeButton>
                     <Modal.Title>Choose Your Avatar</Modal.Title>
                 </Modal.Header>

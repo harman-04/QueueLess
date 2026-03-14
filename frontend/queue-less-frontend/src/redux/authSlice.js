@@ -6,13 +6,14 @@ const getInitialState = () => {
   const role = localStorage.getItem('role');
   const id = localStorage.getItem('userId');
   const name = localStorage.getItem('name');
+  const phoneNumber = localStorage.getItem('phoneNumber');
   const profileImageUrl = localStorage.getItem('profileImageUrl');
   const placeId = localStorage.getItem('placeId');
   const isVerified = localStorage.getItem('isVerified') === 'true';
- const preferences = JSON.parse(localStorage.getItem('preferences') || 'null') || {
+  const preferences = JSON.parse(localStorage.getItem('preferences') || 'null') || {
     emailNotifications: true,
     smsNotifications: false,
-        pushNotifications: true,   
+    pushNotifications: true,
     language: 'en',
     defaultSearchRadius: 5,
     darkMode: false,
@@ -25,10 +26,11 @@ const getInitialState = () => {
     role: role || null,
     id: id || null,
     name: name || null,
+    phoneNumber: phoneNumber || null,
     profileImageUrl: profileImageUrl || null,
     placeId: placeId || null,
     isVerified: isVerified || false,
-     preferences,
+    preferences,
     ownedPlaceIds: ownedPlaceIds || []
   };
 };
@@ -38,11 +40,12 @@ const authSlice = createSlice({
   initialState: getInitialState(),
   reducers: {
     loginSuccess: (state, action) => {
-      const { token, role, userId, name, profileImageUrl, placeId, isVerified, preferences, ownedPlaceIds } = action.payload;
+      const { token, role, userId, name, phoneNumber, profileImageUrl, placeId, isVerified, preferences, ownedPlaceIds } = action.payload;
       state.token = token;
       state.role = role;
       state.id = userId;
       state.name = name;
+      state.phoneNumber = phoneNumber || null;
       state.profileImageUrl = profileImageUrl || null;
       state.placeId = placeId || null;
       state.isVerified = isVerified || false;
@@ -56,12 +59,13 @@ const authSlice = createSlice({
         favoritePlaceIds: []
       };
       state.ownedPlaceIds = ownedPlaceIds || [];
-      
+
       // Save to localStorage
       localStorage.setItem('token', token);
       localStorage.setItem('role', role);
       localStorage.setItem('userId', userId);
       localStorage.setItem('name', name);
+      localStorage.setItem('phoneNumber', phoneNumber || '');
       if (profileImageUrl) localStorage.setItem('profileImageUrl', profileImageUrl);
       if (placeId) localStorage.setItem('placeId', placeId);
       localStorage.setItem('isVerified', isVerified ? 'true' : 'false');
@@ -69,11 +73,17 @@ const authSlice = createSlice({
       localStorage.setItem('ownedPlaceIds', JSON.stringify(state.ownedPlaceIds));
     },
     updateProfile: (state, action) => {
-      const { name, profileImageUrl, placeId, isVerified, preferences, ownedPlaceIds } = action.payload;
+      const { name, phoneNumber, profileImageUrl, placeId, isVerified, preferences, ownedPlaceIds } = action.payload;
       if (name) {
         state.name = name;
         localStorage.setItem('name', name);
       }
+
+      if (phoneNumber !== undefined) {   // <-- add
+        state.phoneNumber = phoneNumber;
+        localStorage.setItem('phoneNumber', phoneNumber);
+      }
+
       if (profileImageUrl !== undefined) {
         state.profileImageUrl = profileImageUrl;
         if (profileImageUrl) {
@@ -125,7 +135,7 @@ const authSlice = createSlice({
         favoritePlaceIds: []
       };
       state.ownedPlaceIds = [];
-      
+
       // Clear all localStorage items related to auth
       localStorage.removeItem('token');
       localStorage.removeItem('role');
@@ -136,7 +146,7 @@ const authSlice = createSlice({
       localStorage.removeItem('isVerified');
       localStorage.removeItem('preferences');
       localStorage.removeItem('ownedPlaceIds');
-      
+
       // Clear any other stored data that might be related to the user session
       localStorage.removeItem('dismissedFeedbackPrompts');
     },

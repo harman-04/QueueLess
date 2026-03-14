@@ -318,3 +318,33 @@
 .account-management .text-muted {
     color: var(--text-secondary) !important;
 }
+/* Premium Upload Button – solid gradient */
+.upload-btn {
+    border-radius: 30px;
+    padding: 12px 20px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    background: linear-gradient(145deg, var(--search-primary), var(--search-primary-hover));
+    border: none;
+    color: white !important;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    box-shadow: var(--shadow-md);
+    width: 100%;
+}
+
+.upload-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(var(--search-primary-rgb), 0.4);
+}
+
+.upload-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    background: var(--bg-secondary);
+    color: var(--text-secondary);
+    box-shadow: none;
+    transform: none;
+}

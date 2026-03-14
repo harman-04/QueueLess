@@ -15,6 +15,7 @@ public class JwtResponse {
     private String role;
     private String userId;
     private String name;
+    private String phoneNumber;
     private String profileImageUrl;
     private String placeId;
     private Boolean isVerified;
