@@ -397,4 +397,16 @@ class AuthServiceTest {
 
         assertEquals("OTP expired", exception.getMessage());
     }
+
+    @Test
+    void loginAccountDisabled() {
+        // Arrange
+        testUser.setIsActive(false); // disable account
+        when(userRepository.findByEmail(loginRequest.getEmail())).thenReturn(Optional.of(testUser));
+        when(passwordEncoder.matches(loginRequest.getPassword(), testUser.getPassword())).thenReturn(true);
+
+        // Act & Assert
+        RuntimeException exception = assertThrows(RuntimeException.class, () -> authService.login(loginRequest));
+        assertEquals("Your account has been disabled. Please contact support.", exception.getMessage());
+    }
 }

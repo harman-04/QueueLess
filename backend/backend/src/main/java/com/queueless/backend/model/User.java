@@ -28,7 +28,7 @@ public class User {
     private String name;
 
     @Email
-    @Indexed(unique = true)   // <-- added
+    @Indexed(unique = true)
     private String email;
 
     @NotBlank
@@ -52,9 +52,12 @@ public class User {
     private String adminId;
     private List<String> managedPlaceIds;
 
-    // In User.java
     @Field("fcmTokens")
     private List<String> fcmTokens;
+
+    // New field – whether the user account is active (not disabled)
+    @Builder.Default
+    private Boolean isActive = true;
 
     @Data
     @NoArgsConstructor

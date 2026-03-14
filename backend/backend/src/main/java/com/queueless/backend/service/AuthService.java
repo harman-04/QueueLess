@@ -42,17 +42,20 @@ public class AuthService {
                     throw new RuntimeException("Invalid credentials");
                 });
 
-
-
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
             log.warn("Login failed - Password mismatch for email: {}", request.getEmail());
             throw new RuntimeException("Invalid credentials");
         }
 
-
         if (!user.getIsVerified()) {
             log.warn("Login failed - User not verified: {}", request.getEmail());
             throw new RuntimeException("Account not verified. Please check your email.");
+        }
+
+        // Check if account is active (null means active for backward compatibility)
+        if (user.getIsActive() != null && !user.getIsActive()) {
+            log.warn("Login failed - Account disabled for email: {}", request.getEmail());
+            throw new RuntimeException("Your account has been disabled. Please contact support.");
         }
 
         String jwtToken = jwtProvider.generateToken(user);
@@ -75,7 +78,6 @@ public class AuthService {
                 user.getOwnedPlaceIds()
         );
     }
-
     public String register(RegisterRequest request) {
         log.info("Registration attempt for email: {} | Role: {}", request.getEmail(), request.getRole());
 
