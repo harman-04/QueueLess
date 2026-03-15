@@ -9,7 +9,4 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public interface AuditLogRepository extends MongoRepository<AuditLog, String> {
-    Page<AuditLog> findByUserId(String userId, Pageable pageable);
-    List<AuditLog> findByAction(String action);
-    List<AuditLog> findByTimestampBetween(LocalDateTime start, LocalDateTime end);
 }

@@ -8,9 +8,7 @@ import com.queueless.backend.exception.ResourceNotFoundException;
 import com.queueless.backend.exception.UserAlreadyInQueueException;
 import com.queueless.backend.model.*;
 import com.queueless.backend.model.Queue;
-import com.queueless.backend.repository.FeedbackRepository;
-import com.queueless.backend.repository.QueueRepository;
-import com.queueless.backend.repository.UserRepository;
+import com.queueless.backend.repository.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -29,7 +27,6 @@ import static org.mockito.Mockito.*;
 import com.queueless.backend.exception.AccessDeniedException;
 import com.queueless.backend.model.*;
 import com.queueless.backend.model.Queue;
-import com.queueless.backend.repository.QueueHourlyStatsRepository;
 
 @ExtendWith(MockitoExtension.class)
 class QueueServiceTest {
@@ -66,6 +63,9 @@ class QueueServiceTest {
 
     @Mock
     private AuditLogService auditLogService;
+
+    @Mock
+    private NotificationPreferenceRepository notificationPreferenceRepository;
 
     @InjectMocks
     private QueueService queueService;
@@ -493,6 +493,7 @@ class QueueServiceTest {
         assertEquals(2, response.getTokensReset());
         assertNull(response.getExportFileUrl());
         verify(queueRepository).save(argThat(queue -> queue.getTokens().isEmpty()));
+        verify(notificationPreferenceRepository).deleteByQueueId(queueId);
     }
 
     // ================= CANCEL TOKEN =================
@@ -590,6 +591,7 @@ class QueueServiceTest {
         when(queueRepository.save(any(Queue.class))).thenAnswer(inv -> inv.getArgument(0));
 
         QueueResetResponseDTO response = queueService.resetQueueWithOptions(queueId, request, providerId);
+        verify(notificationPreferenceRepository).deleteByQueueId(queueId);
 
         assertTrue(response.getSuccess());
         assertEquals(1, response.getTokensReset());

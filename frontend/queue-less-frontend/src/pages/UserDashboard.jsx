@@ -16,7 +16,8 @@ import {
     FaUsers,
     FaAmbulance,
     FaRegSmileBeam,
-    FaHeart
+    FaHeart,
+    FaBell
 } from "react-icons/fa";
 import { getShortTokenId } from '../utils/tokenUtils';
 import { logout } from "../redux/authSlice";
@@ -213,6 +214,14 @@ const UserDashboard = () => {
                     >
                         <FaSync className="me-2" /> Refresh
                     </button>
+
+                    <Button
+  variant="outline-info"
+  onClick={() => navigate('/user/notifications')}
+  className="d-flex align-items-center"
+>
+  <FaBell className="me-2" /> Notifications
+</Button>
                     <button
                         onClick={handleLogout}
                         className="btn btn-outline-danger d-flex align-items-center"

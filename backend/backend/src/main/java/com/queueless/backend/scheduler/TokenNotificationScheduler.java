@@ -1,5 +1,6 @@
 package com.queueless.backend.scheduler;
 
+import com.queueless.backend.model.NotificationPreference;
 import com.queueless.backend.model.Queue;
 import com.queueless.backend.model.QueueToken;
 import com.queueless.backend.model.Service;
@@ -8,6 +9,7 @@ import com.queueless.backend.repository.QueueRepository;
 import com.queueless.backend.repository.UserRepository;
 import com.queueless.backend.service.EmailService;
 import com.queueless.backend.service.FcmService;
+import com.queueless.backend.service.NotificationPreferenceService;
 import com.queueless.backend.service.ServiceService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,6 +18,9 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Component
@@ -27,6 +32,7 @@ public class TokenNotificationScheduler {
     private final ServiceService serviceService;
     private final EmailService emailService;
     private final FcmService fcmService;
+    private final NotificationPreferenceService notificationPreferenceService; // <-- add this
 
     @Value("${token.notification.before-minutes:5}")
     private int notifyBeforeMinutes;
@@ -62,7 +68,10 @@ public class TokenNotificationScheduler {
                 })
                 .toList();
 
-        // In TokenNotificationScheduler.processQueue()
+        // Fetch all notification preferences for this queue (to avoid per-user DB calls)
+        Map<String, NotificationPreference> preferenceMap = notificationPreferenceService.getPreferencesForQueue(queue.getId())
+                .stream()
+                .collect(Collectors.toMap(NotificationPreference::getUserId, Function.identity()));
 
         boolean anyTokenNotified = false;
         for (int i = 0; i < waitingTokens.size(); i++) {
@@ -70,40 +79,59 @@ public class TokenNotificationScheduler {
             if (Boolean.TRUE.equals(token.getNotificationSent())) continue;
 
             int estimatedMinutes = i * avgServiceTime;
-            if (estimatedMinutes <= notifyBeforeMinutes) {
-                User user = userRepository.findById(token.getUserId()).orElse(null);
-                if (user != null) {
-                    // Send email if enabled
-                    if (user.getPreferences() != null && Boolean.TRUE.equals(user.getPreferences().getEmailNotifications())) {
-                        try {
-                            emailService.sendUpcomingTokenEmail(
-                                    user.getEmail(),
-                                    token.getTokenId(),
-                                    queue.getServiceName(),
-                                    estimatedMinutes
-                            );
-                            log.info("Sent email notification for token {} to {}", token.getTokenId(), user.getEmail());
-                        } catch (Exception e) {
-                            log.error("Failed to send email for token {}: {}", token.getTokenId(), e.getMessage());
-                        }
+
+            // Get user and preferences
+            User user = userRepository.findById(token.getUserId()).orElse(null);
+            if (user == null) continue;
+
+            NotificationPreference pref = preferenceMap.get(user.getId());
+            boolean shouldNotify = false;
+            int threshold = notifyBeforeMinutes; // global default
+
+            // Check if user has disabled notifications for this queue
+            if (pref != null && pref.getEnabled() != null && !pref.getEnabled()) {
+                // User disabled notifications for this queue – skip entirely
+                continue;
+            }
+
+            // Use custom threshold if set
+            if (pref != null && pref.getNotifyBeforeMinutes() != null) {
+                threshold = pref.getNotifyBeforeMinutes();
+            }
+
+            if (estimatedMinutes <= threshold) {
+                shouldNotify = true;
+            }
+
+            if (shouldNotify) {
+                // Send email if enabled (global preference)
+                if (user.getPreferences() != null && Boolean.TRUE.equals(user.getPreferences().getEmailNotifications())) {
+                    try {
+                        emailService.sendUpcomingTokenEmail(
+                                user.getEmail(),
+                                token.getTokenId(),
+                                queue.getServiceName(),
+                                estimatedMinutes
+                        );
+                        log.info("Sent email notification for token {} to {}", token.getTokenId(), user.getEmail());
+                    } catch (Exception e) {
+                        log.error("Failed to send email for token {}: {}", token.getTokenId(), e.getMessage());
                     }
-
-                    // Send push notifications to all registered devices
-                    if (user.getPreferences() != null && Boolean.TRUE.equals(user.getPreferences().getPushNotifications())
-                            && user.getFcmTokens() != null && !user.getFcmTokens().isEmpty()) {
-
-                        String title = "Your turn is coming up!";
-                        String body = String.format("Token %s for %s is about to be served (approx. %d min).",
-                                token.getTokenId(), queue.getServiceName(), estimatedMinutes);
-                        fcmService.sendMulticast(user.getFcmTokens(), title, body, queue.getId());
-                        log.info("Sent push notifications for token {} to {} devices", token.getTokenId(), user.getFcmTokens().size());
-                    }
-
-                    token.setNotificationSent(true);
-                    anyTokenNotified = true;
                 }
 
+                // Send push notifications if enabled
+                if (user.getPreferences() != null && Boolean.TRUE.equals(user.getPreferences().getPushNotifications())
+                        && user.getFcmTokens() != null && !user.getFcmTokens().isEmpty()) {
 
+                    String title = "Your turn is coming up!";
+                    String body = String.format("Token %s for %s is about to be served (approx. %d min).",
+                            token.getTokenId(), queue.getServiceName(), estimatedMinutes);
+                    fcmService.sendMulticast(user.getFcmTokens(), title, body, queue.getId());
+                    log.info("Sent push notifications for token {} to {} devices", token.getTokenId(), user.getFcmTokens().size());
+                }
+
+                token.setNotificationSent(true);
+                anyTokenNotified = true;
             }
         }
 

@@ -33,6 +33,7 @@ import VerifyEmail from './pages/VerifyEmail';
 import useFcmToken from './hooks/useFcmToken';
 import NotFound from './pages/NotFound';
 import AdminProviderDetail from './pages/AdminProviderDetail';
+import NotificationPreferences from './pages/NotificationPreferences';
 
 function App() {
   const { token, role } = useSelector((state) => state.auth);
@@ -139,6 +140,12 @@ function App() {
             <Route path="/user/dashboard" element={
               <ProtectedRoute allowedRoles={['USER']}>
                 <UserDashboard />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/user/notifications" element={
+              <ProtectedRoute allowedRoles={['USER']}>
+                <NotificationPreferences />
               </ProtectedRoute>
             } />
 

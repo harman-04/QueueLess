@@ -6,10 +6,7 @@ import com.queueless.backend.enums.TokenStatus;
 import com.queueless.backend.exception.*;
 import com.queueless.backend.model.*;
 import com.queueless.backend.model.Queue;
-import com.queueless.backend.repository.FeedbackRepository;
-import com.queueless.backend.repository.QueueHourlyStatsRepository;
-import com.queueless.backend.repository.QueueRepository;
-import com.queueless.backend.repository.UserRepository;
+import com.queueless.backend.repository.*;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -37,6 +34,7 @@ public class QueueService {
     private final ExportCacheService exportCacheService;
     private final QueueHourlyStatsRepository statsRepository;
     private final AuditLogService auditLogService;
+    private final NotificationPreferenceRepository notificationPreferenceRepository;
 
     private User getUserOrThrow(String userId) {
         return userRepository.findById(userId)
@@ -241,6 +239,8 @@ public class QueueService {
 
         response.setSuccess(true);
         response.setMessage("Queue reset successfully");
+        // After queue is reset/cleared, delete preferences
+        notificationPreferenceRepository.deleteByQueueId(queueId);
         response.setTokensReset(tokensReset);
 
         log.info("Queue {} reset by user {}, {} tokens cleared", queueId, requesterId, tokensReset);
@@ -791,7 +791,7 @@ public class QueueService {
             QueueToken token = tokenOpt.get();
             token.setStatus(TokenStatus.CANCELLED.toString());
             token.setCancellationReason(reason);
-            token.setCompletedAt(LocalDateTime.now()); // optional: use completedAt as cancellation time
+            token.setCompletedAt(LocalDateTime.now());
 
             // Clear user's active token
             User user = getUserOrThrow(token.getUserId());
@@ -823,12 +823,17 @@ public class QueueService {
         broadcastQueueUpdate(queueId, updatedQueue);
         log.info("Token {} cancelled", tokenId);
 
+        // Fix: Use HashMap to allow null reason
+        Map<String, Object> details = new HashMap<>();
+        details.put("queueId", queueId);
+        details.put("tokenId", tokenId);
+        details.put("reason", reason); // reason may be null
         auditLogService.logEvent("TOKEN_CANCELLED",
                 "Token cancelled" + (reason != null ? ": " + reason : ""),
-                Map.of("queueId", queueId, "tokenId", tokenId, "reason", reason));
+                details);
+
         return updatedQueue;
     }
-
     public Queue reorderQueue(String queueId, List<QueueToken> newTokens) {
         Queue queue = getQueueOrThrow(queueId);
         queue.setTokens(newTokens);

@@ -4,6 +4,7 @@ import com.queueless.backend.dto.PasswordChangeRequest;
 import com.queueless.backend.dto.UserProfileUpdateRequest;
 import com.queueless.backend.dto.UserTokenHistoryDTO;
 import com.queueless.backend.enums.TokenStatus;
+import com.queueless.backend.exception.ResourceNotFoundException;
 import com.queueless.backend.model.*;
 import com.queueless.backend.model.Queue;
 import com.queueless.backend.repository.FeedbackRepository;
@@ -206,6 +207,11 @@ public class UserService {
     private User getUserOrThrow(String userId) {
         return userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
+    }
+
+    public User getUserById(String userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
     }
 
     public void addFcmToken(String userId, String fcmToken) {

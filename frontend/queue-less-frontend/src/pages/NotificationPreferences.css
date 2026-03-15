@@ -1,0 +1,14 @@
+.notification-preferences .preference-card {
+  transition: transform 0.2s;
+  border: 1px solid var(--border-color);
+}
+
+.notification-preferences .preference-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-md);
+}
+
+.notification-preferences .list-group-item {
+  background-color: transparent;
+  border-color: var(--border-color);
+}
