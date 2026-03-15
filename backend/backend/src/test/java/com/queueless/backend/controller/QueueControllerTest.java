@@ -1,6 +1,8 @@
 package com.queueless.backend.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.queueless.backend.config.RateLimitConfig;
+import com.queueless.backend.config.TestSecurityConfig;
 import com.queueless.backend.dto.*;
 import com.queueless.backend.exception.QueueInactiveException;
 import com.queueless.backend.exception.UserAlreadyInQueueException;
@@ -11,7 +13,9 @@ import com.queueless.backend.service.QueueService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -27,10 +31,9 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@SpringBootTest(properties = {
-        "spring.cache.type=none",
-        "spring.autoconfigure.exclude=org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration"
-})
+@WebMvcTest(controllers = QueueController.class,
+        properties = "spring.autoconfigure.exclude=org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration")
+@Import({RateLimitConfig.class, TestSecurityConfig.class})
 @AutoConfigureMockMvc
 class QueueControllerTest {
 

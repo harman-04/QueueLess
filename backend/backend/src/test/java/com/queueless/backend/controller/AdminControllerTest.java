@@ -2,6 +2,8 @@ package com.queueless.backend.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.itextpdf.text.DocumentException;
+import com.queueless.backend.config.RateLimitConfig;
+import com.queueless.backend.config.TestSecurityConfig;
 import com.queueless.backend.dto.*;
 import com.queueless.backend.exception.AccessDeniedException;
 import com.queueless.backend.exception.ResourceNotFoundException;
@@ -16,7 +18,9 @@ import com.queueless.backend.service.ExportService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -36,10 +40,9 @@ import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@SpringBootTest(properties = {
-        "spring.cache.type=none",
-        "spring.autoconfigure.exclude=org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration"
-})
+@WebMvcTest(controllers = AdminController.class,
+        properties = "spring.autoconfigure.exclude=org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration")
+@Import({RateLimitConfig.class, TestSecurityConfig.class})
 @AutoConfigureMockMvc
 class AdminControllerTest {
 
