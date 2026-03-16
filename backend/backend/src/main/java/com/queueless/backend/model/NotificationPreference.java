@@ -36,4 +36,7 @@ public class NotificationPreference {
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private Boolean notifyOnBestTime;
+    // Add this field
+    private LocalDateTime lastBestTimeNotificationSent;
 }

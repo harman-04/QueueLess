@@ -28,7 +28,8 @@ public class NotificationPreferenceService {
                                                            Integer notifyBeforeMinutes,
                                                            Boolean notifyOnStatusChange,
                                                            Boolean notifyOnEmergencyApproval,
-                                                           Boolean enabled) {
+                                                           Boolean enabled,
+                                                           Boolean notifyOnBestTime) {
         // Validate user and queue exist
         userService.getUserById(userId);
         queueService.getQueueById(queueId);
@@ -42,6 +43,7 @@ public class NotificationPreferenceService {
         preference.setNotifyOnStatusChange(notifyOnStatusChange);
         preference.setNotifyOnEmergencyApproval(notifyOnEmergencyApproval);
         preference.setEnabled(enabled != null ? enabled : true);
+        preference.setNotifyOnBestTime(notifyOnBestTime != null ? notifyOnBestTime : false);
 
         if (preference.getCreatedAt() == null) {
             preference.setCreatedAt(LocalDateTime.now());

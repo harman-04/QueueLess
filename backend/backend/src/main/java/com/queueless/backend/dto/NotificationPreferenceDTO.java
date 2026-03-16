@@ -18,7 +18,7 @@ public class NotificationPreferenceDTO {
     private Boolean notifyOnStatusChange;
     private Boolean notifyOnEmergencyApproval;
     private Boolean enabled;
-
+    private Boolean notifyOnBestTime;
     public static NotificationPreferenceDTO fromEntity(NotificationPreference pref) {
         NotificationPreferenceDTO dto = new NotificationPreferenceDTO();
         dto.setUserId(pref.getUserId());
@@ -27,6 +27,7 @@ public class NotificationPreferenceDTO {
         dto.setNotifyOnStatusChange(pref.getNotifyOnStatusChange());
         dto.setNotifyOnEmergencyApproval(pref.getNotifyOnEmergencyApproval());
         dto.setEnabled(pref.getEnabled());
+        dto.setNotifyOnBestTime(pref.getNotifyOnBestTime() != null ? pref.getNotifyOnBestTime() : false);
         return dto;
     }
 }

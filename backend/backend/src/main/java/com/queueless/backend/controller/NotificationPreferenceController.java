@@ -61,7 +61,8 @@ public class NotificationPreferenceController {
                 dto.getNotifyBeforeMinutes(),
                 dto.getNotifyOnStatusChange(),
                 dto.getNotifyOnEmergencyApproval(),
-                dto.getEnabled()
+                dto.getEnabled(),
+                dto.getNotifyOnBestTime()
         );
         return ResponseEntity.ok(NotificationPreferenceDTO.fromEntity(saved));
     }

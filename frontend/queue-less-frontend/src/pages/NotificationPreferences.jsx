@@ -29,7 +29,8 @@ const NotificationPreferences = () => {
     const [selectedQueueId, setSelectedQueueId] = useState('');
     const [loadingQueues, setLoadingQueues] = useState(false);
     const [saving, setSaving] = useState(false);
-
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [deleteQueueId, setDeleteQueueId] = useState(null);
     useEffect(() => {
         if (!token) {
             navigate('/login');
@@ -92,7 +93,9 @@ const NotificationPreferences = () => {
             notifyBeforeMinutes: pref.notifyBeforeMinutes || 5,
             notifyOnStatusChange: pref.notifyOnStatusChange ?? true,
             notifyOnEmergencyApproval: pref.notifyOnEmergencyApproval ?? true,
-            enabled: pref.enabled ?? true
+            enabled: pref.enabled ?? true,
+            notifyOnBestTime: pref.notifyOnBestTime ?? false
+
         });
         setShowEditModal(true);
     };
@@ -104,74 +107,83 @@ const NotificationPreferences = () => {
             notifyBeforeMinutes: 5,
             notifyOnStatusChange: true,
             notifyOnEmergencyApproval: true,
-            enabled: true
+            enabled: true,
+            notifyOnBestTime: false
         });
         setSelectedQueueId('');
         fetchUserQueues();
         setShowAddModal(true);
     };
 
-    const handleDelete = async (queueId) => {
-        if (!window.confirm('Are you sure you want to delete this preference? You will revert to global settings.')) return;
+    const handleDeleteClick = (queueId) => {
+        setDeleteQueueId(queueId);
+        setShowDeleteModal(true);
+    };
+
+    const handleConfirmDelete = async () => {
+        if (!deleteQueueId) return;
         try {
-            await notificationPreferenceService.deletePreference(queueId);
-            setPreferences(prefs => prefs.filter(p => p.queueId !== queueId));
+            await notificationPreferenceService.deletePreference(deleteQueueId);
+            setPreferences(prefs => prefs.filter(p => p.queueId !== deleteQueueId));
             toast.success('Preference deleted');
         } catch (err) {
             toast.error('Failed to delete preference');
+        } finally {
+            setShowDeleteModal(false);
+            setDeleteQueueId(null);
         }
     };
 
-   const handleSaveEdit = async () => {
-  setSaving(true);
-  try {
-    const response = await notificationPreferenceService.updatePreference(
-      editingPref.queueId,
-      editingPref
-    );
-    // Preserve the queue name from editing state
-    const updatedPref = {
-      ...response.data,
-      queueName: editingPref.queueName
+    const handleSaveEdit = async () => {
+        setSaving(true);
+        try {
+            const response = await notificationPreferenceService.updatePreference(
+                editingPref.queueId,
+                editingPref
+            );
+            // Preserve the queue name from editing state
+            const updatedPref = {
+                ...response.data,
+                queueName: editingPref.queueName
+            };
+            setPreferences(prefs =>
+                prefs.map(p => p.queueId === editingPref.queueId ? updatedPref : p)
+            );
+            setShowEditModal(false);
+            toast.success('Preference updated');
+        } catch (err) {
+            toast.error('Failed to update preference');
+        } finally {
+            setSaving(false);
+        }
     };
-    setPreferences(prefs =>
-      prefs.map(p => p.queueId === editingPref.queueId ? updatedPref : p)
-    );
-    setShowEditModal(false);
-    toast.success('Preference updated');
-  } catch (err) {
-    toast.error('Failed to update preference');
-  } finally {
-    setSaving(false);
-  }
-};
 
-const handleSaveAdd = async () => {
-  if (!selectedQueueId) {
-    toast.error('Please select a queue');
-    return;
-  }
-  setSaving(true);
-  try {
-    const response = await notificationPreferenceService.updatePreference(
-      selectedQueueId,
-      editingPref
-    );
-    // Get the queue details from userQueues to set the name
-    const queue = userQueues.find(q => q.id === selectedQueueId);
-    const newPref = {
-      ...response.data,
-      queueName: queue?.serviceName || ''
+    const handleSaveAdd = async () => {
+        if (!selectedQueueId) {
+            toast.error('Please select a queue');
+            return;
+        }
+        setSaving(true);
+        try {
+            const response = await notificationPreferenceService.updatePreference(
+                selectedQueueId,
+                editingPref
+            );
+            // Get the queue details from userQueues to set the name
+            const queue = userQueues.find(q => q.id === selectedQueueId);
+            const newPref = {
+                ...response.data,
+                queueName: queue?.serviceName || ''
+            };
+            setPreferences(prev => [...prev, newPref]);
+            setShowAddModal(false);
+            toast.success('Preference added');
+        } catch (err) {
+            toast.error('Failed to add preference');
+        } finally {
+            setSaving(false);
+        }
     };
-    setPreferences(prev => [...prev, newPref]);
-    setShowAddModal(false);
-    toast.success('Preference added');
-  } catch (err) {
-    toast.error('Failed to add preference');
-  } finally {
-    setSaving(false);
-  }
-};
     const handleInputChange = (e) => {
         const { name, value, type, checked } = e.target;
         setEditingPref(prev => ({
@@ -242,6 +254,11 @@ const handleSaveAdd = async () => {
                                             <FaBell className="me-2 text-info" />
                                             Emergency approval: <strong>{pref.notifyOnEmergencyApproval ? 'Yes' : 'No'}</strong>
                                         </ListGroup.Item>
+
+                                        <ListGroup.Item>
+                                            <FaClock className="me-2 text-success" />
+                                            Best time notification: <strong>{pref.notifyOnBestTime ? 'Yes' : 'No'}</strong>
+                                        </ListGroup.Item>
                                     </ListGroup>
                                 </Card.Body>
                                 <Card.Footer className="d-flex justify-content-end gap-2">
@@ -255,7 +272,7 @@ const handleSaveAdd = async () => {
                                     <Button
                                         variant="outline-danger"
                                         size="sm"
-                                        onClick={() => handleDelete(pref.queueId)}
+                                        onClick={() => handleDeleteClick(pref.queueId)}
                                     >
                                         <FaTrash className="me-1" /> Delete
                                     </Button>
@@ -316,6 +333,19 @@ const handleSaveAdd = async () => {
                                 checked={editingPref?.enabled ?? true}
                                 onChange={handleInputChange}
                             />
+                        </Form.Group>
+
+                        <Form.Group className="mb-3">
+                            <Form.Check
+                                type="checkbox"
+                                label="Notify me when queue is shortest (once per day)"
+                                name="notifyOnBestTime"
+                                checked={editingPref?.notifyOnBestTime || false}
+                                onChange={handleInputChange}
+                            />
+                            <Form.Text className="text-muted">
+                                You'll receive a notification when the number of waiting people drops below 3.
+                            </Form.Text>
                         </Form.Group>
                     </Form>
                 </Modal.Body>
@@ -418,8 +448,23 @@ const handleSaveAdd = async () => {
                                             onChange={handleInputChange}
                                         />
                                     </Form.Group>
+
+                                    <Form.Group className="mb-3">
+                                        <Form.Check
+                                            type="checkbox"
+                                            label="Notify me when queue is shortest (once per day)"
+                                            name="notifyOnBestTime"
+                                            checked={editingPref.notifyOnBestTime}
+                                            onChange={handleInputChange}
+                                        />
+                                        <Form.Text className="text-muted">
+                                            You'll receive a notification when the number of waiting people drops below 3.
+                                        </Form.Text>
+                                    </Form.Group>
                                 </>
                             )}
+
+
                         </Form>
                     )}
                 </Modal.Body>
@@ -433,6 +478,28 @@ const handleSaveAdd = async () => {
                         disabled={saving || !selectedQueueId || userQueues.length === 0}
                     >
                         {saving ? <Spinner animation="border" size="sm" /> : 'Add Preference'}
+                    </Button>
+                </Modal.Footer>
+            </Modal>
+
+            {/* Delete Confirmation Modal */}
+            <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)} centered className="delete-confirm-modal">
+                <Modal.Header closeButton className="border-0">
+                    <Modal.Title className="text-danger">
+                        <FaExclamationTriangle className="me-2" /> Confirm Deletion
+                    </Modal.Title>
+                </Modal.Header>
+                <Modal.Body className="text-center py-4">
+                    <FaTrash size={48} className="text-danger mb-3" />
+                    <h5>Are you sure?</h5>
+                    <p className="text-muted">This action cannot be undone. You will revert to global notification settings for this queue.</p>
+                </Modal.Body>
+                <Modal.Footer className="border-0 justify-content-center">
+                    <Button variant="outline-secondary" onClick={() => setShowDeleteModal(false)}>
+                        Cancel
+                    </Button>
+                    <Button variant="danger" onClick={handleConfirmDelete}>
+                        <FaTrash className="me-2" /> Delete Permanently
                     </Button>
                 </Modal.Footer>
             </Modal>
