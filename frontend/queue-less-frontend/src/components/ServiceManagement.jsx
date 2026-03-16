@@ -5,7 +5,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { fetchServicesByPlace, createService, updateService, deleteService } from '../redux/serviceSlice';
 import { fetchPlaceById } from '../redux/placeSlice';
 import { Form, Button, Card, Spinner, Alert, Table, Modal, Row, Col, Badge } from 'react-bootstrap';
-import { FaPlus, FaEdit, FaTrash, FaClock, FaUsers, FaAmbulance } from 'react-icons/fa';
+import { FaPlus, FaEdit, FaTrash, FaClock, FaUsers, FaAmbulance, FaExclamationTriangle } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import './ServiceManagement.css';
 
@@ -18,6 +18,8 @@ const ServiceManagement = () => {
   const { id: userId } = useSelector((state) => state.auth);
   const [showModal, setShowModal] = useState(false);
   const [editingService, setEditingService] = useState(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteServiceId, setDeleteServiceId] = useState(null);
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -106,16 +108,22 @@ const ServiceManagement = () => {
     }
   };
 
-  const handleDelete = async (serviceId) => {
-    if (window.confirm('Are you sure you want to delete this service?')) {
-      try {
-        await dispatch(deleteService(serviceId)).unwrap();
-        toast.success('Service deleted successfully!');
-        // RE-FETCH SERVICES TO UPDATE THE LIST
-        dispatch(fetchServicesByPlace(placeId));
-      } catch (error) {
-        toast.error(`Failed to delete service: ${error.message}`);
-      }
+  const handleDeleteClick = (serviceId) => {
+    setDeleteServiceId(serviceId);
+    setShowDeleteModal(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteServiceId) return;
+    try {
+      await dispatch(deleteService(deleteServiceId)).unwrap();
+      toast.success('Service deleted successfully!');
+      dispatch(fetchServicesByPlace(placeId));
+    } catch (error) {
+      toast.error(`Failed to delete service: ${error.message}`);
+    } finally {
+      setShowDeleteModal(false);
+      setDeleteServiceId(null);
     }
   };
 
@@ -200,7 +208,7 @@ const ServiceManagement = () => {
                         <Button
                           variant="outline-danger"
                           size="sm"
-                          onClick={() => handleDelete(service.id)}
+                          onClick={() => handleDeleteClick(service.id)}
                         >
                           <FaTrash />
                         </Button>
@@ -236,7 +244,7 @@ const ServiceManagement = () => {
               </Col>
               <Col md={4}>
                 <Form.Group className="mb-3">
-                  <Form.Label>Average Service Time (minutes) *</Form.Label>
+                  <Form.Label>Average Service Time (minutes)*</Form.Label>
                   <Form.Control
                     type="number"
                     name="averageServiceTime"
@@ -299,6 +307,28 @@ const ServiceManagement = () => {
             </Button>
           </Modal.Footer>
         </Form>
+      </Modal>
+
+      {/* Delete Confirmation Modal */}
+      <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)} centered className="delete-confirm-modal">
+        <Modal.Header closeButton className="border-0">
+          <Modal.Title className="text-danger">
+            <FaExclamationTriangle className="me-2" /> Confirm Deletion
+          </Modal.Title>
+        </Modal.Header>
+        <Modal.Body className="text-center py-4">
+          <FaTrash size={48} className="text-danger mb-3" />
+          <h5>Are you sure?</h5>
+          <p className="text-muted">This action cannot be undone. This service will be permanently deleted.</p>
+        </Modal.Body>
+        <Modal.Footer className="border-0 justify-content-center">
+          <Button variant="outline-secondary" onClick={() => setShowDeleteModal(false)}>
+            Cancel
+          </Button>
+          <Button variant="danger" onClick={handleConfirmDelete}>
+            <FaTrash className="me-2" /> Delete Permanently
+          </Button>
+        </Modal.Footer>
       </Modal>
     </div>
   );

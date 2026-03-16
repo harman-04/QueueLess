@@ -295,9 +295,11 @@ public class QueueService {
 
         log.debug("Token {} added to queueId={}", tokenId, queueId);
 
-        auditLogService.logEvent("QUEUE_JOIN",
-                "User joined queue",
-                Map.of("queueId", queueId, "tokenId", token.getTokenId(), "userId", userId));
+        Map<String, Object> details = new HashMap<>();
+        details.put("queueId", queueId);
+        details.put("tokenId", token.getTokenId());
+        details.put("userId", userId);
+        auditLogService.logEvent("QUEUE_JOIN", "User joined queue", details);
 
         return token;
     }
@@ -355,9 +357,11 @@ public class QueueService {
         broadcastQueueUpdate(queueId, updatedQueue);
 
         log.debug("Group token {} added to queueId={} with {} members", tokenId, queueId, groupMembers.size());
-        auditLogService.logEvent("QUEUE_JOIN",
-                "User joined queue with group",
-                Map.of("queueId", queueId, "tokenId", token.getTokenId(), "userId", userId));
+        Map<String, Object> details = new HashMap<>();
+        details.put("queueId", queueId);
+        details.put("tokenId", token.getTokenId());
+        details.put("userId", userId);
+        auditLogService.logEvent("QUEUE_JOIN", "User joined queue with group", details);
 
         return token;
     }
@@ -411,9 +415,11 @@ public class QueueService {
         broadcastQueueUpdate(queueId, updatedQueue);
 
         log.debug("Emergency token {} added to queueId={}", tokenId, queueId);
-        auditLogService.logEvent("QUEUE_JOIN",
-                "User's Emergency Token Added to Queue",
-                Map.of("queueId", queueId, "tokenId", token.getTokenId(), "userId", userId));
+        Map<String, Object> details = new HashMap<>();
+        details.put("queueId", queueId);
+        details.put("tokenId", token.getTokenId());
+        details.put("userId", userId);
+        auditLogService.logEvent("QUEUE_JOIN", "User's Emergency Token Added to Queue", details);
 
         return token;
     }
@@ -517,9 +523,10 @@ public class QueueService {
             broadcastQueueUpdate(queueId, updatedQueue);
             log.info("Token {} moved to IN_SERVICE", token.getTokenId());
 
-            auditLogService.logEvent("TOKEN_SERVED",
-                    "Token moved to IN_SERVICE",
-                    Map.of("queueId", queueId, "tokenId", token.getTokenId()));
+            Map<String, Object> details = new HashMap<>();
+            details.put("queueId", queueId);
+            details.put("tokenId", token.getTokenId());
+            auditLogService.logEvent("TOKEN_SERVED", "Token moved to IN_SERVICE", details);
 
 
             return updatedQueue;
@@ -740,9 +747,10 @@ public class QueueService {
 
         log.info("Token {} marked COMPLETED", tokenId);
 
-        auditLogService.logEvent("TOKEN_COMPLETED",
-                "Token completed",
-                Map.of("queueId", queueId, "tokenId", tokenId));
+        Map<String, Object> details = new HashMap<>();
+        details.put("queueId", queueId);
+        details.put("tokenId", tokenId);
+        auditLogService.logEvent("TOKEN_COMPLETED", "Token completed", details);
         return updatedQueue;
     }
 

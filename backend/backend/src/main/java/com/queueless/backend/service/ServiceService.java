@@ -5,9 +5,9 @@ import com.queueless.backend.model.Service;
 import com.queueless.backend.repository.ServiceRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
-
 
 import java.util.List;
 import java.util.Optional;
@@ -15,15 +15,15 @@ import java.util.Optional;
 @Slf4j
 @org.springframework.stereotype.Service
 @RequiredArgsConstructor
+@CacheConfig(cacheNames = {"services", "servicesByPlace"})
 public class ServiceService {
 
     private final ServiceRepository serviceRepository;
     private final PlaceService placeService;
 
-    @CacheEvict(value = {"services", "servicesByPlace"}, allEntries = true)
+    @CacheEvict(allEntries = true)
     public Service createService(ServiceDTO serviceDTO) {
         log.debug("Creating new service: {}", serviceDTO);
-
 
         Service service = new Service();
         service.setPlaceId(serviceDTO.getPlaceId());
@@ -35,12 +35,10 @@ public class ServiceService {
         service.setIsActive(serviceDTO.getIsActive());
 
         Service saved = serviceRepository.save(service);
-        log.info("Service saved with ID: {}", saved.getId());
+        log.info("Service saved with ID: {} – cache cleared for services and servicesByPlace", saved.getId());
         return saved;
     }
 
-
-    // Add this method to verify service ownership through place
     public boolean isServiceOwnedByAdmin(String serviceId, String adminId) {
         Optional<Service> service = serviceRepository.findById(serviceId);
         if (service.isPresent()) {
@@ -50,9 +48,9 @@ public class ServiceService {
         return false;
     }
 
-    @Cacheable(value = "services", key = "#id")
+    @Cacheable(key = "#id", unless = "#result == null")
     public Service getServiceById(String id) {
-        log.debug("Looking up service with ID: {}", id);
+        log.debug("Fetching service with ID: {} (cache miss)", id);
         return serviceRepository.findById(id)
                 .orElseThrow(() -> {
                     log.error("Service not found with ID: {}", id);
@@ -60,16 +58,17 @@ public class ServiceService {
                 });
     }
 
-    @Cacheable(value = "servicesByPlace", key = "#placeId")
+    @Cacheable(key = "#placeId", unless = "#result.isEmpty()")
     public List<Service> getServicesByPlaceId(String placeId) {
-        log.debug("Fetching services by place ID: {}", placeId);
+        log.debug("Fetching services by place ID: {} (cache miss)", placeId);
         List<Service> services = serviceRepository.findByPlaceId(placeId);
         log.info("Found {} services for place {}", services.size(), placeId);
         return services;
     }
 
+    @CacheEvict(allEntries = true)
     public Service updateService(String id, ServiceDTO serviceDTO) {
-        log.info("Updating service with ID: {}", id);
+        log.info("Updating service with ID: {} – will clear cache after update", id);
         Service service = getServiceById(id);
 
         if (serviceDTO.getName() != null) service.setName(serviceDTO.getName());
@@ -80,20 +79,20 @@ public class ServiceService {
         if (serviceDTO.getIsActive() != null) service.setIsActive(serviceDTO.getIsActive());
 
         Service updated = serviceRepository.save(service);
-        log.info("Service updated successfully with ID: {}", id);
+        log.info("Service updated successfully with ID: {} – cache cleared", id);
         return updated;
     }
 
+    @CacheEvict(allEntries = true)
     public void deleteService(String id) {
-        log.warn("Deleting service with ID: {}", id);
+        log.warn("Deleting service with ID: {} – will clear cache after deletion", id);
         Service service = getServiceById(id);
         serviceRepository.delete(service);
-        log.info("Service deleted successfully with ID: {}", id);
+        log.info("Service deleted successfully with ID: {} – cache cleared", id);
     }
 
-    // ServiceService.java - Add this method
     public List<Service> getAllServices() {
-        log.debug("Fetching all services");
+        log.debug("Fetching all services (no caching)");
         List<Service> services = serviceRepository.findAll();
         log.info("Found {} services", services.size());
         return services;
