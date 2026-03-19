@@ -49,6 +49,9 @@ class AdminServiceTest {
     @Mock
     private PasswordResetService passwordResetService;
 
+    @Mock
+    private PasswordResetTokenService passwordResetTokenService;
+
     @InjectMocks
     private AdminService adminService;
 
@@ -473,7 +476,7 @@ class AdminServiceTest {
     }
 
     @Test
-    void resetProviderPassword_Success() throws MessagingException {
+    void resetProviderPassword_Success() {
         String adminId = "admin123";
         String providerId = "provider123";
         String email = "provider@test.com";
@@ -485,11 +488,11 @@ class AdminServiceTest {
                 .build();
 
         when(userRepository.findById(providerId)).thenReturn(Optional.of(provider));
-        when(passwordResetService.sendOtp(any(ForgotPasswordRequest.class))).thenReturn("OTP sent");
+        when(passwordResetTokenService.createAndSendToken(provider)).thenReturn("RESET-123");
 
         adminService.resetProviderPassword(providerId, adminId);
 
-        verify(passwordResetService).sendOtp(argThat(req -> req.getEmail().equals(email)));
+        verify(passwordResetTokenService).createAndSendToken(provider);
     }
     @Test
     void resetProviderPassword_NotFound() {
