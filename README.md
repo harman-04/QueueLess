@@ -244,7 +244,7 @@ SSL_KEY_STORE_PASSWORD=changeit
 #### Backend
 
 ```bash
-cd backend
+cd backend/backend
 ./mvnw spring-boot:run
 
 The backend will start on `https://localhost:8443` (SSL enabled). You can access the API at `https://localhost:8443/api`.
@@ -252,7 +252,7 @@ The backend will start on `https://localhost:8443` (SSL enabled). You can access
 #### Frontend
 
 ```bash
-cd frontend
+cd frontend/queue-less-frontend
 npm run dev
 ```
 
