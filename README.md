@@ -1,4 +1,4 @@
-```markdown
+
 # QueueLess – Smart Queue Management System
 
 QueueLess is a comprehensive, multi‑tenant queue management platform designed for businesses of all types – hospitals, banks, shops, restaurants, and more. It allows administrators to create and manage multiple locations (places), providers to handle queues in real time, and users to join queues, track their position, receive notifications, and provide feedback. The system features live updates via WebSocket, email/push notifications, Razorpay payment integration, role‑based access control, and detailed analytics.
