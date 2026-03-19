@@ -1,6 +1,5 @@
 package com.queueless.backend.service;
 
-import com.queueless.backend.exception.ResourceNotFoundException;
 import com.queueless.backend.model.NotificationPreference;
 import com.queueless.backend.repository.NotificationPreferenceRepository;
 import lombok.RequiredArgsConstructor;

@@ -1,25 +1,25 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
-import basicSsl from '@vitejs/plugin-basic-ssl' // Import the plugin
+import fs from 'fs'
 
 export default defineConfig({
-  plugins: [
-    react(),
-    basicSsl(), // Add the plugin here
-  ],
+  plugins: [react()],
   define: {
     global: 'window',
   },
   server: {
-    https: true, // Enable HTTPS
+    https: {
+      key: fs.readFileSync('ssl/key.pem'), // adjust path if needed
+      cert: fs.readFileSync('ssl/cert.pem'),
+    },
     host: true,
     proxy: {
       '/api': {
-        target: 'https://localhost:8443', // Your backend's HTTPS URL
+        target: 'https://localhost:8443',
         changeOrigin: true,
-        secure: false, // This is crucial for accepting your self-signed backend cert
+        secure: false, // accept backend's self‑signed cert
       },
-       '/uploads': 'https://localhost:8443',
+      '/uploads': 'https://localhost:8443',
     },
   },
 })

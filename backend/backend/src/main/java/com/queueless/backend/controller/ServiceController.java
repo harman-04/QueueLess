@@ -6,7 +6,6 @@ import com.queueless.backend.service.PlaceService;
 import com.queueless.backend.service.ServiceService;
 import com.queueless.backend.security.annotations.AdminOnly;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;

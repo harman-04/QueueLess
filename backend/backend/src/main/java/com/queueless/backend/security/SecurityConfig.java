@@ -104,6 +104,7 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/api/auth/**",
                                 "/api/password/**",
+                                "/api/password-reset-token/**",
                                 "/ws/**",
                                 "/api/payment/create-order",
                                 "/api/payment/confirm",

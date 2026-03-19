@@ -5,19 +5,13 @@ import com.queueless.backend.model.Place;
 import com.queueless.backend.model.Service;
 import com.queueless.backend.model.Queue;
 import com.queueless.backend.repository.PlaceRepository;
-import com.queueless.backend.repository.ServiceRepository;
-import com.queueless.backend.repository.QueueRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
-import org.springframework.data.support.PageableExecutionUtils;
-
-
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -29,8 +23,6 @@ import java.util.stream.Collectors;
 public class SearchService {
 
     private final PlaceRepository placeRepository;
-    private final ServiceRepository serviceRepository;
-    private final QueueRepository queueRepository;
     private final PlaceService placeService;
     private final QueueService queueService;
     private final MongoTemplate mongoTemplate;
@@ -206,7 +198,6 @@ public class SearchService {
         return result;
     }
 
-    // ... (other methods remain the same)
     public List<Place> searchNearbyWithFilters(Double longitude, Double latitude, Double radius,
                                                SearchRequestDTO request) {
         return placeRepository.searchNearbyWithFilters(

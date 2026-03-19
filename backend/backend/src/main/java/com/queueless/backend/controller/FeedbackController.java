@@ -9,7 +9,6 @@ import com.queueless.backend.security.annotations.UserOnly;
 import com.queueless.backend.security.annotations.Authenticated;
 import com.queueless.backend.security.annotations.AdminOrProviderOnly;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;

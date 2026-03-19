@@ -92,7 +92,8 @@ public class PlaceController {
     @GetMapping("/admin/my-places")
     @AdminOnly
     @Operation(summary = "Get my places", description = "Returns all places managed by the authenticated admin.")
-    @ApiResponse(responseCode = "200", description = "List of places")
+    @ApiResponse(responseCode = "200", description = "List of places",
+            content = @Content(schema = @Schema(implementation = PlaceDTO.class)))
     @ApiResponse(responseCode = "401", description = "Unauthorized")
     public ResponseEntity<List<PlaceDTO>> getMyPlaces() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -115,7 +116,8 @@ public class PlaceController {
     @GetMapping("/admin/{adminId}")
     @AdminOnly
     @Operation(summary = "Get places by admin ID", description = "Returns all places for a specific admin. The authenticated admin must match the requested adminId.")
-    @ApiResponse(responseCode = "200", description = "List of places")
+    @ApiResponse(responseCode = "200", description = "List of places",
+            content = @Content(schema = @Schema(implementation = PlaceDTO.class)))
     @ApiResponse(responseCode = "401", description = "Unauthorized")
     @ApiResponse(responseCode = "403", description = "Forbidden – admin ID mismatch")
     public ResponseEntity<List<PlaceDTO>> getPlacesByAdmin(@PathVariable String adminId) {
@@ -145,7 +147,8 @@ public class PlaceController {
 
     @GetMapping("/type/{type}")
     @Operation(summary = "Get places by type", description = "Returns all places of a given type. Public access.")
-    @ApiResponse(responseCode = "200", description = "List of places")
+    @ApiResponse(responseCode = "200", description = "List of places",
+            content = @Content(schema = @Schema(implementation = PlaceDTO.class)))
     public ResponseEntity<List<PlaceDTO>> getPlacesByType(@PathVariable String type) {
         log.debug("Fetching places of type: {}", type);
         List<Place> places = placeService.getPlacesByType(type);
@@ -155,7 +158,9 @@ public class PlaceController {
 
     @GetMapping("/nearby")
     @Operation(summary = "Get nearby places", description = "Returns places within a given radius (km) from the specified coordinates. Public access.")
-    @ApiResponse(responseCode = "200", description = "List of nearby places")
+    @ApiResponse(responseCode = "200", description = "List of nearby places",
+            content = @Content(schema = @Schema(implementation = PlaceDTO.class)))
+    @ApiResponse(responseCode = "400", description = "Invalid radius (must be positive and ≤50)")
     public ResponseEntity<List<PlaceDTO>> getNearbyPlaces(
             @Parameter(description = "Longitude") @RequestParam double longitude,
             @Parameter(description = "Latitude") @RequestParam double latitude,
@@ -235,7 +240,8 @@ public class PlaceController {
 
     @GetMapping
     @Operation(summary = "Get all places (non-paginated)", description = "Returns all places. Public access. Consider using /paginated for large datasets.")
-    @ApiResponse(responseCode = "200", description = "List of all places")
+    @ApiResponse(responseCode = "200", description = "List of all places",
+            content = @Content(schema = @Schema(implementation = PlaceDTO.class)))
     public ResponseEntity<List<PlaceDTO>> getAllPlaces() {
         log.debug("Fetching all places");
         List<Place> places = placeService.getAllPlaces();
@@ -245,7 +251,8 @@ public class PlaceController {
 
     @GetMapping("/paginated")
     @Operation(summary = "Get paginated places", description = "Returns a paginated list of places. Public access.")
-    @ApiResponse(responseCode = "200", description = "Paginated list of places")
+    @ApiResponse(responseCode = "200", description = "Paginated list of places",
+            content = @Content(schema = @Schema(implementation = Page.class)))
     public ResponseEntity<Page<PlaceDTO>> getPlacesPaginated(
             @PageableDefault(size = 20, sort = "name") Pageable pageable) {
         log.debug("Fetching paginated places: page={}, size={}", pageable.getPageNumber(), pageable.getPageSize());
@@ -256,6 +263,8 @@ public class PlaceController {
 
     @GetMapping("/top-rated")
     @Operation(summary = "Get top-rated places", description = "Returns a limited number of places with the highest average rating.")
+    @ApiResponse(responseCode = "200", description = "List of top-rated places",
+            content = @Content(schema = @Schema(implementation = PlaceDTO.class)))
     public ResponseEntity<List<PlaceDTO>> getTopRatedPlaces(@RequestParam(defaultValue = "3") int limit) {
         log.info("Fetching top {} rated places", limit);
         List<Place> places = placeService.getTopRatedPlaces(limit);

@@ -5,6 +5,8 @@ import com.queueless.backend.repository.PlaceRepository;
 import com.queueless.backend.repository.QueueRepository;
 import com.queueless.backend.repository.UserRepository;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -20,6 +22,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/public")
 @RequiredArgsConstructor
+@Tag(name = "Public", description = "Public endpoints for homepage stats")
 public class PublicController {
 
     private final UserRepository userRepository;
@@ -28,6 +31,7 @@ public class PublicController {
 
     @GetMapping("/stats")
     @Operation(summary = "Get public statistics", description = "Returns total users, places, and queues served for the homepage.")
+    @ApiResponse(responseCode = "200", description = "Statistics map")
     public ResponseEntity<Map<String, Object>> getPublicStats() {
         log.info("Fetching public statistics");
         Map<String, Object> stats = new HashMap<>();
@@ -43,6 +47,8 @@ public class PublicController {
     }
 
     @GetMapping("/live-stats")
+    @Operation(summary = "Get live queue statistics", description = "Returns number of active queues and average wait time.")
+    @ApiResponse(responseCode = "200", description = "Live stats")
     public ResponseEntity<Map<String, Object>> getLiveStats() {
         log.info("Fetching live queue statistics");
         List<Queue> allQueues = queueRepository.findAll();

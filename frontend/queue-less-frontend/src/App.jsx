@@ -34,6 +34,7 @@ import useFcmToken from './hooks/useFcmToken';
 import NotFound from './pages/NotFound';
 import AdminProviderDetail from './pages/AdminProviderDetail';
 import NotificationPreferences from './pages/NotificationPreferences';
+import ResetPasswordWithToken from './pages/ResetPasswordWithToken';
 
 function App() {
   const { token, role } = useSelector((state) => state.auth);
@@ -124,7 +125,7 @@ function App() {
             <Route path="/search" element={<AdvancedSearch />} />
             <Route path="/favorites" element={<ProtectedRoute><FavoritesPage /></ProtectedRoute>} />
             <Route path="/verify-email" element={<VerifyEmail />} />
-
+            <Route path="/reset-password-token" element={<ResetPasswordWithToken />} />
             <Route path='/profile' element={
               <ProtectedRoute allowedRoles={['USER', 'ADMIN', 'PROVIDER']}>
                 <UserProfile />

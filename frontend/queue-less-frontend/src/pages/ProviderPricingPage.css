@@ -255,24 +255,7 @@
     color: var(--text-primary) !important;
 }
 
-.dark-mode .form-floating > label {
-    color: var(--text-secondary);
-}
 
-/* Move label up and mask background ONLY for floating forms */
-.dark-mode .form-floating > .form-control:focus ~ label,
-.dark-mode .form-floating > .form-control:not(:placeholder-shown) ~ label {
-    opacity: 0.85;
-    transform: scale(0.85) translateY(-0.5rem) translateX(0.15rem);
-    color: var(--search-primary);
-    background-color: var(--input-bg); 
-    padding: 0 0.5rem;
-}
-
-/* ONLY hide placeholder for floating labels to prevent the clash you saw earlier */
-.dark-mode .form-floating > .form-control:not(:focus)::placeholder {
-    color: transparent !important;
-}
 
 /* Ensure global search inputs like in AdminPlaces.jsx stay visible */
 .dark-mode .ql-ap-search-input::placeholder {

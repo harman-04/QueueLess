@@ -33,6 +33,7 @@ public class AdminService {
     private final TokenRepository tokenRepository;
     private final PlaceService placeService;
     private final PasswordResetService passwordResetService;
+    private final PasswordResetTokenService passwordResetTokenService;
 
     public Map<String, Object> getDashboardStats(String adminId) {
         log.info("Fetching dashboard stats for admin: {}", adminId);
@@ -605,7 +606,22 @@ public class AdminService {
         return getProviderById(providerId, requestingAdminId);
     }
 
-    public void resetProviderPassword(String providerId, String requestingAdminId) throws MessagingException {
+//    public void resetProviderPassword(String providerId, String requestingAdminId) throws MessagingException {
+//        log.info("Admin {} requested password reset for provider {}", requestingAdminId, providerId);
+//
+//        User provider = userRepository.findById(providerId)
+//                .orElseThrow(() -> new ResourceNotFoundException("Provider not found with id: " + providerId));
+//
+//        if (!requestingAdminId.equals(provider.getAdminId())) {
+//            log.warn("Admin {} attempted to reset password for provider {} not under their control", requestingAdminId, providerId);
+//            throw new AccessDeniedException("You can only reset passwords for providers under your administration");
+//        }
+//
+//        ForgotPasswordRequest request = new ForgotPasswordRequest(provider.getEmail());
+//        passwordResetService.sendOtp(request);
+//    }
+
+    public void resetProviderPassword(String providerId, String requestingAdminId) {
         log.info("Admin {} requested password reset for provider {}", requestingAdminId, providerId);
 
         User provider = userRepository.findById(providerId)
@@ -616,8 +632,8 @@ public class AdminService {
             throw new AccessDeniedException("You can only reset passwords for providers under your administration");
         }
 
-        ForgotPasswordRequest request = new ForgotPasswordRequest(provider.getEmail());
-        passwordResetService.sendOtp(request);
+        // Generate and send token
+        passwordResetTokenService.createAndSendToken(provider);
     }
 
 }

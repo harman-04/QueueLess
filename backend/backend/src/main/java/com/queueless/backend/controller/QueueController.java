@@ -463,7 +463,10 @@ public class QueueController {
     @GetMapping("/{queueId}/pending-emergency")
     @AdminOrProviderOnly
     @Operation(summary = "Get pending emergency tokens", description = "Returns all pending emergency tokens for a queue.")
-    @ApiResponse(responseCode = "200", description = "List of pending emergency tokens")
+    @ApiResponse(responseCode = "200", description = "List of pending emergency tokens",
+            content = @Content(schema = @Schema(implementation = QueueToken.class)))
+    @ApiResponse(responseCode = "403", description = "Forbidden")
+    @ApiResponse(responseCode = "404", description = "Queue not found")
     public ResponseEntity<List<QueueToken>> getPendingEmergencyTokens(@PathVariable String queueId) {
         try {
             List<QueueToken> pendingTokens = queueService.getPendingEmergencyTokens(queueId);
@@ -479,6 +482,8 @@ public class QueueController {
     @Operation(summary = "Approve/reject emergency token", description = "Approves or rejects a pending emergency token.")
     @ApiResponse(responseCode = "200", description = "Queue updated",
             content = @Content(schema = @Schema(implementation = Queue.class)))
+    @ApiResponse(responseCode = "403", description = "Forbidden")
+    @ApiResponse(responseCode = "404", description = "Queue or token not found")
     public ResponseEntity<Queue> approveEmergencyToken(
             @PathVariable String queueId,
             @PathVariable String tokenId,
@@ -557,6 +562,7 @@ public class QueueController {
     @ApiResponse(responseCode = "200", description = "Queue reset",
             content = @Content(schema = @Schema(implementation = QueueResetResponseDTO.class)))
     @ApiResponse(responseCode = "403", description = "Access denied")
+    @ApiResponse(responseCode = "500", description = "Internal server error")
     public ResponseEntity<QueueResetResponseDTO> resetQueueWithOptions(
             @PathVariable String queueId,
             @Valid @RequestBody QueueResetRequestDTO resetRequest) {
@@ -575,7 +581,8 @@ public class QueueController {
 
     @GetMapping("/{queueId}/best-time")
     @Operation(summary = "Get best time to join", description = "Analyzes historical data to suggest the best times to join the queue.")
-    @ApiResponse(responseCode = "200", description = "Best time recommendations")
+    @ApiResponse(responseCode = "200", description = "Best time recommendations",
+            content = @Content(schema = @Schema(implementation = Map.class)))
     public ResponseEntity<Map<String, Object>> getBestTimeToJoin(@PathVariable String queueId) {
         Map<String, Object> bestTime = queueService.getBestTimeToJoin(queueId);
         return ResponseEntity.ok(bestTime);
@@ -583,6 +590,11 @@ public class QueueController {
 
     @GetMapping("/{queueId}/qr")
     @AdminOrProviderOnly
+    @Operation(summary = "Generate queue QR code", description = "Generates a QR code that users can scan to join the queue.")
+    @ApiResponse(responseCode = "200", description = "QR code image (PNG)",
+            content = @Content(mediaType = "image/png"))
+    @ApiResponse(responseCode = "403", description = "Forbidden")
+    @ApiResponse(responseCode = "404", description = "Queue not found")
     public ResponseEntity<byte[]> generateQueueQR(@PathVariable String queueId) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String providerId = authentication.getName();
@@ -614,7 +626,8 @@ public class QueueController {
     @PostMapping("/join-by-qr")
     @Authenticated
     @Operation(summary = "Join queue via QR scan", description = "Directly adds a token to the queue from a scanned QR code.")
-    @ApiResponse(responseCode = "201", description = "Token created")
+    @ApiResponse(responseCode = "201", description = "Token created",
+            content = @Content(schema = @Schema(implementation = QueueToken.class)))
     @ApiResponse(responseCode = "400", description = "Invalid request or queue inactive")
     @ApiResponse(responseCode = "409", description = "User already in queue")
     public ResponseEntity<?> joinByQr(@Valid @RequestBody JoinQrRequest request) {
@@ -636,6 +649,7 @@ public class QueueController {
     @Operation(summary = "Get user position in queue")
     @ApiResponse(responseCode = "200", description = "Position info",
             content = @Content(schema = @Schema(implementation = UserPositionDTO.class)))
+    @ApiResponse(responseCode = "403", description = "Forbidden – not the same user")
     public ResponseEntity<UserPositionDTO> getUserPosition(
             @PathVariable String queueId,
             @PathVariable String userId) {

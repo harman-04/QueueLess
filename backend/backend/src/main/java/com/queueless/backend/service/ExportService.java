@@ -20,19 +20,10 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import com.queueless.backend.dto.AdminReportDTO;
 import com.queueless.backend.dto.AdminReportDTO.PlaceSummaryDTO;
-import com.queueless.backend.dto.AdminReportDTO.GlobalSummaryDTO;
 import org.apache.poi.ss.usermodel.*;
-import org.apache.poi.ss.util.CellRangeAddress;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import com.itextpdf.text.*;
 import com.itextpdf.text.pdf.*;
-import java.io.ByteArrayOutputStream;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.List;
-
 /**
  * Enhanced service class for exporting queue data to PDF and Excel formats.
  * Produces professional, well-structured reports with comprehensive statistics.
@@ -63,7 +54,7 @@ public class ExportService {
             throw new IllegalArgumentException("Queue object cannot be null for PDF export.");
         }
 
-        // 2. Validate Report Type outside of try-catch so it doesn't get wrapped
+        // 2. Validate Report Type outside try-catch so it doesn't get wrapped
         String type = reportType != null ? reportType.toLowerCase() : "";
         if (!List.of("tokens", "statistics", "full").contains(type)) {
             log.error("Invalid report type '{}' requested for PDF export", reportType);
@@ -112,7 +103,7 @@ public class ExportService {
             throw new IllegalArgumentException("Queue object cannot be null for Excel export.");
         }
 
-        // 2. Validate Report Type outside of try-catch
+        // 2. Validate Report Type outside try-catch
         String type = reportType != null ? reportType.toLowerCase() : "";
         if (!List.of("tokens", "statistics", "full").contains(type)) {
             log.error("Invalid report type '{}' requested for Excel export", reportType);

@@ -1,21 +1,23 @@
+// src/pages/Login.jsx
 import { useFormik } from 'formik';
 import { loginSchema } from '../validation/authSchema';
 import { authService } from '../services/authService';
 import AuthFormWrapper from '../components/AuthFormWrapper';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import { FaLock, FaEnvelope } from 'react-icons/fa';
+import { FaLock, FaEnvelope, FaEye, FaEyeSlash } from 'react-icons/fa';
 import { useDispatch } from 'react-redux';
 import { loginSuccess } from '../redux/authSlice';
 import './Login.css';
 import { useState } from 'react';
-import axiosInstance from '../utils/axiosInstance'; // <-- ADD THIS
+import axiosInstance from '../utils/axiosInstance';
 
 const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const dispatch = useDispatch();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const from = location.state?.from?.pathname || '/';
 
@@ -75,10 +77,10 @@ const Login = () => {
               await axiosInstance.post('/queues/join-by-qr', { queueId, tokenType });
               toast.success('You have joined the queue!');
               navigate(`/customer/queue/${queueId}`);
-              return; // stop further navigation
+              return;
             } catch (err) {
               toast.error('Failed to join queue from QR');
-              // fall through to default dashboard
+              // fall through
             }
           }
 
@@ -117,46 +119,66 @@ const Login = () => {
   return (
     <AuthFormWrapper title="Welcome Back 👋">
       <form onSubmit={handleSubmit} className="login-form" noValidate>
+        {/* Email Field */}
         <div className="mb-4">
           <label htmlFor="email" className="form-label">
-            <FaEnvelope className="icon" /> Email
+            Email
           </label>
-          <input
-            id="email"
-            type="email"
-            name="email"
-            className={`form-control ${touched.email && errors.email ? 'is-invalid' : ''}`}
-            value={values.email}
-            onChange={handleChange}
-            placeholder="Enter your email"
-            autoComplete="email"
-            required
-          />
-          {touched.email && errors.email && (
-            <div className="invalid-feedback">{errors.email}</div>
-          )}
+          <div className="input-group">
+            <span className="input-group-text border-end-0">
+              <FaEnvelope className="text-secondary" />
+            </span>
+            <input
+              id="email"
+              type="email"
+              name="email"
+              className={`form-control border-start-0 ${touched.email && errors.email ? 'is-invalid' : ''}`}
+              value={values.email}
+              onChange={handleChange}
+              placeholder="Enter your email"
+              autoComplete="email"
+              required
+            />
+            {touched.email && errors.email && (
+              <div className="invalid-feedback">{errors.email}</div>
+            )}
+          </div>
         </div>
 
+        {/* Password Field with Show/Hide Toggle */}
         <div className="mb-4">
           <label htmlFor="password" className="form-label">
-            <FaLock className="icon" /> Password
+            Password
           </label>
-          <input
-            id="password"
-            type="password"
-            name="password"
-            className={`form-control ${touched.password && errors.password ? 'is-invalid' : ''}`}
-            value={values.password}
-            onChange={handleChange}
-            placeholder="Enter your password"
-            autoComplete="current-password"
-            required
-          />
-          {touched.password && errors.password && (
-            <div className="invalid-feedback">{errors.password}</div>
-          )}
+          <div className="input-group">
+            <span className="input-group-text border-end-0">
+              <FaLock className="text-secondary" />
+            </span>
+            <input
+              id="password"
+              type={showPassword ? 'text' : 'password'}
+              name="password"
+              className={`form-control border-start-0 ${touched.password && errors.password ? 'is-invalid' : ''}`}
+              value={values.password}
+              onChange={handleChange}
+              placeholder="Enter your password"
+              autoComplete="current-password"
+              required
+            />
+            <span
+              className="input-group-text border-start-0"
+              onClick={() => setShowPassword(!showPassword)}
+              style={{ cursor: 'pointer' }}
+            >
+              {showPassword ? <FaEyeSlash className="text-secondary" /> : <FaEye className="text-secondary" />}
+            </span>
+            {touched.password && errors.password && (
+              <div className="invalid-feedback">{errors.password}</div>
+            )}
+          </div>
         </div>
 
+        {/* Links */}
         <div className="d-flex justify-content-between align-items-center mb-3">
           <Link to="/forgot-password" className="text-decoration-none forgot-link">
             Forgot Password?
@@ -166,6 +188,7 @@ const Login = () => {
           </Link>
         </div>
 
+        {/* Submit Button */}
         <button
           className="btn btn-primary w-100 login-btn"
           type="submit"

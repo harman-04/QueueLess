@@ -1,4 +1,4 @@
-//src/pages/Register.jsx
+// src/pages/Register.jsx
 import { useFormik } from 'formik';
 import { registerSchema } from '../validation/authSchema';
 import { authService } from '../services/authService';
@@ -7,14 +7,18 @@ import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faUser, faEnvelope, faPhone, faLock, faKey, faBell, faGlobe, faPalette } from '@fortawesome/free-solid-svg-icons';
+import {
+  faUser, faEnvelope, faPhone, faLock, faKey,
+  faBell, faGlobe, faPalette, faEye, faEyeSlash
+} from '@fortawesome/free-solid-svg-icons';
 import '@fortawesome/fontawesome-free/css/all.min.css';
-import './Register.css'; //
+import './Register.css';
 
 const Register = () => {
   const navigate = useNavigate();
   const [role, setRole] = useState('USER');
   const [showPreferences, setShowPreferences] = useState(false);
+  const [showPassword, setShowPassword] = useState(false); // State for password visibility
 
   const { values, errors, touched, handleChange, handleSubmit } = useFormik({
     initialValues: {
@@ -28,7 +32,7 @@ const Register = () => {
       preferences: {
         emailNotifications: true,
         smsNotifications: false,
-            pushNotifications: true,
+        pushNotifications: true,
         language: 'en',
         defaultSearchRadius: 5,
         darkMode: false
@@ -37,7 +41,6 @@ const Register = () => {
     validationSchema: registerSchema,
     onSubmit: async (values) => {
       try {
-        // Only include token and placeId if needed
         const payload = {
           name: values.name,
           email: values.email,
@@ -50,8 +53,6 @@ const Register = () => {
         };
 
         await authService.register(payload);
-        // toast.success('Registered successfully!');
-        // navigate('/login');
         toast.success('Registration successful! Please verify your email.');
         navigate('/verify-email', { state: { email: values.email } });
       } catch (err) {
@@ -64,10 +65,11 @@ const Register = () => {
     <AuthFormWrapper title="Create Your Account">
       <div className="register-form">
         <form onSubmit={handleSubmit}>
+          {/* Name Field */}
           <div className="mb-3">
             <label className="form-label">Name</label>
             <div className="input-group">
-              <span className="input-group-text bg-light border-end-0">
+              <span className="input-group-text border-end-0">
                 <FontAwesomeIcon icon={faUser} className="text-secondary" />
               </span>
               <input
@@ -83,10 +85,11 @@ const Register = () => {
             </div>
           </div>
 
+          {/* Email Field */}
           <div className="mb-3">
             <label className="form-label">Email</label>
             <div className="input-group">
-              <span className="input-group-text bg-light border-end-0">
+              <span className="input-group-text  border-end-0">
                 <FontAwesomeIcon icon={faEnvelope} className="text-secondary" />
               </span>
               <input
@@ -102,10 +105,11 @@ const Register = () => {
             </div>
           </div>
 
+          {/* Phone Number Field */}
           <div className="mb-3">
             <label className="form-label">Phone Number</label>
             <div className="input-group">
-              <span className="input-group-text bg-light border-end-0">
+              <span className="input-group-text  border-end-0">
                 <FontAwesomeIcon icon={faPhone} className="text-secondary" />
               </span>
               <input
@@ -121,14 +125,15 @@ const Register = () => {
             </div>
           </div>
 
+          {/* Password Field with Show/Hide Toggle */}
           <div className="mb-3">
             <label className="form-label">Password</label>
             <div className="input-group">
-              <span className="input-group-text bg-light border-end-0">
+              <span className="input-group-text  border-end-0">
                 <FontAwesomeIcon icon={faLock} className="text-secondary" />
               </span>
               <input
-                type="password"
+                type={showPassword ? 'text' : 'password'}
                 name="password"
                 className={`form-control border-start-0 ${touched.password && errors.password ? 'is-invalid' : ''}`}
                 value={values.password}
@@ -136,10 +141,21 @@ const Register = () => {
                 placeholder="Create a strong password"
                 autoComplete="off"
               />
-              {touched.password && errors.password && <div className="invalid-feedback">{errors.password}</div>}
+              <span
+                className="input-group-text  border-start-0 "
+                onClick={() => setShowPassword(!showPassword)}
+                style={{ cursor: 'pointer' }}
+                id='showPassword'
+              >
+                <FontAwesomeIcon icon={showPassword ? faEyeSlash : faEye} className="text-secondary" />
+              </span>
             </div>
+            {touched.password && errors.password && (
+              <div className="invalid-feedback d-block">{errors.password}</div>
+            )}
           </div>
 
+          {/* Account Type Field */}
           <div className="mb-3">
             <label className="form-label">Account Type</label>
             <select
@@ -157,6 +173,7 @@ const Register = () => {
             </select>
           </div>
 
+          {/* Token Field (for ADMIN/PROVIDER) */}
           {(role === 'ADMIN' || role === 'PROVIDER') && (
             <div className="mb-3">
               <label className="form-label">Registration Token</label>
@@ -178,6 +195,7 @@ const Register = () => {
             </div>
           )}
 
+          {/* Place ID Field (for PROVIDER) */}
           {role === 'PROVIDER' && (
             <div className="mb-3">
               <label className="form-label">Place ID (Optional)</label>
@@ -199,6 +217,7 @@ const Register = () => {
             </div>
           )}
 
+          {/* Toggle Preferences Button */}
           <div className="mb-3">
             <button
               type="button"
@@ -210,6 +229,7 @@ const Register = () => {
             </button>
           </div>
 
+          {/* Preferences Panel */}
           {showPreferences && (
             <div className="border p-3 rounded mb-3">
               <h6 className="mb-3">Preferences</h6>
@@ -245,19 +265,19 @@ const Register = () => {
               </div>
 
               <div className="form-check mb-2">
-      <input
-        type="checkbox"
-        name="preferences.pushNotifications"
-        className="form-check-input"
-        checked={values.preferences.pushNotifications}
-        onChange={handleChange}
-        id="pushNotifications"
-      />
-      <label className="form-check-label" htmlFor="pushNotifications">
-        <i className="bi bi-bell me-2"></i>
-        Push Notifications
-      </label>
-    </div>
+                <input
+                  type="checkbox"
+                  name="preferences.pushNotifications"
+                  className="form-check-input"
+                  checked={values.preferences.pushNotifications}
+                  onChange={handleChange}
+                  id="pushNotifications"
+                />
+                <label className="form-check-label" htmlFor="pushNotifications">
+                  <i className="bi bi-bell me-2"></i>
+                  Push Notifications
+                </label>
+              </div>
 
               <div className="form-check mb-2">
                 <input
@@ -304,13 +324,15 @@ const Register = () => {
             </div>
           )}
 
+          {/* Submit Button */}
           <button className="btn btn-primary w-100 login-btn mb-2 shadow-sm" type="submit">
             Register
           </button>
 
-         <Link to="/login" className="text-decoration-none create-link text-center small">
-  Already have an account?
-</Link>
+          {/* Login Link */}
+          <Link to="/login" className="text-decoration-none create-link text-center small">
+            Already have an account?
+          </Link>
         </form>
       </div>
     </AuthFormWrapper>

@@ -9,7 +9,6 @@ import com.queueless.backend.service.QueueService;
 import com.queueless.backend.security.annotations.Authenticated;
 import com.queueless.backend.security.annotations.AdminOrProviderOnly;
 import com.queueless.backend.security.annotations.AdminOnly;
-import com.queueless.backend.security.annotations.UserOnly;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.handler.annotation.Header;
@@ -19,8 +18,6 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
-import org.springframework.beans.factory.annotation.Autowired;
-
 import java.util.Optional;
 
 @Controller

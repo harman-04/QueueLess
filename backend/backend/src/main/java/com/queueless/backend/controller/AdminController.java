@@ -60,7 +60,7 @@ public class AdminController {
     @Operation(summary = "Get my payment history", description = "Returns payment history for the authenticated admin (payments made by them).")
     @ApiResponse(responseCode = "200", description = "List of payments",
             content = @Content(schema = @Schema(implementation = Payment.class)))
-    @ApiResponse(responseCode = "500", description = "Internal server error")
+    @ApiResponse(responseCode = "400", description = "Bad request – service error")
     public List<Payment> getMyPaymentHistory() {
         log.info("Fetching payment history for admin dashboard.");
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -87,7 +87,7 @@ public class AdminController {
     @AdminOnly
     @Operation(summary = "Get admin dashboard statistics", description = "Returns aggregated statistics for the admin's dashboard.")
     @ApiResponse(responseCode = "200", description = "Statistics map")
-    @ApiResponse(responseCode = "500", description = "Internal server error")
+    @ApiResponse(responseCode = "400", description = "Bad request – service error")
     public Map<String, Object> getAdminStats() {
         log.info("Fetching admin dashboard statistics");
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -105,7 +105,7 @@ public class AdminController {
     @AdminOnly
     @Operation(summary = "Get all queues under admin's places", description = "Returns a list of all queues belonging to places owned by the admin.")
     @ApiResponse(responseCode = "200", description = "List of queues")
-    @ApiResponse(responseCode = "500", description = "Internal server error")
+    @ApiResponse(responseCode = "400", description = "Bad request – service error")
     public List<Queue> getAllAdminQueues() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String adminId = authentication.getName();
@@ -126,7 +126,7 @@ public class AdminController {
     @Operation(summary = "Get enhanced queue details", description = "Returns queues with place and provider names, token counts, and estimated wait times.")
     @ApiResponse(responseCode = "200", description = "List of enhanced queue DTOs",
             content = @Content(schema = @Schema(implementation = AdminQueueDTO.class)))
-    @ApiResponse(responseCode = "500", description = "Internal server error")
+    @ApiResponse(responseCode = "400", description = "Bad request – service error")
     public List<AdminQueueDTO> getAdminQueuesWithDetails() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String adminId = authentication.getName();
@@ -143,7 +143,7 @@ public class AdminController {
     @AdminOnly
     @Operation(summary = "Get enhanced payment history", description = "Returns all payments made by admin (for themselves) and for providers they created, sorted by date.")
     @ApiResponse(responseCode = "200", description = "List of payments")
-    @ApiResponse(responseCode = "500", description = "Internal server error")
+    @ApiResponse(responseCode = "400", description = "Bad request – service error")
     public ResponseEntity<List<PaymentHistoryDTO>> getEnhancedPaymentHistory() {
         String adminId = SecurityContextHolder.getContext().getAuthentication().getName();
         List<PaymentHistoryDTO> history = adminService.getEnhancedPaymentHistory(adminId);
@@ -154,6 +154,7 @@ public class AdminController {
     @AdminOnly
     @Operation(summary = "Get token volume over time", description = "Returns daily token counts for the last N days (default 30).")
     @ApiResponse(responseCode = "200", description = "Map with dates and counts")
+    @ApiResponse(responseCode = "400", description = "Invalid days parameter")
     public ResponseEntity<Map<String, Object>> getTokensOverTime(
             @RequestParam(defaultValue = "30") @Min(1) @Max(365) int days) {
         String adminId = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -165,6 +166,7 @@ public class AdminController {
     @AdminOnly
     @Operation(summary = "Get busiest hours", description = "Returns average queue waiting count by hour (0-23) over the last 30 days.")
     @ApiResponse(responseCode = "200", description = "Map of hour -> average waiting count")
+    @ApiResponse(responseCode = "400", description = "Bad request – service error")
     public ResponseEntity<Map<Integer, Double>> getBusiestHours() {
         String adminId = SecurityContextHolder.getContext().getAuthentication().getName();
         Map<Integer, Double> data = adminService.getBusiestHours(adminId);
@@ -173,6 +175,10 @@ public class AdminController {
 
     @GetMapping("/providers")
     @AdminOnly
+    @Operation(summary = "Get providers with performance", description = "Returns all providers under this admin with queue statistics.")
+    @ApiResponse(responseCode = "200", description = "List of provider performance DTOs",
+            content = @Content(schema = @Schema(implementation = ProviderPerformanceDTO.class)))
+    @ApiResponse(responseCode = "400", description = "Bad request – service error")
     public ResponseEntity<List<ProviderPerformanceDTO>> getProvidersWithQueues() {
         String adminId = SecurityContextHolder.getContext().getAuthentication().getName();
         return ResponseEntity.ok(adminService.getProvidersWithQueues(adminId));
@@ -182,6 +188,7 @@ public class AdminController {
     @AdminOnly
     @Operation(summary = "Get places with current queue counts", description = "Returns all places owned by the admin with waiting and in-service token counts.")
     @ApiResponse(responseCode = "200", description = "List of places with queue stats")
+    @ApiResponse(responseCode = "400", description = "Bad request – service error")
     public ResponseEntity<List<PlaceWithQueueDTO>> getPlacesWithQueueStats() {
         String adminId = SecurityContextHolder.getContext().getAuthentication().getName();
         return ResponseEntity.ok(adminService.getPlacesWithQueueStats(adminId));
@@ -189,7 +196,10 @@ public class AdminController {
 
     @GetMapping("/report/pdf")
     @AdminOnly
-    @Operation(summary = "Export admin report as PDF")
+    @Operation(summary = "Export admin report as PDF", description = "Generates a PDF report with overall and per‑place statistics.")
+    @ApiResponse(responseCode = "200", description = "PDF file",
+            content = @Content(mediaType = "application/pdf"))
+    @ApiResponse(responseCode = "500", description = "Error generating PDF")
     public ResponseEntity<ByteArrayResource> exportAdminReportPdf() {
         String adminId = SecurityContextHolder.getContext().getAuthentication().getName();
         AdminReportDTO report = adminService.getAdminReport(adminId);
@@ -209,6 +219,10 @@ public class AdminController {
 
     @GetMapping("/report/excel")
     @AdminOnly
+    @Operation(summary = "Export admin report as Excel", description = "Generates an Excel report with overall and per‑place statistics.")
+    @ApiResponse(responseCode = "200", description = "Excel file",
+            content = @Content(mediaType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+    @ApiResponse(responseCode = "500", description = "Error generating Excel")
     public ResponseEntity<ByteArrayResource> exportAdminReportExcel() {
         String adminId = SecurityContextHolder.getContext().getAuthentication().getName();
         AdminReportDTO report = adminService.getAdminReport(adminId);
@@ -229,6 +243,9 @@ public class AdminController {
     @PostMapping("/alert-config")
     @AdminOnly
     @Operation(summary = "Create or update alert configuration")
+    @ApiResponse(responseCode = "200", description = "Alert config saved",
+            content = @Content(schema = @Schema(implementation = AlertConfig.class)))
+    @ApiResponse(responseCode = "400", description = "Invalid parameters or service error")
     public ResponseEntity<AlertConfig> saveAlertConfig(
             @RequestParam int thresholdWaitTime,
             @RequestParam(required = false) String notificationEmail) {
@@ -240,6 +257,10 @@ public class AdminController {
     @GetMapping("/alert-config")
     @AdminOnly
     @Operation(summary = "Get current alert configuration")
+    @ApiResponse(responseCode = "200", description = "Alert config",
+            content = @Content(schema = @Schema(implementation = AlertConfig.class)))
+    @ApiResponse(responseCode = "404", description = "No configuration found")
+    @ApiResponse(responseCode = "400", description = "Bad request – service error")
     public ResponseEntity<AlertConfig> getAlertConfig() {
         String adminId = SecurityContextHolder.getContext().getAuthentication().getName();
         try {
@@ -253,6 +274,8 @@ public class AdminController {
     @DeleteMapping("/alert-config")
     @AdminOnly
     @Operation(summary = "Delete alert configuration")
+    @ApiResponse(responseCode = "200", description = "Deleted")
+    @ApiResponse(responseCode = "400", description = "Bad request – service error")
     public ResponseEntity<Void> deleteAlertConfig() {
         String adminId = SecurityContextHolder.getContext().getAuthentication().getName();
         alertConfigService.deleteConfig(adminId);
@@ -262,6 +285,8 @@ public class AdminController {
     @PutMapping("/alert-config/toggle")
     @AdminOnly
     @Operation(summary = "Enable or disable alerts")
+    @ApiResponse(responseCode = "200", description = "Toggled")
+    @ApiResponse(responseCode = "400", description = "Bad request – service error")
     public ResponseEntity<Void> toggleAlerts(@RequestParam boolean enabled) {
         String adminId = SecurityContextHolder.getContext().getAuthentication().getName();
         alertConfigService.toggleEnabled(adminId, enabled);
@@ -275,6 +300,7 @@ public class AdminController {
             content = @Content(schema = @Schema(implementation = ProviderDetailsDTO.class)))
     @ApiResponse(responseCode = "403", description = "Forbidden – not the admin of this provider")
     @ApiResponse(responseCode = "404", description = "Provider not found")
+    @ApiResponse(responseCode = "400", description = "Bad request – service error")
     public ResponseEntity<ProviderDetailsDTO> getProviderDetails(@PathVariable String providerId) {
         String adminId = SecurityContextHolder.getContext().getAuthentication().getName();
         ProviderDetailsDTO details = adminService.getProviderById(providerId, adminId);
@@ -304,6 +330,7 @@ public class AdminController {
             content = @Content(schema = @Schema(implementation = ProviderDetailsDTO.class)))
     @ApiResponse(responseCode = "403", description = "Forbidden – not the admin of this provider")
     @ApiResponse(responseCode = "404", description = "Provider not found")
+    @ApiResponse(responseCode = "400", description = "Bad request – service error")
     public ResponseEntity<ProviderDetailsDTO> toggleProviderStatus(
             @PathVariable String providerId,
             @RequestParam boolean active) {

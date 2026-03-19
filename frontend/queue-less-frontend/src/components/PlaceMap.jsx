@@ -6,6 +6,8 @@ import 'leaflet/dist/leaflet.css';
 import { Card, Spinner, Alert } from 'react-bootstrap';
 import axiosInstance from '../utils/axiosInstance';
 import './PlaceMap.css';
+import { useMap } from 'react-leaflet';
+
 // Fix for default marker icons in Leaflet with webpack
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -55,11 +57,22 @@ const PlaceMap = () => {
     return '#e74c3c'; // red
   };
 
+  function MapResizeHandler() {
+  const map = useMap();
+  useEffect(() => {
+    // Small delay to allow the container to become visible
+    setTimeout(() => {
+      map.invalidateSize();
+    }, 100);
+  }, [map]);
+  return null;
+}
   return (
     <Card className="mb-4 place-map-card">
-      <Card.Header>Geographic Heat Map – Queue Load</Card.Header>
+      <Card.Header>Geographic Heat Map Queue Load</Card.Header>
       <Card.Body style={{ height: 500 }}>
         <MapContainer center={center} zoom={5} style={{ height: '100%', width: '100%' }}>
+          <MapResizeHandler />
           <TileLayer
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'

@@ -468,40 +468,40 @@ const AdminDashboard = () => {
             </Card>
           </Tab>
 
-         <Tab eventKey="analytics" title={<span><FaChartLine className="me-2" /> Analytics</span>}>
-  <Row>
-    <Col md={12}>
-      {analyticsLoading ? (
-        <div className="skeleton-box analytics-skeleton-card animate__animated animate__fadeIn">
-           <div className="d-flex h-100 align-items-center justify-content-center">
-              <Spinner animation="grow" variant="primary" size="lg" />
-              <span className="ms-3 fw-bold text-primary">Analyzing Token Volume...</span>
-           </div>
-        </div>
-      ) : (
-        <TokenVolumeChart data={tokensOverTime} error={analyticsError} />
-      )}
-    </Col>
-  </Row>
+          <Tab eventKey="analytics" title={<span><FaChartLine className="me-2" /> Analytics</span>}>
+            <Row>
+              <Col md={12}>
+                {analyticsLoading ? (
+                  <div className="skeleton-box analytics-skeleton-card animate__animated animate__fadeIn">
+                    <div className="d-flex h-100 align-items-center justify-content-center">
+                      <Spinner animation="grow" variant="primary" size="lg" />
+                      <span className="ms-3 fw-bold text-primary">Analyzing Token Volume...</span>
+                    </div>
+                  </div>
+                ) : (
+                  <TokenVolumeChart data={tokensOverTime} error={analyticsError} />
+                )}
+              </Col>
+            </Row>
 
-  <Row>
-    <Col md={12}>
-      {analyticsLoading ? (
-        <div className="skeleton-box analytics-skeleton-card animate__animated animate__fadeIn">
-           <div className="d-flex h-100 align-items-center justify-content-center">
-              <Spinner animation="grow" variant="info" size="lg" />
-              <span className="ms-3 fw-bold text-info">Mapping Busiest Hours...</span>
-           </div>
-        </div>
-      ) : (
-        <BusiestHoursChart data={busiestHours} error={analyticsError} />
-      )}
-    </Col>
-  </Row>
-</Tab>
+            <Row>
+              <Col md={12}>
+                {analyticsLoading ? (
+                  <div className="skeleton-box analytics-skeleton-card animate__animated animate__fadeIn">
+                    <div className="d-flex h-100 align-items-center justify-content-center">
+                      <Spinner animation="grow" variant="info" size="lg" />
+                      <span className="ms-3 fw-bold text-info">Mapping Busiest Hours...</span>
+                    </div>
+                  </div>
+                ) : (
+                  <BusiestHoursChart data={busiestHours} error={analyticsError} />
+                )}
+              </Col>
+            </Row>
+          </Tab>
 
           <Tab eventKey="map" title={<span><FaMapMarkerAlt className="me-2" /> Heat Map</span>}>
-            <PlaceMap />
+            {activeTab === 'map' && <PlaceMap />}
           </Tab>
         </Tabs>
 

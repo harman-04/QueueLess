@@ -837,3 +837,28 @@
 .admin-dashboard .payments-table td:last-child {
     padding-right: 1.5rem !important;
 }
+
+/* Input group styling for admin dashboard */
+.admin-dashboard .input-group-text {
+  background-color: var(--bg-secondary) !important;
+  border: 2px solid var(--border-color) !important;
+  color: var(--text-secondary) !important;
+  border-radius: 12px 0 0 12px;
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+}
+
+.admin-dashboard .input-group .form-control {
+  background-color: var(--input-bg) !important;
+  border: 2px solid var(--border-color) !important;
+  border-left: none;
+  color: var(--input-text) !important;
+  border-radius: 0 12px 12px 0;
+  padding: 0.75rem 1rem;
+}
+
+.admin-dashboard .input-group .form-control:focus {
+  border-color: var(--search-primary) !important;
+  box-shadow: 0 0 0 3px rgba(var(--search-primary-rgb), 0.2) !important;
+  outline: none;
+}

@@ -161,7 +161,6 @@ const ProviderPricingPage = () => {
                 onChange={formik.handleChange}
                 isInvalid={formik.touched.email && formik.errors.email}
               />
-              <Form.Label htmlFor="floatingEmail">Professional Email</Form.Label>
               <Form.Control.Feedback type="invalid">
                 {formik.errors.email}
               </Form.Control.Feedback>

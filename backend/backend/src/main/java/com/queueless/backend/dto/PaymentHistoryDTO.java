@@ -1,23 +1,40 @@
-// src/main/java/com/queueless/backend/dto/PaymentHistoryDTO.java
 package com.queueless.backend.dto;
 
-import lombok.Data;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
+import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
+
 import java.time.LocalDateTime;
 
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@Schema(description = "Payment history entry")
 public class PaymentHistoryDTO {
-    private String id;               // paymentId or tokenId
-    private String description;       // e.g., "Admin token" or "Provider token for p@gmail.com"
-    private int amount;               // amount in paise (0 for tokens without payment)
-    private String role;              // ADMIN or PROVIDER
-    private String status;            // "Completed" or "Pending" (based on payment, always "Completed" for tokens)
+    @Schema(description = "Payment or token ID", example = "pay123")
+    private String id;
+
+    @Schema(description = "Description", example = "Admin token")
+    private String description;
+
+    @Schema(description = "Amount in paise", example = "10000")
+    private int amount;
+
+    @Schema(description = "Role (ADMIN or PROVIDER)", example = "ADMIN")
+    private String role;
+
+    @Schema(description = "Payment status", example = "Completed")
+    private String status;
+
+    @Schema(description = "Creation timestamp")
     private LocalDateTime createdAt;
-    private String reference;         // orderId or tokenValue
-    private boolean isPaid;           // true for tokens
+
+    @Schema(description = "Reference (orderId or token value)", example = "order_abc123")
+    private String reference;
+
+    @Schema(description = "Whether payment was completed", example = "true")
+    private boolean isPaid;
 }

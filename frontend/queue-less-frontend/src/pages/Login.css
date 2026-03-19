@@ -1,4 +1,4 @@
-/* Login.css – Premium UI/UX with Dark Mode Support */
+/* Login.css – Premium UI/UX with Dark Mode Support (Updated) */
 
 .login-form {
   width: 100%;
@@ -11,15 +11,39 @@
 .login-form .form-label {
   font-weight: 600;
   color: var(--text-primary);
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
   margin-bottom: 0.5rem;
+  font-size: 0.95rem;
+  letter-spacing: 0.3px;
 }
 
-.login-form .form-label .icon {
-  color: var(--link-color);
-  font-size: 1.1rem;
+/* Input group styling */
+.login-form .input-group {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.login-form .input-group-text {
+  background-color: var(--bg-secondary);
+  border: 2px solid var(--border-color);
+  color: var(--text-secondary);
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+}
+
+.login-form .input-group-text:first-child {
+  border-radius: 12px 0 0 12px;
+  border-right: none;
+}
+
+.login-form .input-group-text:last-child {
+  border-radius: 0 12px 12px 0;
+  border-left: none;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.login-form .input-group-text:last-child:hover {
+  color: var(--search-primary);
 }
 
 /* Input fields */
@@ -44,10 +68,23 @@
   border-color: var(--danger-color);
 }
 
+/* Remove border radius on adjacent inputs in input-group */
+.input-group > .form-control:not(:first-child) {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
+.input-group > .form-control:not(:last-child) {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+/* Invalid feedback positioning */
 .login-form .invalid-feedback {
   color: var(--danger-color);
   font-size: 0.85rem;
   margin-top: 0.3rem;
+  width: 100%;
 }
 
 /* Links */
@@ -107,6 +144,7 @@
     padding: 0;
   }
 
+  .login-form .input-group-text,
   .login-form .form-control {
     padding: 0.6rem 0.9rem;
   }

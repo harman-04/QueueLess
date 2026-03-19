@@ -61,9 +61,9 @@ public class AuthService {
         String jwtToken = jwtProvider.generateToken(user);
         log.info("Login successful for email: {} | Role: {}", user.getEmail(), user.getRole());
 
-        auditLogService.logEvent("USER_LOGIN",
-                "User logged in",
-                Map.of("email", request.getEmail()));
+        Map<String, Object> details = new HashMap<>();
+        details.put("email", request.getEmail());
+        auditLogService.logEvent("USER_LOGIN", "User logged in", details);
 
         return new JwtResponse(
                 jwtToken,
@@ -187,10 +187,10 @@ public class AuthService {
 
         log.info("Registration successful for email: {} | Role: {}", user.getEmail(), user.getRole());
 
-        auditLogService.logEvent("USER_REGISTERED",
-                "User registered with role: " + request.getRole(),
-                Map.of("email", request.getEmail(), "role", request.getRole().name()));
-
+        Map<String, Object> details = new HashMap<>();
+        details.put("email", request.getEmail());
+        details.put("role", request.getRole().name());
+        auditLogService.logEvent("USER_REGISTERED", "User registered with role: " + request.getRole(), details);
         return "User registered successfully! Please verify your email.";
     }
     private void sendVerificationOtp(String email) {

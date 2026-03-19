@@ -108,4 +108,24 @@ public class EmailService {
             log.error("Failed to send verification email", e);
         }
     }
+
+    public void sendPasswordResetLink(String toEmail, String resetLink) {
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+
+            helper.setTo(toEmail);
+            helper.setSubject("QueueLess – Password Reset Requested by Admin");
+
+            String htmlTemplate = loadHtmlTemplate("templates/password-reset-link-template.html");
+            String processedHtml = htmlTemplate.replace("{{RESET_LINK}}", resetLink);
+
+            helper.setText(processedHtml, true);
+            mailSender.send(message);
+            log.info("Password reset link email sent to {}", toEmail);
+        } catch (Exception e) {
+            log.error("Failed to send password reset link email", e);
+            throw new RuntimeException("Failed to send reset email", e);
+        }
+    }
 }

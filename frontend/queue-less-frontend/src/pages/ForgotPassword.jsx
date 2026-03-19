@@ -26,7 +26,7 @@ const ForgotPassword = () => {
        <div className="forgot-password-container">
       <form onSubmit={handleSubmit}>
         <div className="mb-3">
-          <label>Email</label>
+         <label className="form-label">Email</label>
           <input
             type="email"
             className="form-control"

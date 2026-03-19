@@ -1,6 +1,5 @@
 package com.queueless.backend.service;
 
-import com.queueless.backend.model.Queue;
 import com.queueless.backend.repository.QueueRepository;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;

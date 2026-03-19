@@ -63,6 +63,7 @@ public class QueueService {
                 });
     }
 
+    @CacheEvict(value = {"queues", "queuesByPlace"}, allEntries = true)
     public QueueToken addNewTokenWithDetails(String queueId, String userId, TokenRequestDTO tokenRequest) {
         Queue queue = getQueueOrThrow(queueId);
 
@@ -174,6 +175,7 @@ public class QueueService {
         return response;
     }
 
+    @CacheEvict(value = {"queues", "queuesByPlace"}, allEntries = true)
     public QueueResetResponseDTO resetQueueWithOptions(String queueId, QueueResetRequestDTO resetRequest, String requesterId) {
         Queue queue = getQueueOrThrow(queueId);
 
@@ -304,6 +306,7 @@ public class QueueService {
         return token;
     }
 
+    @CacheEvict(value = {"queues", "queuesByPlace"}, allEntries = true)
     public QueueToken addGroupToken(String queueId, String userId, List<QueueToken.GroupMember> groupMembers) {
         Queue queue = getQueueOrThrow(queueId);
 
@@ -366,6 +369,7 @@ public class QueueService {
         return token;
     }
 
+    @CacheEvict(value = {"queues", "queuesByPlace"}, allEntries = true)
     public QueueToken addEmergencyToken(String queueId, String userId, String emergencyDetails) {
         Queue queue = getQueueOrThrow(queueId);
 
@@ -424,6 +428,7 @@ public class QueueService {
         return token;
     }
 
+    @CacheEvict(value = {"queues", "queuesByPlace"}, allEntries = true)
     public Queue approveEmergencyToken(String queueId, String tokenId, boolean approve, String reason) {
         Queue queue = getQueueOrThrow(queueId);
 
@@ -559,6 +564,7 @@ public class QueueService {
         }
     }
 
+    @CacheEvict(value = {"queues", "queuesByPlace"}, allEntries = true)
     public Queue setQueueActiveStatus(String queueId, boolean active) {
         Queue queue = getQueueOrThrow(queueId);
         queue.setIsActive(active);
@@ -569,6 +575,7 @@ public class QueueService {
     }
 
     @Scheduled(fixedRate = 30000)
+    @CacheEvict(value = {"queues", "queuesByPlace"}, allEntries = true)
     public void updateAllQueueWaitTimes() {
         log.info("🕐 Updating estimated wait times for all queues");
         List<Queue> allQueues = queueRepository.findAll();
@@ -593,6 +600,7 @@ public class QueueService {
         }
     }
 
+    @CacheEvict(value = "queuesByPlace", key = "#placeId")
     public Queue createNewQueue(String providerId, String serviceName, String placeId, String serviceId) {
         log.info("Creating queue for providerId={}, serviceName={}, placeId={}, serviceId={}",
                 providerId, serviceName, placeId, serviceId);
@@ -755,6 +763,7 @@ public class QueueService {
     }
 
     @Scheduled(fixedRate = 3600000) // Run every hour
+    @CacheEvict(value = {"queues", "queuesByPlace"}, allEntries = true)
     public void cleanupExpiredTokens() {
         log.info("Cleaning up expired tokens (older than 24 hours)...");
         List<Queue> allQueues = queueRepository.findAll();
@@ -842,6 +851,8 @@ public class QueueService {
 
         return updatedQueue;
     }
+
+    @CacheEvict(value = {"queues", "queuesByPlace"}, allEntries = true)
     public Queue reorderQueue(String queueId, List<QueueToken> newTokens) {
         Queue queue = getQueueOrThrow(queueId);
         queue.setTokens(newTokens);
@@ -892,6 +903,7 @@ public class QueueService {
         }
     }
 
+    @CacheEvict(value = {"queues", "queuesByPlace"}, allEntries = true) // <-- added
     public Queue updateQueueStatistics(String queueId) {
         Queue queue = getQueueOrThrow(queueId);
 
