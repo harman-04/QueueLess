@@ -32,7 +32,10 @@ public class TokenNotificationScheduler {
     private final ServiceService serviceService;
     private final EmailService emailService;
     private final FcmService fcmService;
-    private final NotificationPreferenceService notificationPreferenceService; // <-- add this
+    private final NotificationPreferenceService notificationPreferenceService;
+
+    @Value("${app.frontend-url:https://localhost:5173}")
+    private String appFrontendUrl;
 
     @Value("${token.notification.before-minutes:5}")
     private int notifyBeforeMinutes;
@@ -111,7 +114,9 @@ public class TokenNotificationScheduler {
                                 user.getEmail(),
                                 token.getTokenId(),
                                 queue.getServiceName(),
-                                estimatedMinutes
+                                estimatedMinutes,
+                                queue.getId(),
+                                appFrontendUrl
                         );
                         log.info("Sent email notification for token {} to {}", token.getTokenId(), user.getEmail());
                     } catch (Exception e) {

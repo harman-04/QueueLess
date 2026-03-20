@@ -35,6 +35,12 @@ import NotFound from './pages/NotFound';
 import AdminProviderDetail from './pages/AdminProviderDetail';
 import NotificationPreferences from './pages/NotificationPreferences';
 import ResetPasswordWithToken from './pages/ResetPasswordWithToken';
+import AboutUs from './pages/AboutUs';
+import Contact from './pages/Contact';
+import Legal from "./pages/Legal"
+import TermsOfService from './pages/TermsOfService';
+import Documentation from './pages/Documentation';
+import HowToUse from './pages/HowToUse';
 
 function App() {
   const { token, role } = useSelector((state) => state.auth);
@@ -122,6 +128,12 @@ function App() {
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/pricing" element={<PricingPage />} />
             <Route path="/customer/queue/:queueId" element={<CustomerQueue />} />
+            <Route path="/about" element={<AboutUs />} />
+            <Route path="/contact" element={<Contact />} />
+            <Route path="/documentation" element={<Documentation />} />
+            <Route path="/legal" element={<Legal />} />
+            <Route path="/terms-of-service" element={<TermsOfService />} />
+            <Route path="/how-to-use" element={<HowToUse />} />
             <Route path="/search" element={<AdvancedSearch />} />
             <Route path="/favorites" element={<ProtectedRoute><FavoritesPage /></ProtectedRoute>} />
             <Route path="/verify-email" element={<VerifyEmail />} />

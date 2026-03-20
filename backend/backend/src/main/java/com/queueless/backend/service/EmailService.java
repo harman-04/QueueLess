@@ -52,7 +52,7 @@ public class EmailService {
         }
     }
 
-    public void sendUpcomingTokenEmail(String toEmail, String tokenId, String serviceName, int minutes) {
+    public void sendUpcomingTokenEmail(String toEmail, String tokenId, String serviceName, int minutes, String queueId, String appBaseUrl) {
         try {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
@@ -60,11 +60,14 @@ public class EmailService {
             helper.setTo(toEmail);
             helper.setSubject("QueueLess – Your turn is coming up!");
 
+            String liveTrackingLink = appBaseUrl + "/customer/queue/" + queueId;
             String htmlTemplate = loadHtmlTemplate("templates/upcoming-token-template.html");
             String processedHtml = htmlTemplate
                     .replace("{{TOKEN_ID}}", tokenId)
                     .replace("{{SERVICE_NAME}}", serviceName)
-                    .replace("{{MINUTES}}", String.valueOf(minutes));
+                    .replace("{{MINUTES}}", String.valueOf(minutes))
+                    .replace("{{LIVE_TRACKING_LINK}}", liveTrackingLink)
+                    .replace("{{APP_URL}}", appBaseUrl);
 
             helper.setText(processedHtml, true);
             mailSender.send(message);

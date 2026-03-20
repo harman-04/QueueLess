@@ -2,18 +2,61 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Your turn is coming up!</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QueueLess – Your turn is coming up!</title>
+    <style>
+        * {
+          margin: 0;
+          padding: 0;
+          box-sizing: border-box;
+        }
+    </style>
 </head>
-<body style="font-family: Arial, sans-serif; background-color: #f4f4f4; margin: 0; padding: 20px;">
-<div style="max-width: 600px; margin: auto; background: white; border-radius: 10px; padding: 30px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
-    <h2 style="color: #333;">⏰ Your turn is almost here!</h2>
-    <p style="font-size: 16px; color: #555;">Hello,</p>
-    <p style="font-size: 16px; color: #555;">
-        Your token <strong>{{TOKEN_ID}}</strong> for <strong>{{SERVICE_NAME}}</strong> is about to be served.
-        Estimated wait time: <strong>{{MINUTES}} minutes</strong>.
-    </p>
-    <p style="font-size: 16px; color: #555;">Please be ready at the counter soon.</p>
-    <p style="font-size: 14px; color: #999; margin-top: 30px;">Thank you for using QueueLess!</p>
-</div>
+<body style="margin:0; padding:0; background-color:#fef9e6; font-family:'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#fef9e6;">
+    <tr>
+        <td align="center" style="padding: 40px 20px;">
+            <!-- Main Card -->
+            <table width="100%" max-width="560" cellpadding="0" cellspacing="0" border="0" style="max-width:560px; width:100%; background-color:#ffffff; border-radius:32px; box-shadow:0 20px 35px -12px rgba(0,0,0,0.12); overflow:hidden;">
+                <!-- Header with warm gradient -->
+                <tr>
+                    <td style="background:linear-gradient(135deg, #f59e0b, #f97316); padding: 32px 32px 24px 32px; text-align:center;">
+                        <h1 style="margin:0; font-size:28px; font-weight:800; color:#ffffff; letter-spacing:-0.5px;">QueueLess</h1>
+                        <p style="margin:6px 0 0 0; font-size:14px; color:rgba(255,255,255,0.9);">Smart Queue Management</p>
+                    </td>
+                </tr>
+                <!-- Main Content -->
+                <tr>
+                    <td style="padding: 36px 32px 40px 32px;">
+                        <div style="text-align:center; margin-bottom:24px;">
+                            <span style="font-size:64px;">⏰</span>
+                        </div>
+                        <h2 style="margin:0 0 12px 0; font-size:28px; font-weight:700; color:#1f2937; text-align:center;">Your turn is almost here!</h2>
+                        <p style="margin:0 0 20px 0; font-size:16px; line-height:1.5; color:#374151; text-align:center;">We're excited to serve you soon.</p>
+                        <div style="background:#fef3e8; border-left:4px solid #f97316; border-radius:16px; padding:20px; margin:24px 0;">
+                            <p style="margin:0 0 12px 0; font-size:16px; color:#4b5563;"><strong style="color:#f97316;">Token ID:</strong> <span style="font-weight:700; background:#ffffff; padding:4px 12px; border-radius:40px; display:inline-block; margin-left:6px;">{{TOKEN_ID}}</span></p>
+                            <p style="margin:0 0 12px 0; font-size:16px; color:#4b5563;"><strong style="color:#f97316;">Service:</strong> {{SERVICE_NAME}}</p>
+                            <p style="margin:0; font-size:16px; color:#4b5563;"><strong style="color:#f97316;">Estimated wait:</strong> <span style="font-weight:700; font-size:18px;">{{MINUTES}} minutes</span></p>
+                        </div>
+                        <p style="margin:0 0 20px 0; font-size:16px; line-height:1.5; color:#374151;">Please be ready at the counter soon. Keep your token handy to present when called.</p>
+                        <div style="text-align:center; margin: 28px 0 20px 0;">
+                            <a href="{{LIVE_TRACKING_LINK}}" style="display:inline-block; background:linear-gradient(135deg, #f97316, #f59e0b); color:#ffffff; font-size:16px; font-weight:600; text-decoration:none; padding:14px 32px; border-radius:50px; box-shadow:0 4px 12px rgba(249,115,22,0.3);">Track your queue →</a>
+                        </div>
+                        <p style="margin:0; font-size:14px; color:#6b7280; text-align:center;">Need to update your status? Visit the <a href="{{APP_URL}}" style="color:#f97316; text-decoration:none;">QueueLess app</a></p>
+                    </td>
+                </tr>
+                <!-- Footer -->
+                <tr>
+                    <td style="background-color:#fef9e6; padding: 24px 32px; text-align:center; border-top:1px solid #ffedd5;">
+                        <p style="margin:0 0 8px 0; font-size:13px; color:#9ca3af;">&copy; 2026 QueueLess – Making waiting smarter</p>
+                        <p style="margin:0; font-size:12px; color:#cbd5e0;">You received this notification because you have an active token. To manage preferences, visit your account settings.</p>
+                    </td>
+                </tr>
+            </table>
+            <!-- Plain text fallback -->
+            <p style="margin-top:24px; font-size:12px; color:#9ca3af; text-align:center;">If the button doesn't work, copy this link into your browser:<br>{{LIVE_TRACKING_LINK}}</p>
+        </td>
+    </tr>
+</table>
 </body>
 </html>

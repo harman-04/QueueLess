@@ -205,3 +205,50 @@
     height: 35px;
   }
 }
+
+/* Contact info styling */
+.contact-info {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.contact-link,
+.contact-phone {
+  color: var(--navbar-text);
+  text-decoration: none;
+  transition: color 0.3s ease, transform 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+}
+
+.contact-link:hover,
+.contact-phone:hover {
+  color: var(--accent-color);
+  transform: translateX(4px);
+}
+
+.contact-link i,
+.contact-phone i {
+  font-size: 1rem;
+  width: 20px;
+}
+
+/* Adjust spacing for follow us heading */
+.footer-contact h4.mt-3 {
+  margin-top: 1.5rem !important;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .contact-info {
+    align-items: center;
+  }
+  .contact-link,
+  .contact-phone {
+    justify-content: center;
+  }
+}
