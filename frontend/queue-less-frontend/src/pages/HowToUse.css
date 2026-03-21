@@ -1,4 +1,4 @@
-/* HowToUse.css – Premium styling with dark mode support */
+/* HowToUse.css – Premium styling, fully scoped to .how-to-use-page */
 
 .how-to-use-page {
   background-color: var(--bg-primary);
@@ -7,7 +7,7 @@
 }
 
 /* Gradient text for headings */
-.gradient-text {
+.how-to-use-page .gradient-text {
   background: linear-gradient(135deg, var(--search-primary), var(--accent-color));
   -webkit-background-clip: text;
   background-clip: text;
@@ -16,21 +16,19 @@
 }
 
 /* Role cards */
-.role-card {
+.how-to-use-page .role-card {
   background-color: var(--card-bg);
   border: 1px solid var(--border-color);
   border-radius: 24px;
   transition: all 0.3s ease;
   overflow: hidden;
 }
-
-.role-card:hover {
+.how-to-use-page .role-card:hover {
   transform: translateY(-8px);
   box-shadow: var(--shadow-lg);
   border-color: var(--search-primary);
 }
-
-.role-icon {
+.how-to-use-page .role-icon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -40,40 +38,34 @@
   background: var(--bg-secondary);
   transition: all 0.3s ease;
 }
-
-.user-icon {
+.how-to-use-page .user-icon {
   color: var(--link-color);
 }
-
-.provider-icon {
+.how-to-use-page .provider-icon {
   color: var(--success-color);
 }
-
-.admin-icon {
+.how-to-use-page .admin-icon {
   color: var(--danger-color);
 }
-
-.role-card:hover .role-icon {
+.how-to-use-page .role-card:hover .role-icon {
   transform: scale(1.1);
   background: var(--border-color);
 }
 
 /* Custom Accordion */
-.custom-accordion .accordion-item {
+.how-to-use-page .custom-accordion .accordion-item {
   background-color: var(--card-bg);
   border: 1px solid var(--border-color);
   border-radius: 16px;
   margin-bottom: 1rem;
   overflow: hidden;
 }
-
-.custom-accordion .accordion-header {
+.how-to-use-page .custom-accordion .accordion-header {
   background-color: var(--bg-secondary);
   border-radius: 16px;
   margin: 0;
 }
-
-.custom-accordion .accordion-button {
+.how-to-use-page .custom-accordion .accordion-button {
   background-color: var(--bg-secondary);
   color: var(--text-primary);
   font-weight: 600;
@@ -81,47 +73,40 @@
   padding: 1.2rem 1.5rem;
   transition: all 0.2s;
 }
-
-.custom-accordion .accordion-button:not(.collapsed) {
+.how-to-use-page .custom-accordion .accordion-button:not(.collapsed) {
   background-color: var(--bg-secondary);
   color: var(--search-primary);
   box-shadow: none;
 }
-
-.custom-accordion .accordion-button:focus {
+.how-to-use-page .custom-accordion .accordion-button:focus {
   box-shadow: none;
   border-color: transparent;
 }
-
-.custom-accordion .accordion-button::after {
+.how-to-use-page .custom-accordion .accordion-button::after {
   filter: invert(var(--dark-mode-invert, 0));
   transition: transform 0.2s;
 }
-
-.custom-accordion .accordion-body {
+.how-to-use-page .custom-accordion .accordion-body {
   padding: 1.5rem;
   color: var(--text-secondary);
   border-top: 1px solid var(--border-color);
 }
 
 /* Pro tips card */
-.pro-tips-card {
+.how-to-use-page .pro-tips-card {
   background: var(--bg-secondary);
   border: 1px solid var(--border-color);
   border-radius: 24px;
   box-shadow: var(--shadow-md);
 }
-
-.pro-tips-card .card-body {
+.how-to-use-page .pro-tips-card .card-body {
   padding: 2rem;
 }
-
-.pro-tips-card h5 {
+.how-to-use-page .pro-tips-card h5 {
   color: var(--text-primary);
   font-weight: 700;
 }
-
-.pro-tips-card ul li {
+.how-to-use-page .pro-tips-card ul li {
   color: var(--text-secondary);
   line-height: 1.5;
   display: flex;
@@ -131,89 +116,75 @@
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
-  .role-card {
+  .how-to-use-page .role-card {
     margin-bottom: 1.5rem;
   }
-
-  .custom-accordion .accordion-button {
+  .how-to-use-page .custom-accordion .accordion-button {
     font-size: 1rem;
     padding: 1rem;
   }
-
-  .pro-tips-card .card-body {
+  .how-to-use-page .pro-tips-card .card-body {
     padding: 1.5rem;
   }
 }
 
-/* Force dark mode for all components on this page */
-.dark-mode .role-card,
-.dark-mode .pro-tips-card,
-.dark-mode .custom-accordion .accordion-item,
-.dark-mode .custom-accordion .accordion-button,
-.dark-mode .custom-accordion .accordion-body,
-.dark-mode .alert {
+/* Dark mode overrides (scoped) */
+.dark-mode .how-to-use-page .role-card,
+.dark-mode .how-to-use-page .pro-tips-card,
+.dark-mode .how-to-use-page .custom-accordion .accordion-item,
+.dark-mode .how-to-use-page .custom-accordion .accordion-button,
+.dark-mode .how-to-use-page .custom-accordion .accordion-body,
+.dark-mode .how-to-use-page .alert {
   background-color: var(--card-bg) !important;
   color: var(--text-primary) !important;
   border-color: var(--border-color) !important;
 }
-
-/* Ensure card text uses theme variables */
-.dark-mode .role-card .card-title,
-.dark-mode .role-card .card-text,
-.dark-mode .pro-tips-card h5,
-.dark-mode .pro-tips-card ul li {
+.dark-mode .how-to-use-page .role-card .card-title,
+.dark-mode .how-to-use-page .role-card .card-text,
+.dark-mode .how-to-use-page .pro-tips-card h5,
+.dark-mode .how-to-use-page .pro-tips-card ul li {
   color: var(--text-primary);
 }
-
-.dark-mode .role-card .card-text {
+.dark-mode .how-to-use-page .role-card .card-text {
   color: var(--text-secondary);
 }
-
-/* Accordion button text and icon */
-.dark-mode .custom-accordion .accordion-button {
+.dark-mode .how-to-use-page .custom-accordion .accordion-button {
   color: var(--text-primary);
   background-color: var(--bg-secondary) !important;
 }
-
-.dark-mode .custom-accordion .accordion-button:not(.collapsed) {
+.dark-mode .how-to-use-page .custom-accordion .accordion-button:not(.collapsed) {
   color: var(--search-primary);
 }
-
-.dark-mode .custom-accordion .accordion-button::after {
+.dark-mode .how-to-use-page .custom-accordion .accordion-button::after {
   filter: invert(var(--dark-mode-invert));
 }
-
-/* Alert boxes (info/warning) */
-.dark-mode .alert-info {
+.dark-mode .how-to-use-page .alert-info {
   background-color: rgba(102, 126, 234, 0.2) !important;
   border-color: var(--search-primary) !important;
   color: var(--text-primary) !important;
 }
-
-.dark-mode .alert-warning {
+.dark-mode .how-to-use-page .alert-warning {
   background-color: rgba(241, 196, 15, 0.2) !important;
   border-color: #f1c40f !important;
   color: var(--text-primary) !important;
 }
-
-/* Pro tips card text */
-.dark-mode .pro-tips-card {
+.dark-mode .how-to-use-page .pro-tips-card {
   background-color: var(--bg-secondary) !important;
 }
-
-.dark-mode .pro-tips-card ul li {
+.dark-mode .how-to-use-page .pro-tips-card ul li {
   color: var(--text-secondary);
 }
-
-/* Icons inside alerts and lists */
-.dark-mode .alert .text-primary,
-.dark-mode .alert .text-success,
-.dark-mode .alert .text-warning {
+.dark-mode .how-to-use-page .alert .text-primary,
+.dark-mode .how-to-use-page .alert .text-success,
+.dark-mode .how-to-use-page .alert .text-warning {
   color: inherit !important;
 }
-
-/* Remove Bootstrap's default box shadows in dark mode if needed */
-.dark-mode .role-card,
-.dark-mode .custom-accordion .accordion-item {
+.dark-mode .how-to-use-page .role-card,
+.dark-mode .how-to-use-page .custom-accordion .accordion-item {
   box-shadow: var(--shadow-sm);
+}
+
+.how-to-use-page .lead.text-muted,
+.how-to-use-page .text-muted {
+    color: var(--text-secondary) !important;
 }

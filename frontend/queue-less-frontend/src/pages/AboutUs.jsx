@@ -174,7 +174,6 @@ const AboutUs = () => {
                 </p>
                 <div className="d-flex justify-content-center gap-3 flex-wrap">
                   <Link to="/register" className="btn btn-primary btn-lg px-4">Get Started</Link>
-                  <Link to="/contact" className="btn btn-outline-light btn-lg px-4">Contact Us</Link>
                 </div>
               </Card.Body>
             </Card>

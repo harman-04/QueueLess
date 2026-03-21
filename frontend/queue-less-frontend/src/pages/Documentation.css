@@ -1,66 +1,69 @@
-/* Documentation.css – Premium styling with dark mode support */
+Documentation.css – Premium styling, fully scoped to .documentation-page
 
 .documentation-page {
     background-color: var(--bg-primary);
     min-height: 100vh;
     padding-top: 1rem;
 }
-/* Custom sticky TOC with navbar offset */
-.sticky-toc {
+
+/* Grid layout – replaces Bootstrap row/col */
+.documentation-page .doc-grid {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    gap: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* Sidebar – sticky */
+.documentation-page .doc-sidebar {
+    position: relative;
+}
+
+.documentation-page .toc-card.sticky-toc {
     position: sticky;
-    /* This must be slightly MORE than your navbar height */
-    top: 100px; 
-    /* Ensures the sticky element doesn't stretch to the height of the row */
-    align-self: flex-start; 
-    /* Lower this to ensure it stays BEHIND the navbar if the navbar is z-index 1030 */
-    z-index: 1000; 
+    top: 100px;
+    z-index: 100;
 }
 
-/* Ensure the parent doesn't have 'overflow: hidden' which kills stickiness */
-.toc-wrapper {
-    height: 100%;
+/* Main content – no special positioning needed */
+.documentation-page .doc-main {
+    min-width: 0;
 }
 
-/* Make TOC scrollable when content exceeds viewport */
-.toc-card {
-  max-height: calc(100vh - 120px); /* 120px = top offset + bottom margin */
-  overflow-y: auto;
-  scrollbar-width: thin; /* Firefox */
-}
-
-/* Custom scrollbar for WebKit browsers */
-.toc-card::-webkit-scrollbar {
-  width: 6px;
-}
-
-.toc-card::-webkit-scrollbar-track {
-  background: var(--bg-secondary);
-  border-radius: 10px;
-}
-
-.toc-card::-webkit-scrollbar-thumb {
-  background: var(--border-color);
-  border-radius: 10px;
-}
-
-.toc-card::-webkit-scrollbar-thumb:hover {
-  background: var(--search-primary);
-}
-
-
-.toc-card {
+/* TOC card styling (including scroll) */
+.documentation-page .toc-card {
     background: var(--card-bg);
     border: 1px solid var(--border-color);
     border-radius: 24px;
     box-shadow: var(--shadow-md);
     transition: box-shadow 0.2s;
+    max-height: calc(100vh - 120px);
+    overflow-y: auto;
+    scrollbar-width: thin;
 }
 
-.toc-card:hover {
+.documentation-page .toc-card:hover {
     box-shadow: var(--shadow-lg);
 }
 
-.toc-title {
+/* Custom scrollbar for WebKit browsers */
+.documentation-page .toc-card::-webkit-scrollbar {
+    width: 6px;
+}
+.documentation-page .toc-card::-webkit-scrollbar-track {
+    background: var(--bg-secondary);
+    border-radius: 10px;
+}
+.documentation-page .toc-card::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 10px;
+}
+.documentation-page .toc-card::-webkit-scrollbar-thumb:hover {
+    background: var(--search-primary);
+}
+
+.documentation-page .toc-title {
     font-weight: 700;
     color: var(--text-primary);
     margin-bottom: 1rem;
@@ -69,7 +72,7 @@
     display: inline-block;
 }
 
-.toc-list .list-group-item {
+.documentation-page .toc-list .list-group-item {
     background: transparent;
     border: none;
     color: var(--text-secondary);
@@ -78,13 +81,11 @@
     cursor: pointer;
     transition: all 0.2s;
 }
-
-.toc-list .list-group-item:hover {
+.documentation-page .toc-list .list-group-item:hover {
     color: var(--search-primary);
     transform: translateX(4px);
 }
-
-.toc-list .list-group-item.active {
+.documentation-page .toc-list .list-group-item.active {
     color: var(--search-primary);
     font-weight: 600;
     background: transparent;
@@ -93,12 +94,12 @@
 }
 
 /* Main content sections */
-.doc-section {
+.documentation-page .doc-section {
     scroll-margin-top: 80px;
     margin-bottom: 3rem;
 }
 
-.doc-card {
+.documentation-page .doc-card {
     background: var(--card-bg);
     border-radius: 24px;
     padding: 2rem;
@@ -106,13 +107,12 @@
     border: 1px solid var(--border-color);
     transition: transform 0.2s, box-shadow 0.2s;
 }
-
-.doc-card:hover {
+.documentation-page .doc-card:hover {
     transform: translateY(-2px);
     box-shadow: var(--shadow-md);
 }
 
-.doc-section h1 {
+.documentation-page .doc-section h1 {
     font-size: 2.5rem;
     font-weight: 800;
     background: linear-gradient(135deg, var(--search-primary), #4a6fdc);
@@ -121,8 +121,7 @@
     color: transparent;
     margin-bottom: 1rem;
 }
-
-.doc-card h2 {
+.documentation-page .doc-card h2 {
     font-size: 1.8rem;
     font-weight: 700;
     margin: 0 0 1rem 0;
@@ -130,32 +129,27 @@
     border-left: 4px solid var(--search-primary);
     padding-left: 1rem;
 }
-
-.doc-card h5 {
+.documentation-page .doc-card h5 {
     font-size: 1.2rem;
     font-weight: 600;
     margin: 1.5rem 0 0.75rem 0;
     color: var(--text-primary);
 }
-
-.doc-card p {
+.documentation-page .doc-card p {
     color: var(--text-secondary);
     line-height: 1.6;
     margin-bottom: 1rem;
 }
-
-.doc-card ul,
-.doc-card ol {
+.documentation-page .doc-card ul,
+.documentation-page .doc-card ol {
     color: var(--text-secondary);
     margin-bottom: 1rem;
     padding-left: 1.5rem;
 }
-
-.doc-card li {
+.documentation-page .doc-card li {
     margin-bottom: 0.5rem;
 }
-
-.doc-card code {
+.documentation-page .doc-card code {
     background-color: var(--bg-secondary);
     padding: 0.2rem 0.4rem;
     border-radius: 6px;
@@ -165,7 +159,7 @@
 }
 
 /* Code blocks */
-.code-block {
+.documentation-page .code-block {
     position: relative;
     margin: 1rem 0;
     border-radius: 12px;
@@ -173,8 +167,7 @@
     background-color: var(--bg-secondary);
     border: 1px solid var(--border-color);
 }
-
-.code-block pre {
+.documentation-page .code-block pre {
     margin: 0;
     padding: 1rem;
     overflow-x: auto;
@@ -184,15 +177,13 @@
     font-size: 0.85rem;
     line-height: 1.5;
 }
-
-.code-block code {
+.documentation-page .code-block code {
     background: none;
     padding: 0;
     color: inherit;
     font-size: inherit;
 }
-
-.copy-btn {
+.documentation-page .copy-btn {
     position: absolute;
     top: 0.5rem;
     right: 0.5rem;
@@ -205,25 +196,22 @@
     color: var(--text-secondary);
     transition: all 0.2s;
 }
-
-.copy-btn:hover {
+.documentation-page .copy-btn:hover {
     background: var(--search-primary);
     color: white;
     border-color: var(--search-primary);
 }
 
 /* FAQ items */
-.faq-item {
+.documentation-page .faq-item {
     margin-bottom: 1.5rem;
     padding-bottom: 1rem;
     border-bottom: 1px solid var(--border-color);
 }
-
-.faq-item:last-child {
+.documentation-page .faq-item:last-child {
     border-bottom: none;
 }
-
-.faq-item h5 {
+.documentation-page .faq-item h5 {
     margin-top: 0;
     font-weight: 600;
     color: var(--text-primary);
@@ -231,115 +219,41 @@
 
 /* Responsive adjustments */
 @media (max-width: 992px) {
-    .toc-card {
-        position: relative !important;
-        margin-bottom: 2rem;
+    .documentation-page .doc-grid {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
     }
-
-    .doc-card {
+    .documentation-page .toc-card.sticky-toc {
+        position: static;
+        margin-bottom: 1rem;
+    }
+    .documentation-page .doc-card {
         padding: 1.5rem;
     }
-
-    .doc-card h1 {
+    .documentation-page .doc-section h1 {
         font-size: 2rem;
     }
-
-    .doc-card h2 {
+    .documentation-page .doc-card h2 {
         font-size: 1.5rem;
     }
 }
-
 @media (max-width: 768px) {
-    .doc-card {
+    .documentation-page .doc-card {
         padding: 1rem;
     }
-
-    .code-block pre {
+    .documentation-page .code-block pre {
         font-size: 0.75rem;
     }
 }
 
-/* Force dark mode for the TOC card */
-.dark-mode .toc-card {
-  background-color: var(--card-bg) !important;
-  border-color: var(--border-color) !important;
+/* Dark mode specific adjustments (scoped) */
+.dark-mode .documentation-page .toc-card {
+    background-color: var(--card-bg) !important;
+    border-color: var(--border-color) !important;
 }
-
-/* Ensure the lead paragraph uses theme text color */
-.dark-mode .doc-card .lead {
-  color: var(--text-primary) !important;
+.dark-mode .documentation-page .doc-main .lead {
+    color: var(--text-primary) !important;
 }
-
-/* Also fix any other lead elements inside doc sections */
-.dark-mode .doc-card .lead {
-  color: var(--text-primary);
-}
-/* Global fix for .lead text */
-.lead {
-  color: var(--text-secondary) !important;
-}
-
-
-/* Documentation.css – add these new rules */
-
-/* Grid layout – replaces Bootstrap row/col */
-.doc-grid {
-  display: grid;
-  grid-template-columns: 280px 1fr;
-  gap: 2rem;
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
-/* Sidebar – sticky */
-.doc-sidebar {
-  position: relative;
-}
-
-.toc-card.sticky-toc {
-  position: sticky;
-  top: 100px;            /* adjust based on your navbar height */
-  z-index: 100;
-}
-
-/* Main content – no special positioning needed */
-.doc-main {
-  min-width: 0; /* prevents overflow issues */
-}
-
-/* Responsive: on smaller screens, switch to stacked layout */
-@media (max-width: 992px) {
-  .doc-grid {
-    grid-template-columns: 1fr;
-    gap: 1.5rem;
-  }
-
-  .toc-card.sticky-toc {
-    position: static;    /* no sticky on mobile */
-    margin-bottom: 1rem;
-  }
-}
-
-/* Ensure the sidebar’s card uses theme variables */
-.toc-card {
-  background: var(--card-bg);
-  border: 1px solid var(--border-color);
-  border-radius: 24px;
-  box-shadow: var(--shadow-md);
-  transition: box-shadow 0.2s;
-}
-
-/* Dark mode overrides for the new grid */
-.dark-mode .toc-card {
-  background-color: var(--card-bg) !important;
-  border-color: var(--border-color) !important;
-}
-
-/* Also fix the lead paragraph text in dark mode */
-.dark-mode .doc-main .lead {
-  color: var(--text-primary) !important;
-}
-
-.lead {
-  color: var(--text-secondary) !important;
+.dark-mode .documentation-page .lead {
+    color: var(--text-primary) !important;
 }

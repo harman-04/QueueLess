@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
+import { Modal } from "react-bootstrap";
 import {
     FaList,
     FaSignOutAlt,
@@ -17,7 +18,8 @@ import {
     FaAmbulance,
     FaRegSmileBeam,
     FaHeart,
-    FaBell
+    FaBell,
+    FaTrashAlt
 } from "react-icons/fa";
 import { getShortTokenId } from '../utils/tokenUtils';
 import { logout } from "../redux/authSlice";
@@ -52,6 +54,10 @@ const UserDashboard = () => {
     const [cancelling, setCancelling] = useState(null);
     const isLoading = placesLoading || servicesLoading || favoritesLoading;
 
+    const [showLeaveModal, setShowLeaveModal] = useState(false);
+    const [leavingQueue, setLeavingQueue] = useState(null); // { queueId, tokenId }
+
+
     useEffect(() => {
         if (token) {
             dispatch(fetchPlaces());
@@ -84,27 +90,41 @@ const UserDashboard = () => {
         setVisibleServices(6);
     }, [searchTerm, places, services]);
 
+    // Helper to transform raw queues data into active queues only
+    const getActiveUserQueues = (queuesData) => {
+        if (!Array.isArray(queuesData)) return [];
+
+        return queuesData
+            .map(queue => {
+                // Find the user's active token (WAITING or IN_SERVICE)
+                const userToken = queue.tokens.find(token =>
+                    token.userId === userId &&
+                    (token.status === 'WAITING' || token.status === 'IN_SERVICE')
+                );
+                if (!userToken) return null; // skip this queue
+
+                // Compute position if the token is waiting
+                const position = userToken.status === 'WAITING'
+                    ? queue.tokens.filter(t => t.status === 'WAITING')
+                        .findIndex(t => t.tokenId === userToken.tokenId) + 1
+                    : null;
+
+                return {
+                    ...queue,
+                    userToken,
+                    position
+                };
+            })
+            .filter(queue => queue !== null); // remove null entries
+    };
+
     useEffect(() => {
         const fetchUserQueues = async () => {
             setQueuesLoading(true);
             try {
                 const response = await axiosInstance.get(`/queues/by-user/${userId}`);
-
-                if (Array.isArray(response.data)) {
-                    const queuesWithUserTokens = response.data.map(queue => {
-                        const userToken = queue.tokens.find(token => token.userId === userId);
-                        return {
-                            ...queue,
-                            userToken: userToken || null,
-                            position: userToken && userToken.status === 'WAITING'
-                                ? queue.tokens.filter(t => t.status === 'WAITING').findIndex(t => t.tokenId === userToken.tokenId) + 1
-                                : null
-                        };
-                    });
-                    setUserQueues(queuesWithUserTokens);
-                } else {
-                    setUserQueues([]);
-                }
+                const activeQueues = getActiveUserQueues(response.data);
+                setUserQueues(activeQueues);
             } catch (error) {
                 console.error("Failed to fetch user queues:", error);
                 if (error.status !== 404) {
@@ -115,7 +135,6 @@ const UserDashboard = () => {
                 setQueuesLoading(false);
             }
         };
-
         if (userId && token) {
             fetchUserQueues();
 
@@ -144,30 +163,25 @@ const UserDashboard = () => {
     };
 
     const handleCancelQueue = async (queueId, tokenId) => {
-        if (!window.confirm('Are you sure you want to leave this queue?')) return;
-        setCancelling(queueId);
+        setLeavingQueue({ queueId, tokenId });
+        setShowLeaveModal(true);
+    };
+    const confirmLeaveQueue = async () => {
+        if (!leavingQueue) return;
+        setCancelling(leavingQueue.queueId);
         try {
-            await axiosInstance.delete(`/queues/${queueId}/cancel-token/${tokenId}`);
+            await axiosInstance.delete(`/queues/${leavingQueue.queueId}/cancel-token/${leavingQueue.tokenId}`);
             toast.success('You have left the queue.');
             // Refresh user queues
             const response = await axiosInstance.get(`/queues/by-user/${userId}`);
-            if (Array.isArray(response.data)) {
-                const queuesWithUserTokens = response.data.map(queue => {
-                    const userToken = queue.tokens.find(token => token.userId === userId);
-                    return {
-                        ...queue,
-                        userToken: userToken || null,
-                        position: userToken && userToken.status === 'WAITING'
-                            ? queue.tokens.filter(t => t.status === 'WAITING').findIndex(t => t.tokenId === userToken.tokenId) + 1
-                            : null
-                    };
-                });
-                setUserQueues(queuesWithUserTokens);
-            }
+            const activeQueues = getActiveUserQueues(response.data);
+            setUserQueues(activeQueues);
         } catch (error) {
             toast.error('Failed to leave queue.');
         } finally {
             setCancelling(null);
+            setShowLeaveModal(false);
+            setLeavingQueue(null);
         }
     };
 
@@ -179,7 +193,12 @@ const UserDashboard = () => {
                 return <span className="badge bg-success">In Service</span>;
             case 'COMPLETED':
                 return <span className="badge bg-info">Completed</span>;
+            case 'CANCELLED':
+                return <span className="badge bg-danger">Cancelled</span>;
+            case 'PENDING':
+                return <span className="badge bg-warning text-dark">Pending Approval</span>;
             default:
+                console.warn('Unknown token status:', status);
                 return <span className="badge bg-secondary">Unknown</span>;
         }
     };
@@ -193,6 +212,7 @@ const UserDashboard = () => {
         }
         return <span className="badge bg-primary me-1">Regular</span>;
     };
+
 
     if (isLoading) {
         return <UserDashboardSkeleton />;
@@ -216,12 +236,12 @@ const UserDashboard = () => {
                     </button>
 
                     <Button
-  variant="outline-info"
-  onClick={() => navigate('/user/notifications')}
-  className="d-flex align-items-center"
->
-  <FaBell className="me-2" /> Notifications
-</Button>
+                        variant="outline-info"
+                        onClick={() => navigate('/user/notifications')}
+                        className="d-flex align-items-center"
+                    >
+                        <FaBell className="me-2" /> Notifications
+                    </Button>
                     <button
                         onClick={handleLogout}
                         className="btn btn-outline-danger d-flex align-items-center"
@@ -231,7 +251,7 @@ const UserDashboard = () => {
                 </div>
             </div>
 
-                    
+
 
             {/* Your Active Queues Section */}
             <div className="user-dashboard-card animate__animated animate__fadeInUp">
@@ -348,7 +368,7 @@ const UserDashboard = () => {
                                                     onClick={() => handleCancelQueue(queue.id, queue.userToken.tokenId)}
                                                     disabled={cancelling === queue.id}
                                                 >
-                                                    {cancelling === queue.id ? <Spinner animation="border" size="sm" /> : 'Leave Queue'}
+                                                    {cancelling === queue.id ? <Spinner animation="border" size="sm" /> : <><FaTrashAlt className="me-1" /> Leave Queue</>}
                                                 </Button>
                                             )}
                                         </div>
@@ -378,8 +398,8 @@ const UserDashboard = () => {
                 </div>
             </div>
 
-                {/* Token History Section */}
-<UserTokenHistoryList days={30} />
+            {/* Token History Section */}
+            <UserTokenHistoryList days={30} />
 
 
 
@@ -574,6 +594,30 @@ const UserDashboard = () => {
                     )}
                 </div>
             </div>
+            {/* Leave Queue Confirmation Modal */}
+            <Modal show={showLeaveModal} onHide={() => setShowLeaveModal(false)} centered className="user-leave-modal">
+                <Modal.Header closeButton>
+                    <Modal.Title>
+                        <FaTrashAlt className="me-2 text-danger" /> Leave Queue
+                    </Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    <p>Are you sure you want to leave this queue?</p>
+                    <p className="text-muted">You will lose your current position and will need to join again if you change your mind.</p>
+                </Modal.Body>
+                <Modal.Footer>
+                    <Button variant="secondary" onClick={() => setShowLeaveModal(false)}>
+                        Cancel
+                    </Button>
+                    <Button
+                        variant="danger"
+                        onClick={confirmLeaveQueue}
+                        disabled={cancelling !== null}
+                    >
+                        {cancelling !== null ? <Spinner animation="border" size="sm" /> : 'Yes, Leave Queue'}
+                    </Button>
+                </Modal.Footer>
+            </Modal>
         </div>
     );
 };

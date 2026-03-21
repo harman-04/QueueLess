@@ -468,7 +468,8 @@
   background: var(--accent-color);
   color: white;
   transform: translateY(-2px);
-  box-shadow: 0 8px 15px rgba(0, 212, 255, 0.3); /* using var(--accent-color) with slight opacity */
+  box-shadow: 0 8px 15px rgba(0, 212, 255, 0.3);
+  /* using var(--accent-color) with slight opacity */
 }
 
 @media (max-width: 768px) {
@@ -490,4 +491,65 @@
     justify-content: center;
     padding: 0.6rem 1rem;
   }
+}
+
+/* Leave Queue Modal – fully scoped to UserDashboard */
+.user-dashboard-container .user-leave-modal .modal-content {
+  background-color: var(--card-bg) !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: 20px !important;
+  box-shadow: var(--shadow-lg) !important;
+}
+
+.user-dashboard-container .user-leave-modal .modal-header {
+  border-bottom-color: var(--border-color) !important;
+  padding: 1.25rem 1.5rem !important;
+}
+
+.user-dashboard-container .user-leave-modal .modal-title {
+  color: var(--text-primary) !important;
+  font-weight: 700 !important;
+}
+
+.user-dashboard-container .user-leave-modal .modal-header .btn-close {
+  filter: invert(var(--dark-mode-invert, 0)) !important;
+}
+
+.user-dashboard-container .user-leave-modal .modal-body {
+  padding: 1.5rem !important;
+  color: var(--text-primary) !important;
+}
+
+.user-dashboard-container .user-leave-modal .modal-footer {
+  border-top-color: var(--border-color) !important;
+  padding: 1rem 1.5rem 1.5rem !important;
+}
+
+.user-dashboard-container .user-leave-modal .modal-footer .btn-secondary {
+  background: var(--bg-secondary) !important;
+  border: 1px solid var(--border-color) !important;
+  color: var(--text-primary) !important;
+  border-radius: 40px !important;
+  padding: 0.5rem 1.5rem !important;
+  font-weight: 600 !important;
+  transition: all 0.2s !important;
+}
+
+.user-dashboard-container .user-leave-modal .modal-footer .btn-secondary:hover {
+  background: var(--border-color) !important;
+  transform: translateY(-2px) !important;
+}
+
+.user-dashboard-container .user-leave-modal .modal-footer .btn-danger {
+  background: linear-gradient(145deg, var(--danger-color), #c0392b) !important;
+  border: none !important;
+  border-radius: 40px !important;
+  padding: 0.5rem 1.5rem !important;
+  font-weight: 600 !important;
+  transition: all 0.2s !important;
+}
+
+.user-dashboard-container .user-leave-modal .modal-footer .btn-danger:hover:not(:disabled) {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 8px 20px rgba(var(--danger-color-rgb), 0.4) !important;
 }

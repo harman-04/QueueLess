@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
@@ -77,22 +78,35 @@ public class EmailService {
         }
     }
 
-    // In EmailService.java
-    public void sendAlertEmail(String toEmail, String message) {
+    public void sendAlertEmail(String toEmail, String adminName, int threshold, List<String> queueSummaries, String appBaseUrl) {
         try {
-            MimeMessage mimeMessage = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, "utf-8");
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+
             helper.setTo(toEmail);
             helper.setSubject("QueueLess Alert – Queue threshold exceeded");
-            helper.setText(message, false); // plain text
-            mailSender.send(mimeMessage);
+
+            // Build the list of queues as HTML
+            StringBuilder queuesHtml = new StringBuilder();
+            for (String summary : queueSummaries) {
+                queuesHtml.append(summary);
+            }
+
+            String htmlTemplate = loadHtmlTemplate("templates/alert-template.html");
+            String processedHtml = htmlTemplate
+                    .replace("{{ADMIN_NAME}}", adminName)
+                    .replace("{{THRESHOLD}}", String.valueOf(threshold))
+                    .replace("{{QUEUES_LIST}}", queuesHtml.toString())
+                    .replace("{{APP_URL}}", appBaseUrl);
+
+            helper.setText(processedHtml, true);
+            mailSender.send(message);
             log.info("Alert email sent to {}", toEmail);
-        } catch (MessagingException e) {
+        } catch (Exception e) {
             log.error("Failed to send alert email to {}", toEmail, e);
         }
     }
 
-    // In EmailService.java
     public void sendVerificationOtpEmail(String toEmail, String otp) {
         try {
             MimeMessage message = mailSender.createMimeMessage();

@@ -1,4 +1,4 @@
-/* AdminProviderDetail.css – Premium UI/UX with Dark Mode */
+/* AdminProviderDetail.css – Premium UI/UX, fully scoped */
 
 /* ===== Container ===== */
 .admin-provider-detail {
@@ -26,14 +26,12 @@
   box-shadow: var(--shadow-lg);
   overflow: hidden;
 }
-
 .admin-provider-detail .card-header {
   background: linear-gradient(135deg, var(--bg-secondary), var(--border-color));
   border-bottom: 1px solid var(--border-color);
   color: var(--text-primary);
   padding: 1.25rem 1.5rem;
 }
-
 .admin-provider-detail .card-header h4 {
   margin: 0;
   font-weight: 700;
@@ -42,8 +40,6 @@
   align-items: center;
   gap: 0.5rem;
 }
-
-/* Header buttons */
 .admin-provider-detail .card-header .btn-primary {
   background: linear-gradient(145deg, var(--search-primary), #4a6fdc);
   border: none;
@@ -57,7 +53,6 @@
   transform: translateY(-2px);
   box-shadow: 0 8px 15px rgba(var(--search-primary-rgb), 0.4);
 }
-
 .admin-provider-detail .card-header .btn-success {
   background: linear-gradient(145deg, var(--success-color), #27ae60);
   border: none;
@@ -71,7 +66,6 @@
   transform: translateY(-2px);
   box-shadow: 0 8px 15px rgba(var(--success-color-rgb), 0.4);
 }
-
 .admin-provider-detail .card-header .btn-secondary {
   background: var(--bg-tertiary, #e9ecef);
   border: 1px solid var(--border-color);
@@ -92,7 +86,7 @@
 }
 
 /* ===== Section Titles ===== */
-.section-title {
+.admin-provider-detail .section-title {
   font-size: 1.2rem;
   font-weight: 600;
   color: var(--text-primary);
@@ -109,7 +103,6 @@
   border-radius: 12px;
   overflow: hidden;
 }
-
 .admin-provider-detail .list-group-item {
   background-color: var(--bg-secondary);
   border: 1px solid var(--border-color);
@@ -117,11 +110,9 @@
   padding: 1rem 1.25rem;
   transition: background-color 0.2s;
 }
-
 .admin-provider-detail .list-group-item:hover {
   background-color: var(--border-color);
 }
-
 .admin-provider-detail .list-group-item .text-primary {
   color: var(--link-color) !important;
 }
@@ -137,8 +128,6 @@
 .admin-provider-detail .list-group-item .text-secondary {
   color: var(--text-secondary) !important;
 }
-
-/* Form controls inside list items */
 .admin-provider-detail .list-group-item .form-control {
   background-color: var(--input-bg);
   border: 2px solid var(--border-color);
@@ -199,19 +188,16 @@
 .admin-provider-detail .stat-item:hover {
   background-color: var(--border-color);
 }
-
 .admin-provider-detail .stat-icon {
   font-size: 2rem;
   color: var(--search-primary);
 }
-
 .admin-provider-detail .stat-label {
   color: var(--text-secondary);
   font-size: 0.8rem;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
-
 .admin-provider-detail .stat-value {
   color: var(--text-primary);
   font-size: 1.5rem;
@@ -223,8 +209,6 @@
 .admin-provider-detail .list-group .list-group-item .small {
   color: var(--text-secondary) !important;
 }
-
-/* Checkbox styling */
 .admin-provider-detail .form-check-input {
   background-color: var(--input-bg);
   border: 2px solid var(--border-color);
@@ -259,21 +243,17 @@
   border-radius: 20px;
   box-shadow: var(--shadow-xl);
 }
-
 .admin-provider-detail .modal-header {
   border-bottom-color: var(--border-color);
   padding: 1.25rem 1.5rem;
 }
-
 .admin-provider-detail .modal-title {
   color: var(--text-primary);
   font-weight: 700;
 }
-
 .admin-provider-detail .modal-header .btn-close {
   filter: invert(var(--dark-mode-invert, 0));
 }
-
 .admin-provider-detail .modal-body {
   padding: 1.5rem;
   color: var(--text-primary);
@@ -281,13 +261,10 @@
 .admin-provider-detail .modal-body .text-warning {
   color: #ffc107 !important;
 }
-
 .admin-provider-detail .modal-footer {
   border-top-color: var(--border-color);
   padding: 1rem 1.5rem 1.5rem;
 }
-
-/* Modal buttons */
 .admin-provider-detail .modal-footer .btn-secondary {
   background: var(--bg-tertiary, #e9ecef);
   border: 1px solid var(--border-color);
@@ -306,7 +283,6 @@
   background: var(--border-color);
   transform: translateY(-2px);
 }
-
 .admin-provider-detail .modal-footer .btn-danger {
   background: linear-gradient(145deg, var(--danger-color), #c0392b);
   border: none;
@@ -328,18 +304,16 @@
     align-items: flex-start;
     gap: 0.5rem;
   }
-
   .admin-provider-detail .stat-item {
     flex-direction: column;
     text-align: center;
   }
-
   .admin-provider-detail .stat-icon {
     margin-right: 0;
   }
 }
 
-/* Ensure muted text uses theme secondary color */
+/* ===== Muted Text ===== */
 .admin-provider-detail .text-muted {
-    color: var(--text-secondary) !important;
+  color: var(--text-secondary) !important;
 }

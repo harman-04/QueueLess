@@ -1,4 +1,4 @@
-/* Legal.css – Premium styling with full dark mode compatibility */
+/* Legal.css – Premium styling, fully scoped to .legal-page */
 
 .legal-page {
   background-color: var(--bg-primary);
@@ -6,12 +6,18 @@
 }
 
 /* Gradient text for main heading */
-.gradient-text {
+.legal-page .gradient-text {
   background: linear-gradient(135deg, var(--search-primary), var(--accent-color));
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
   display: inline-block;
+}
+
+/* Subtitle and any text-muted */
+.legal-page .lead.text-muted,
+.legal-page .text-muted {
+  color: var(--text-secondary) !important;
 }
 
 /* Last updated badge */
@@ -23,7 +29,7 @@
 }
 
 /* Legal cards */
-.legal-card {
+.legal-page .legal-card {
   background: var(--card-bg);
   border: 1px solid var(--border-color);
   border-radius: 24px;
@@ -31,14 +37,13 @@
   transition: transform 0.2s, box-shadow 0.2s;
   overflow: hidden;
 }
-
-.legal-card:hover {
+.legal-page .legal-card:hover {
   transform: translateY(-4px);
   box-shadow: var(--shadow-lg);
 }
 
 /* Card header */
-.legal-card .card-header {
+.legal-page .legal-card .card-header {
   background: linear-gradient(145deg, var(--search-primary), #4a6fdc);
   border: none;
   color: white;
@@ -48,20 +53,19 @@
 }
 
 /* Card body – force theme background */
-.legal-card .card-body {
+.legal-page .legal-card .card-body {
   background-color: var(--card-bg);
   color: var(--text-primary);
 }
 
 /* Accordion custom styling */
-.legal-accordion .accordion-item {
+.legal-page .legal-accordion .accordion-item {
   background-color: transparent;
   border: none;
   border-bottom: 1px solid var(--border-color);
   margin-bottom: 0;
 }
-
-.legal-accordion .accordion-button {
+.legal-page .legal-accordion .accordion-button {
   background-color: transparent !important;
   color: var(--text-primary) !important;
   font-weight: 600;
@@ -71,55 +75,42 @@
   box-shadow: none !important;
   border: none;
 }
-
-.legal-accordion .accordion-button:not(.collapsed) {
+.legal-page .legal-accordion .accordion-button:not(.collapsed) {
   color: var(--search-primary) !important;
   background-color: transparent !important;
 }
-
-.legal-accordion .accordion-button:focus {
+.legal-page .legal-accordion .accordion-button:focus {
   outline: none !important;
   box-shadow: none !important;
 }
-
-.legal-accordion .accordion-button:hover {
+.legal-page .legal-accordion .accordion-button:hover {
   background-color: var(--bg-secondary) !important;
 }
-
-/* Accordion icon */
-.legal-accordion .accordion-button::after {
+.legal-page .legal-accordion .accordion-button::after {
   filter: invert(var(--dark-mode-invert, 0));
   transition: transform 0.2s;
 }
-
-/* Accordion body */
-.legal-accordion .accordion-body {
+.legal-page .legal-accordion .accordion-body {
   color: var(--text-secondary);
   padding: 0 0 1rem 0;
   background-color: transparent;
 }
-
-.legal-accordion .accordion-body ul {
+.legal-page .legal-accordion .accordion-body ul {
   margin-top: 0.5rem;
   padding-left: 1.2rem;
 }
-
-.legal-accordion .accordion-body li {
+.legal-page .legal-accordion .accordion-body li {
   margin-bottom: 0.3rem;
   color: var(--text-secondary);
 }
-
-.legal-accordion .accordion-body a {
+.legal-page .legal-accordion .accordion-body a {
   color: var(--link-color);
   text-decoration: none;
 }
-
-.legal-accordion .accordion-body a:hover {
+.legal-page .legal-accordion .accordion-body a:hover {
   text-decoration: underline;
 }
-
-/* Ensure collapse container is transparent */
-.legal-accordion .accordion-collapse {
+.legal-page .legal-accordion .accordion-collapse {
   background-color: transparent;
 }
 
@@ -128,22 +119,25 @@
   color: var(--text-secondary) !important;
 }
 
-/* Dark mode overrides for any remaining Bootstrap elements */
-.dark-mode .legal-accordion .accordion-body {
+/* Dark mode overrides (scoped) */
+.dark-mode .legal-page .legal-accordion .accordion-body {
   color: var(--text-secondary);
 }
-
-.dark-mode .legal-accordion .accordion-body a {
+.dark-mode .legal-page .legal-accordion .accordion-body a {
   color: var(--link-color);
+}
+.dark-mode .legal-page .lead.text-muted,
+.dark-mode .legal-page .text-muted {
+  color: var(--text-secondary) !important;
 }
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
-  .legal-card .card-header {
+  .legal-page .legal-card .card-header {
     font-size: 1rem;
     padding: 0.8rem 1rem;
   }
-  .legal-accordion .accordion-button {
+  .legal-page .legal-accordion .accordion-button {
     font-size: 0.9rem;
   }
 }

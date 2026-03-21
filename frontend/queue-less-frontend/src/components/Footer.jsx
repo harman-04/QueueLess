@@ -45,7 +45,7 @@ const Footer = () => {
         <div className="footer-contact">
           <h4>Contact Us</h4>
           <div className="contact-info">
-            <a href="mailto:support@queueless.com" className="contact-link">
+            <a href="mailto:harmandeep02315@gmail.com" className="contact-link">
               <i className="fas fa-envelope"></i> harmandeep02315@gmail.com
             </a>
             {/* <span className="contact-phone">

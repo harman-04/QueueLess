@@ -1,4 +1,4 @@
-/* AboutUs.css – Premium styling with full dark mode compatibility */
+/* AboutUs.css – Premium styling, fully scoped to .about-us-page */
 
 .about-us-page {
     background-color: var(--bg-primary);
@@ -6,7 +6,7 @@
 }
 
 /* Gradient text for main heading */
-.gradient-text {
+.about-us-page .gradient-text {
     background: linear-gradient(135deg, var(--search-primary), var(--accent-color));
     -webkit-background-clip: text;
     background-clip: text;
@@ -14,7 +14,7 @@
     display: inline-block;
 }
 
-/* ----- Global Text Overrides ----- */
+/* ----- Global Text Overrides (scoped) ----- */
 .about-us-page h1,
 .about-us-page h2,
 .about-us-page h3,
@@ -51,7 +51,7 @@
 }
 
 /* ----- Mission Card ----- */
-.mission-card {
+.about-us-page .mission-card {
     background: var(--card-bg);
     border: 1px solid var(--border-color);
     border-radius: 32px;
@@ -59,23 +59,35 @@
     transition: transform 0.3s, box-shadow 0.3s;
 }
 
-.mission-card:hover {
+.about-us-page .mission-card:hover {
     transform: translateY(-5px);
     box-shadow: var(--shadow-lg);
 }
 
-.mission-icon {
+.about-us-page .mission-icon {
     color: var(--search-primary);
     margin-bottom: 1rem;
 }
 
-.mission-card h2 {
+.about-us-page .mission-card h2 {
     margin-bottom: 1rem;
 }
 
+/* Ensure mission card text uses theme colors */
+.about-us-page .mission-card .card-body {
+    background-color: var(--card-bg);
+    color: var(--text-primary);
+}
+
+.about-us-page .mission-card h2,
+.about-us-page .mission-card p,
+.about-us-page .mission-card .lead {
+    color: var(--text-primary) !important;
+}
+
 /* ----- Problem & Solution Cards ----- */
-.problem-card,
-.solution-card {
+.about-us-page .problem-card,
+.about-us-page .solution-card {
     background: var(--bg-secondary);
     border-radius: 24px;
     border-left: 4px solid;
@@ -83,164 +95,57 @@
     height: 100%;
 }
 
-.problem-card {
+.about-us-page .problem-card {
     border-left-color: var(--danger-color);
 }
 
-.solution-card {
+.about-us-page .solution-card {
     border-left-color: var(--success-color);
 }
 
-.problem-card:hover,
-.solution-card:hover {
+.about-us-page .problem-card:hover,
+.about-us-page .solution-card:hover {
     transform: translateX(8px);
     background: var(--border-color);
 }
 
 /* ----- Feature Cards ----- */
-.feature-card {
+.about-us-page .feature-card {
     background: var(--card-bg);
     border: 1px solid var(--border-color);
     border-radius: 20px;
     transition: all 0.3s ease;
 }
 
-.feature-card:hover {
+.about-us-page .feature-card:hover {
     transform: translateY(-8px);
     box-shadow: var(--shadow-lg);
     border-color: var(--search-primary);
 }
 
-.feature-icon {
+.about-us-page .feature-icon {
     color: var(--search-primary);
     transition: transform 0.2s;
 }
 
-.feature-card:hover .feature-icon {
+.about-us-page .feature-card:hover .feature-icon {
     transform: scale(1.1);
 }
 
-.feature-card h5 {
+.about-us-page .feature-card h5 {
     font-weight: 600;
     margin-top: 0.5rem;
     margin-bottom: 0.75rem;
 }
 
-.feature-card p {
+.about-us-page .feature-card p {
     font-size: 0.95rem;
     line-height: 1.5;
 }
 
 /* ----- Technology Badges ----- */
-.tech-badge {
+.about-us-page .tech-badge {
     background: var(--bg-secondary);
-    border-radius: 40px;
-    padding: 1rem;
-    font-size: 0.9rem;
-    transition: all 0.2s;
-}
-
-.tech-badge strong {
-    color: var(--search-primary);
-    display: block;
-    margin-bottom: 0.5rem;
-}
-
-.tech-badge:hover {
-    transform: translateY(-3px);
-    background: var(--border-color);
-}
-
-/* ----- Philosophy Card ----- */
-.philosophy-card {
-    background: var(--bg-secondary);
-    border-radius: 32px;
-    border: 1px solid var(--border-color);
-    transition: all 0.3s;
-}
-
-.philosophy-card .lead {
-    margin-bottom: 1.5rem;
-}
-
-/* ----- Call to Action Card ----- */
-.cta-card {
-    background: linear-gradient(135deg, var(--search-primary), var(--accent-color));
-    border: none;
-    border-radius: 32px;
-    color: white;
-    transition: box-shadow 0.3s;
-}
-
-.cta-card .card-body {
-    background: transparent;
-}
-
-.cta-card h3,
-.cta-card p,
-.cta-card .btn-outline-light,
-.cta-card .btn-primary {
-    color: white;
-}
-
-.cta-card .btn-primary {
-    background-color: white;
-    border-color: white;
-    color: var(--search-primary);
-    font-weight: 600;
-    transition: all 0.3s;
-}
-
-.cta-card .btn-primary:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
-    background-color: white;
-    color: var(--search-primary);
-}
-
-.cta-card .btn-outline-light {
-    border-width: 2px;
-    transition: all 0.3s;
-}
-
-.cta-card .btn-outline-light:hover {
-    transform: translateY(-2px);
-    background-color: white;
-    color: var(--search-primary);
-}
-
-/* Dark mode specific adjustments */
-.dark-mode .cta-card {
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-}
-
-/* ----- Responsive ----- */
-@media (max-width: 768px) {
-    .mission-card .lead {
-        font-size: 1rem;
-    }
-
-    .feature-card {
-        padding: 1.5rem;
-    }
-
-    .philosophy-card {
-        padding: 1.5rem !important;
-    }
-
-    .cta-card .btn-lg {
-        padding: 0.5rem 1rem;
-        font-size: 1rem;
-    }
-}
-
-.lead {
-    color: var(--text-secondary) !important;
-}
-
-/* Technology Badges – explicit dark mode support */
-.tech-badge {
-    background-color: var(--bg-secondary);
     border-radius: 40px;
     padding: 1rem;
     font-size: 0.9rem;
@@ -249,39 +154,107 @@
     box-shadow: var(--shadow-sm);
 }
 
-.tech-badge strong {
+.about-us-page .tech-badge strong {
     color: var(--search-primary);
     display: block;
     margin-bottom: 0.5rem;
     font-size: 1rem;
 }
 
-.tech-badge:hover {
+.about-us-page .tech-badge:hover {
     transform: translateY(-3px);
-    background-color: var(--border-color);
+    background: var(--border-color);
     box-shadow: var(--shadow-md);
 }
 
 /* Ensure all text inside tech badges inherits correct colors */
-.tech-badge,
-.tech-badge * {
+.about-us-page .tech-badge,
+.about-us-page .tech-badge * {
     color: var(--text-primary);
+}
+
+/* ----- Philosophy Card ----- */
+.about-us-page .philosophy-card {
+    background: var(--bg-secondary);
+    border-radius: 32px;
+    border: 1px solid var(--border-color);
+    transition: all 0.3s;
+}
+
+.about-us-page .philosophy-card .lead {
+    margin-bottom: 1.5rem;
+}
+
+/* ----- Call to Action Card ----- */
+.about-us-page .cta-card {
+    background: linear-gradient(135deg, var(--search-primary), var(--accent-color));
+    border: none;
+    border-radius: 32px;
+    color: white;
+    transition: box-shadow 0.3s;
+}
+
+.about-us-page .cta-card .card-body {
+    background: transparent;
+}
+
+.about-us-page .cta-card h3,
+.about-us-page .cta-card p,
+.about-us-page .cta-card .btn-outline-light,
+.about-us-page .cta-card .btn-primary {
+    color: white;
+}
+
+.about-us-page .cta-card .btn-primary {
+    background-color: white;
+    border-color: white;
+    color: var(--search-primary);
+    font-weight: 600;
+    transition: all 0.3s;
+}
+
+.about-us-page .cta-card .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+    background-color: white;
+    color: var(--search-primary);
+}
+
+.about-us-page .cta-card .btn-outline-light {
+    border-width: 2px;
+    transition: all 0.3s;
+}
+
+.about-us-page .cta-card .btn-outline-light:hover {
+    transform: translateY(-2px);
+    background-color: white;
+    color: var(--search-primary);
+}
+
+/* Dark mode specific adjustments (scoped) */
+.dark-mode .about-us-page .cta-card {
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+/* ----- Responsive ----- */
+@media (max-width: 768px) {
+    .about-us-page .mission-card .lead {
+        font-size: 1rem;
+    }
+    .about-us-page .feature-card {
+        padding: 1.5rem;
+    }
+    .about-us-page .philosophy-card {
+        padding: 1.5rem !important;
+    }
+    .about-us-page .cta-card .btn-lg {
+        padding: 0.5rem 1rem;
+        font-size: 1rem;
+    }
 }
 
 /* Override any stray Bootstrap text colors */
 .about-us-page .text-muted,
 .about-us-page .text-secondary {
     color: var(--text-secondary) !important;
-}
-
-/* Mission Card – ensure all text uses theme colors */
-.mission-card .card-body {
-    background-color: var(--card-bg);
-    color: var(--text-primary);
-}
-
-.mission-card h2,
-.mission-card p,
-.mission-card .lead {
-    color: var(--text-primary) !important;
 }

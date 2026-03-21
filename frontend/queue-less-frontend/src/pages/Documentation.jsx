@@ -154,10 +154,11 @@ const Documentation = () => {
                                 </ul>
                                 <h5>Installation</h5>
                                 <CodeBlock
-                                    code={`git clone https://github.com/yourusername/queueless.git
-cd queueless/backend
+                                    code={`git clone https://github.com/harman-04/QueueLess.git
+cd QueueLess/backend/backend
 ./mvnw clean install
-cd ../frontend
+cd ..
+cd ../frontend/queue-less-frontend
 npm install`}
                                     index={0}
                                 />

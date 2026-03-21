@@ -132,6 +132,7 @@ QueueLess follows a **client‑server architecture** with a Spring Boot backend 
 3. **Frontend setup**
 
    ```bash
+   cd ..
    cd ../frontend/queue-less-frontend
    npm install
    ```
@@ -257,6 +258,97 @@ npm run dev
 ```
 
 The frontend will be available at `https://localhost:5173`.
+
+### SSL Certificate (Development)
+
+The application uses HTTPS (port 8443 for backend, 443 for frontend in Docker) with self‑signed certificates. To avoid browser warnings, you can generate trusted certificates using **mkcert**.
+
+#### Install mkcert
+
+- **macOS**: `brew install mkcert`
+- **Windows**: `choco install mkcert` or download from [github.com/FiloSottile/mkcert](https://github.com/FiloSottile/mkcert)
+- **Linux**: `sudo apt install libnss3-tools` then `curl -JLO "https://dl.filippo.io/mkcert/latest?for=linux/amd64" && chmod +x mkcert-v*-linux-amd64 && sudo mv mkcert-v*-linux-amd64 /usr/local/bin/mkcert`
+
+#### Generate and Install Certificates
+
+1. **Create a local CA** (one‑time):
+
+   ```bash
+   mkcert -install
+   ```
+   
+
+
+2. **Generate certificates for localhost**:
+
+   ```bash
+   cd backend/src/main/resources
+   mkcert localhost 127.0.0.1 ::1
+   ```
+
+   This creates `localhost+2.pem` and `localhost+2-key.pem`. Rename them:
+
+   ```bash
+   mv localhost+2.pem localhost.pem
+   mv localhost+2-key.pem localhost-key.pem
+   ```
+
+3. **Convert to PKCS12 format** (required by Spring Boot):
+
+   ```bash
+   openssl pkcs12 -export -in localhost.pem -inkey localhost-key.pem -out localhost.p12 -name localhost -password pass:changeit
+   ```
+
+   The password `changeit` matches the default in `application.properties`.
+
+4. **Place the `.p12` file** inside `src/main/resources/`.
+
+#### Backend Configuration
+
+The `application.properties` already contains:
+
+```properties
+server.ssl.key-store=classpath:localhost.p12
+server.ssl.key-store-password=${SSL_KEY_STORE_PASSWORD:changeit}
+server.ssl.key-store-type=PKCS12
+```
+
+Make sure the password matches the one used when generating the `.p12` file.
+
+#### Frontend Configuration (Vite)
+
+For the Vite dev server to trust the certificate, add this to `vite.config.js`:
+
+```js
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+
+export default defineConfig({
+  plugins: [react()],
+  server: {
+    https: {
+      key: 'path/to/localhost-key.pem',
+      cert: 'path/to/localhost.pem',
+    },
+    port: 5173,
+    proxy: {
+      '/api': {
+        target: 'https://localhost:8443',
+        changeOrigin: true,
+        secure: false,
+      },
+    },
+  },
+});
+```
+
+Replace the paths with the actual location of your `.pem` files. The proxy ensures API requests are forwarded to the backend without CORS issues.
+
+#### Docker
+
+In the provided `docker-compose.yml`, the backend uses the `localhost.p12` file mounted from the host. Ensure you have generated the `.p12` file and placed it in the expected location (`backend/src/main/resources/localhost.p12`).
+
+> **Note**: For production, use certificates from a trusted CA like Let’s Encrypt.
 
 ### Docker Setup
 

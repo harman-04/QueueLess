@@ -21,26 +21,34 @@ const AlertConfigModal = ({ show, onHide, onConfigChanged }) => {
   }, [show]);
 
   const fetchConfig = async () => {
-    setFetching(true);
-    setError(null);
-    try {
-      const response = await axiosInstance.get('/admin/alert-config');
-      setThreshold(response.data.thresholdWaitTime);
-      setEmail(response.data.notificationEmail || '');
-      setEnabled(response.data.enabled);
-    } catch (err) {
-      if (err.response?.status === 404) {
-        // No config yet – leave default values
-        setThreshold(15);
-        setEmail('');
-        setEnabled(true);
-      } else {
-        setError('Failed to load alert configuration');
-      }
-    } finally {
-      setFetching(false);
+  setFetching(true);
+  setError(null);
+  try {
+    const response = await axiosInstance.get('/admin/alert-config');
+    setThreshold(response.data.thresholdWaitTime);
+    setEmail(response.data.notificationEmail || '');
+    setEnabled(response.data.enabled);
+  } catch (err) {
+    // Check for 404 – the normalized error from axiosInstance has a status property
+    const is404 = err.status === 404 ||
+                  (err.response?.status === 404) ||
+                  (err.message?.includes('404'));
+
+    if (is404) {
+      // No configuration yet – use defaults and do not show error
+      setThreshold(15);
+      setEmail('');
+      setEnabled(true);
+      // Optional: log a debug message instead of error
+      console.debug('No alert config found, using defaults');
+    } else {
+      console.error('Failed to load alert config:', err);
+      setError('Failed to load alert configuration');
     }
-  };
+  } finally {
+    setFetching(false);
+  }
+};
 
   const handleSave = async () => {
     setLoading(true);
