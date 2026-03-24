@@ -10,20 +10,21 @@ QueueLess is a comprehensive, multi‑tenant queue management platform designed 
 1. [Features](#features)
 2. [Tech Stack](#tech-stack)
 3. [Architecture Overview](#architecture-overview)
-4. [Getting Started](#getting-started)
+4. [Screenshots & Demo](#screenshots--demo)
+5. [Getting Started](#getting-started)
    - [Prerequisites](#prerequisites)
    - [Installation](#installation)
    - [Environment Variables](#environment-variables)
    - [Running Locally](#running-locally)
    - [Docker Setup](#docker-setup)
-5. [API Documentation](#api-documentation)
-6. [WebSocket Real‑Time Updates](#websocket-real‑time-updates)
-7. [Testing](#testing)
-8. [Deployment](#deployment)
-9. [Troubleshooting](#troubleshooting)
-10. [Contributing](#contributing)
-11. [License](#license)
-12. [Code of Conduct](#code-of-conduct)
+6. [API Documentation](#api-documentation)
+7. [WebSocket Real‑Time Updates](#websocket-realtime-updates)
+8. [Testing](#testing)
+9. [Deployment](#deployment)
+10. [Troubleshooting](#troubleshooting)
+11. [Contributing](#contributing)
+12. [License](#license)
+13. [Code of Conduct](#code-of-conduct)
 
 ---
 
@@ -98,6 +99,653 @@ QueueLess follows a **client‑server architecture** with a Spring Boot backend 
 - **Feedback** – submitted for completed tokens, includes multi‑dimensional ratings.
 - **AuditLog** – records important actions for traceability.
 - **NotificationPreference** – per‑queue notification settings for users.
+
+---
+
+## Screenshots & Demo
+
+### 🏠 Public Pages
+
+<details>
+<summary>Home Page (Click to expand)</summary>
+
+**Hero Section**  
+![home-page-1.png](screenshots/home-page-1.png)  
+*Landing page with call‑to‑action, statistics, and live queue status.*
+
+**Features & Testimonials**  
+![home-page-2.png](screenshots/home-page-2.png)  
+![home-page-3.png](screenshots/home-page-3.png)  
+![home-page-4.png](screenshots/home-page-4.png)  
+![home-page-5.png](screenshots/home-page-5.png)  
+*Overview of key features and user testimonials.*
+
+</details>
+
+<details>
+<summary>Places List & Place Details</summary>
+
+**Places List**  
+![place-list-2.png](screenshots/place-list-2.png)  
+*All active places displayed with images, ratings, and addresses.*
+
+**Places List (Dark Mode)**  
+![place-list-1.png](screenshots/place-list-1.png)
+
+**Place Detail**  
+![place-detail-1.png](screenshots/place-detail-1.png)  
+*Main view with services, business hours, and location map.*
+
+**Place Detail – Feedback & Best Time**  
+![place-detail-2.png](screenshots/place-detail-2.png)  
+*User reviews, average ratings, and best‑time recommendations.*
+
+</details>
+
+<details>
+<summary>Advanced Search</summary>
+
+**Search Filters**  
+![advanced-search-1.png](screenshots/advanced-search-1.png)  
+*Filter by location, rating, wait time, and features.*
+
+**Search Results – Places**  
+![advanced-search-2.png](screenshots/advanced-search-2.png)
+
+**Search Results – Services**  
+![advanced-search-3.png](screenshots/advanced-search-3.png)
+
+**Search Results – Queues**  
+![advanced-search-4.png](screenshots/advanced-search-4.png)  
+*Paginated results with place details and queue status.*
+
+</details>
+
+<details>
+<summary>Authentication & Registration</summary>
+
+**Login Page**  
+![login-1.png](screenshots/login-1.png)  
+*All roles login with email and password.*
+
+**Register Page – User**  
+![register-1.png](screenshots/register-1.png)  
+![reegister-2.png](screenshots/reegister-2.png)  
+*User registration – no payment required.*
+
+**Register – Mobile View**  
+![register-3.png](screenshots/register-3.png)
+
+**Email Verification**  
+*All roles receive a verification email after registration.*  
+*Example email (responsive):*  
+![verify-otp-2.png](screenshots/verify-otp-2.png)  
+*Verification page:*  
+![verify-otp-1.png](screenshots/verify-otp-1.png)
+
+**Forgot Password**  
+![forgot-password.png](screenshots/forgot-password.png)  
+*Enter email, receive OTP, then reset password.*
+
+</details>
+
+<details>
+<summary>Admin Token Purchase & Registration</summary>
+
+**Pricing Page (Admin)**  
+![admin-payement-1.png](screenshots/admin-payement-1.png)  
+![admin-payement-2.png](screenshots/admin-payement-2.png)  
+![admin-payement-3.png](screenshots/admin-payement-3.png)  
+*Razorpay checkout for purchasing admin tokens.*
+
+**Admin Token Generated**  
+![admin-payement-4.png](screenshots/admin-payement-4.png)  
+*Copy the token and use it during registration.*
+
+**Admin Registration**  
+![register-admin-1.png](screenshots/register-admin-1.png)  
+![register-admin-2.png](screenshots/register-admin-2.png)  
+*Choose “ADMIN” role and paste the purchased token. Token works once and expires.*
+
+</details>
+
+---
+
+### 👤 User Dashboard (Logged‑in)
+
+<details>
+<summary>Dashboard Overview</summary>
+
+**My Queues**  
+![user-dashboard-1.png](screenshots/user-dashboard-1.png)
+
+**Favourite Places**  
+![user-dashboard-2.png](screenshots/user-dashboard-2.png)
+
+**Token Usage Chart**  
+![user-dashboard-3.png](screenshots/user-dashboard-3.png)
+
+**Places Section**  
+![user-dashboard-4.png](screenshots/user-dashboard-4.png)
+
+**Dark Mode**  
+![user-dashboard-5.png](screenshots/user-dashboard-5.png)
+
+**Mobile View**  
+![user-dashboard-6.png](screenshots/user-dashboard-6.png)
+
+*Personal dashboard showing active queues, favourite places, and token history.*
+
+</details>
+
+<details>
+<summary>Joining a Queue & Token Flow</summary>
+
+**Regular Token – Join Form**  
+![join-queue-1.png](screenshots/join-queue-1.png)
+
+**Get Token with Details**  
+![join-queue-2.png](screenshots/join-queue-2.png)
+
+**Group Token – Form**  
+![join-queue-3.png](screenshots/join-queue-3.png)
+
+**Emergency Token – Form**  
+![join-queue-4.png](screenshots/join-queue-4.png)
+
+**Queue Information**  
+![join-queue-5.png](screenshots/join-queue-5.png)
+
+**Mobile View**  
+![join-queue-6.png](screenshots/join-queue-6.png)
+
+**Live Position**  
+![join-queue-7.png](screenshots/join-queue-7.png)
+
+**Feedback Prompt** (after token completion)  
+![join-queue-8.png](screenshots/join-queue-8.png)
+
+**Feedback Form**  
+![join-queue-9.png](screenshots/join-queue-9.png)
+
+**Filled Form**  
+![join-queue-10.png](screenshots/join-queue-10.png)
+
+**Completion Message**  
+![join-queue-11.png](screenshots/join-queue-11.png)
+
+*Users can choose regular, group, or emergency tokens, provide details, and give feedback after completion.*
+
+</details>
+
+<details>
+<summary>Queue Position & Notifications</summary>
+
+**Queue Position**  
+![queue-position-1.png](screenshots/queue-position-1.png)  
+![queue-position-2.png](screenshots/queue-position-2.png)
+
+**Push Notifications**  
+*Your turn is coming up:*  
+![notification-preferences-4.png](screenshots/notification-preferences-4.png)
+
+*Queue is short:*  
+![notification-preferences-7.png](screenshots/notification-preferences-7.png)
+
+**Email Notification**  
+*Reminder when your turn is approaching:*  
+![notification-preferences-8.png](screenshots/notification-preferences-8.png)
+
+</details>
+
+<details>
+<summary>Favourite Places</summary>
+
+**Favourites Page**  
+![favourite-place-1.png](screenshots/favourite-place-1.png)
+
+**Dark Mode**  
+![favourite-place-2.png](screenshots/favourite-place-2.png)
+
+**Mobile View**  
+![favourite-place-3.png](screenshots/favourite-place-3.png)
+
+</details>
+
+<details>
+<summary>Notification Preferences</summary>
+
+**Empty State**  
+![notification-preferences-1.png](screenshots/notification-preferences-1.png)
+
+**Add Preference – Select Queue**  
+![notification-preferences-2.png](screenshots/notification-preferences-2.png)
+
+**Add Preference – Set Options**  
+![notification-preferences-3.png](screenshots/notification-preferences-3.png)
+
+**Preferences List**  
+![notification-preferences-5.png](screenshots/notification-preferences-5.png)
+
+**Mobile View**  
+![notification-preferences-6.png](screenshots/notification-preferences-6.png)
+
+*Per‑queue settings for reminder time, status changes, and best‑time alerts.*
+
+</details>
+
+<details>
+<summary>User Profile</summary>
+
+**Profile Page**  
+![user-profile-1.png](screenshots/user-profile-1.png)
+
+**Avatar Selection**  
+![user-profile-2.png](screenshots/user-profile-2.png)
+
+**Personal Information**  
+![user-profile-3.png](screenshots/user-profile-3.png)
+
+**Change Password**  
+![user-profile-4.png](screenshots/user-profile-4.png)
+
+**Preferences & Account**  
+![user-profile-5.png](screenshots/user-profile-5.png)
+
+**Dark Mode**  
+![user-profile-6.png](screenshots/user-profile-6.png)
+
+**Mobile View – Light**  
+![user-profile-7.png](screenshots/user-profile-7.png)
+
+**Mobile View – Dark**  
+![user-profile-8.png](screenshots/user-profile-8.png)  
+![user-profile-9.png](screenshots/user-profile-9.png)
+
+*Update name, phone, password, upload profile image, and manage preferences.*
+
+</details>
+
+<details>
+<summary>Token History</summary>
+
+![Token History](screenshots/token-history.png)  
+*Past tokens with ratings and service details.*
+
+</details>
+
+---
+
+### 🛠️ Provider Dashboard
+
+<details>
+<summary>Provider Queue List</summary>
+
+**Queues List**  
+![provider-queues-1.png](screenshots/provider-queues-1.png)  
+![provider-queues-2.png](screenshots/provider-queues-2.png)
+
+**Dark Mode**  
+![provider-queues-3.png](screenshots/provider-queues-3.png)
+
+**Mobile View**  
+![provider-queues-4.png](screenshots/provider-queues-4.png)  
+![provider-queues-5.png](screenshots/provider-queues-5.png)
+
+*List of all queues with status and quick actions.*
+
+</details>
+
+<details>
+<summary>Queue Management</summary>
+
+**Dashboard**  
+![queue-management-1.png](screenshots/queue-management-1.png)
+
+**Complete Token**  
+![queue-management-2.png](screenshots/queue-management-2.png)
+
+**Completed Tokens List**  
+![queue-management-3.png](screenshots/queue-management-3.png)
+
+**QR Code**  
+![queue-management-4.png](screenshots/queue-management-4.png)
+
+**Reset Queue with Export**  
+![queue-management-6.png](screenshots/queue-management-6.png)
+
+**Export History**  
+![queue-management-7.png](screenshots/queue-management-7.png)
+
+**Dark Mode**  
+![queue-management-8.png](screenshots/queue-management-8.png)
+
+**Mobile View**  
+![queue-management-9.png](screenshots/queue-management-9.png)
+
+*Drag‑and‑drop reorder, serve next, complete/cancel tokens, view user details, and reset.*
+
+</details>
+
+<details>
+<summary>Emergency Approval</summary>
+
+![Emergency Approval](screenshots/emergency-approval.png)  
+*Approve or reject emergency token requests with optional reason.*
+
+</details>
+
+<details>
+<summary>Analytics & Exports</summary>
+
+**Token Volume (30 days)**  
+![provider-analytics-1.png](screenshots/provider-analytics-1.png)
+
+**Busiest Hours**  
+![provider-analytics-2.png](screenshots/provider-analytics-2.png)
+
+**Average Wait Time Trend**  
+![provider-analytics-3.png](screenshots/provider-analytics-3.png)
+
+**Export Reports**  
+![queue-management-5.png](screenshots/queue-management-5.png)
+
+**Dark Mode Charts**  
+![provider-analytics-4.png](screenshots/provider-analytics-4.png)
+
+**Mobile View**  
+![provider-analytics-5.png](screenshots/provider-analytics-5.png)
+
+*Charts for token volume, busiest hours, average wait time, and PDF/Excel exports.*
+
+</details>
+
+---
+
+### 👑 Admin Dashboard
+
+<details>
+<summary>Admin Overview</summary>
+
+**Dashboard**  
+![admin-dashboard-1.png](screenshots/admin-dashboard-1.png)
+
+**Dark Mode**  
+![admin-dashboard-2.png](screenshots/admin-dashboard-2.png)
+
+**Mobile View**  
+![admin-dashboard-3.png](screenshots/admin-dashboard-3.png)
+
+*Statistics cards, quick actions, and tabs for places, queues, payments, providers, analytics.*
+
+</details>
+
+<details>
+<summary>Place Management</summary>
+
+**Places List**  
+![admin-places-1.png](screenshots/admin-places-1.png)  
+![admin-places-2.png](screenshots/admin-places-2.png)  
+![admin-places-3.png](screenshots/admin-places-3.png)  
+![admin-places-4.png](screenshots/admin-places-4.png)
+
+**Create/Edit Place (Dark Mode)**  
+![admin-places-5.png](screenshots/admin-places-5.png)
+
+**Mobile View**  
+![admin-places-6.png](screenshots/admin-places-6.png)
+
+*Create and edit places with images, location, business hours, and contact info.*
+
+</details>
+
+<details>
+<summary>Service Management</summary>
+
+**Services List**  
+![admin-services-1.png](screenshots/admin-services-1.png)
+
+**Create Service**  
+![admin-services-2.png](screenshots/admin-services-2.png)
+
+**Services Table**  
+![admin-services-3.png](screenshots/admin-services-3.png)
+
+**Dark Mode – Create Service**  
+![admin-services-4.png](screenshots/admin-services-4.png)
+
+**Mobile View**  
+![admin-services-5.png](screenshots/admin-services-5.png)
+
+*Add services under a place, set average service time, and enable group/emergency support.*
+
+</details>
+
+<details>
+<summary>Provider Management</summary>
+
+**Providers Table**  
+![admin-providers-1.png](screenshots/admin-providers-1.png)
+
+**Dark Mode**  
+![admin-providers-2.png](screenshots/admin-providers-2.png)
+
+**Provider Details**  
+![admin-providers-3.png](screenshots/admin-providers-3.png)
+
+**Edit Provider**  
+![admin-providers-4.png](screenshots/admin-providers-4.png)
+
+**Dark Mode – Details**  
+![admin-providers-5.png](screenshots/admin-providers-5.png)
+
+**Mobile View**  
+![admin-providers-6.png](screenshots/admin-providers-6.png)
+
+**Password Reset Email**  
+![admin-providers-7.png](screenshots/admin-providers-7.png)
+
+*List all providers, view performance, edit details, assign places, and reset passwords.*
+
+</details>
+
+<details>
+<summary>Payment History</summary>
+
+**Payment History**  
+![payment-history-1.png](screenshots/payment-history-1.png)
+
+**Dark Mode**  
+![payment-history-2.png](screenshots/payment-history-2.png)
+
+**Mobile View**  
+![payment-history-3.png](screenshots/payment-history-3.png)
+
+*Record of all token purchases (admin and provider) with transaction details.*
+
+</details>
+
+<details>
+<summary>Admin Queues</summary>
+
+**Queues Table**  
+![admin-queues-1.png](screenshots/admin-queues-1.png)
+
+**Dark Mode**  
+![admin-queues-2.png](screenshots/admin-queues-2.png)
+
+**Mobile View**  
+![admin-queues-3.png](screenshots/admin-queues-3.png)
+
+*Admins can see all queues managed by their providers and toggle active status.*
+
+</details>
+
+<details>
+<summary>Analytics Charts</summary>
+
+**Token Volume**  
+![admin-analytics-1.png](screenshots/admin-analytics-1.png)
+
+**Busiest Hours**  
+![admin-analytics-2.png](screenshots/admin-analytics-2.png)
+
+**Dark Mode**  
+![admin-analytics-3.png](screenshots/admin-analytics-3.png)
+
+**Mobile View**  
+![admin-analytics-4.png](screenshots/admin-analytics-4.png)
+
+*Token volume over time and busiest hours across all places.*
+
+</details>
+
+<details>
+<summary>Heat Map (Queue Load)</summary>
+
+**Heat Map**  
+![heat-map-1.png](screenshots/heat-map-1.png)
+
+**Dark Mode**  
+![heat-map-2.png](screenshots/heat-map-2.png)
+
+**Mobile View**  
+![heat-map-3.png](screenshots/heat-map-3.png)
+
+*Geographic visualisation of queue load per place.*
+
+</details>
+
+<details>
+<summary>Alert Configuration</summary>
+
+**Alert Config Form**  
+![admin-alert-1.png](screenshots/admin-alert-1.png)
+
+**Dark Mode**  
+![admin-alert-2.png](screenshots/admin-alert-2.png)
+
+**Mobile View**  
+![admin-alert-3.png](screenshots/admin-alert-3.png)
+
+**Alert Email**  
+![admin-alert-4.png](screenshots/admin-alert-4.png)  
+![admin-alert-5.png](screenshots/admin-alert-5.png)
+
+*Set wait time thresholds; receive email alerts when exceeded.*
+
+</details>
+
+---
+
+### 📄 Additional Public Pages
+
+<details>
+<summary>About Us</summary>
+
+![about-page-1.png](screenshots/about-page-1.png)  
+![about-page-2.png](screenshots/about-page-2.png)  
+![about-page-3.png](screenshots/about-page-3.png)  
+![about-page-4.png](screenshots/about-page-4.png)
+
+**Mobile View**  
+![about-page-5.png](screenshots/about-page-5.png)
+
+*Our mission, problem statement, solution, differentiators, and technologies used.*
+
+</details>
+
+<details>
+<summary>How to Use</summary>
+
+**User Guide**  
+![how-to-use-page-1.png](screenshots/how-to-use-page-1.png)
+
+**Provider Guide**  
+![how-to-use-page-2.png](screenshots/how-to-use-page-2.png)
+
+**Admin Guide**  
+![how-to-use-page-3.png](screenshots/how-to-use-page-3.png)
+
+**Pro Tips**  
+![how-to-use-page-4.png](screenshots/how-to-use-page-4.png)
+
+**Mobile View**  
+![how-to-use-page-5.png](screenshots/how-to-use-page-5.png)
+
+*Step‑by‑step instructions for each role, plus tips for best experience.*
+
+</details>
+
+<details>
+<summary>Documentation</summary>
+
+![documentation-page-1.png](screenshots/documentation-page-1.png)
+
+**Mobile View**  
+![documentation-page-2.png](screenshots/documentation-page-2.png)
+
+*Major API documentation – User Friendly Ui for apis and getting started.*
+
+</details>
+
+<details>
+<summary>Privacy Policy & Terms of Service</summary>
+
+**Privacy Policy**  
+![privacy-policy-page-1.png](screenshots/privacy-policy-page-1.png)
+
+**Mobile View**  
+![privicy-policy-page-2.png](screenshots/privicy-policy-page-2.png)
+
+*Legal information page containing both privacy policy and terms of service.*
+
+</details>
+
+---
+
+### 📚 Swagger – API Documentation
+
+![swagger-api-1.png](screenshots/swagger-api-1.png)
+
+**Schemas**  
+![swagger-api-2.png](screenshots/swagger-api-2.png)
+
+*Interactive OpenAPI documentation for all controllers and models.*
+
+---
+
+### 📊 Grafana – Monitoring Dashboards
+
+**Queue Metrics**  
+![grafana-1.png](screenshots/grafana-1.png)
+
+**Spring Boot Metrics**  
+![grafana-2.png](screenshots/grafana-2.png)
+
+**Cache & Performance**  
+![grafana-3.png](screenshots/grafana-3.png)
+
+**Logs Drilldown**  
+![grafana-4.png](screenshots/grafana-4.png)
+
+**All Metrics**  
+![grafana-5.png](screenshots/grafana-5.png)
+
+*Visualise metrics and logs from Prometheus and Loki.*
+
+---
+
+### 🎬 Real‑time Updates (Demo)
+
+**Live Queue Updates** 
+
+<video src="screenshots/queue-updates.mp4" width="100%" autoplay loop muted playsinline></video>
+
+*Watch as tokens are added, served, and completed – the queue updates instantly on all connected clients.*
+---
+
+*All screenshots are from the running application.*
 
 ---
 
