@@ -738,10 +738,10 @@ QueueLess follows a **client‑server architecture** with a Spring Boot backend 
 
 ### 🎬 Real‑time Updates (Demo)
 
-**Live Queue Updates** 
+**Live Queue Updates**  
 
-<video src="screenshots/queue-updates.mp4" width="100%" autoplay loop muted playsinline></video>
-
+![Live Demo](screenshots/queue-updates.gif) 
+ 
 *Watch as tokens are added, served, and completed – the queue updates instantly on all connected clients.*
 ---
 

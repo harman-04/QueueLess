@@ -7623,12 +7623,6 @@ Admin can Pause and Resume Any Queue using Action Button*
 *Drilldown Metrics - All Metrics
 ![grafana-5.png](screenshots/grafana-5.png)
 
-### Real‑time Updates (GIF)
-
-**Live Queue Updates**  
-![Live Demo](screenshots/queue-updates.gif)  
-*Watch as tokens are added, served, and completed – the queue updates instantly on all connected clients.*
-
 ---
 
 *All screenshots are from the running application. *
