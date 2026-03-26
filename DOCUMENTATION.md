@@ -20,8 +20,11 @@
 16. [Conclusion](#16-conclusion)
 17. [Technology Learning Guide](#17-technology-learning-guide)
 18. [Interview Questions & Answers](#18-interview-questions--answers)
-19. [Data Structures & Algorithms in QueueLess](#19-data-structures--algorithms-in-queueless)
-20. [How to Present QueueLess in an Interview](#20-how-to-present-queueless-in-an-interview)
+19. [General Technical Interview Questions](#19-general-technical-interview-questions)
+20. [Data Structures & Algorithms in QueueLess](#20-data-structures--algorithms-in-queueless)
+21. [Data Structures Used in QueueLess](#21-data-structures-used-in-queueless)
+22. [How to Present QueueLess in an Interview](#22-how-to-present-queueless-in-an-interview)
+23. [Screenshots & Demo](#23-screenshots--demo)
 
 ---
 
@@ -51,13 +54,10 @@ QueueLess follows a **client‑server architecture** with a clear separation bet
 - **Monitoring**: Prometheus scrapes metrics, Grafana visualizes them, Loki collects logs, Promtail ships logs.
 
 ```mermaid
-%%{init: {'theme': 'dark', 'themeVariables': { 'primaryTextColor': '#FFFFFF', 'lineColor': '#B0BEC5', 'edgeLabelBackground':'#111827'}}}%%
 graph TD
-    %% Global Diagram Title - No literal ** or other formatting
-    mainTitle["APPLICATION ARCHITECTURE DIAGRAM (DARK MODE)"]:::titleNode
+    mainTitle["APPLICATION ARCHITECTURE DIAGRAM"]:::titleNode
     style mainTitle fill:none,stroke:none
 
-    %% --- Node Definitions - Clean Multiline Text, No Markdown ---
     Browser_D["User Browser\nApplication Interface"]:::browserNodeD
     Backend_D["Spring Boot Backend\nAPI & Business Logic"]:::backendNodeD
     MongoDB_D["MongoDB\nNoSQL Database"]:::dbNodeD
@@ -66,18 +66,12 @@ graph TD
     Firebase_D["Firebase FCM"]:::serviceNodeD
     SMTP_D["SMTP (Email)"]:::serviceNodeD
 
-    %% --- Defining Tiered Styles with Specific Colors ---
     classDef titleNode font-size:22px,font-weight:bold,color:#E1F5FE,stroke:none;
-    %% Neon Blue for Client
     classDef browserNodeD fill:#0D47A1,stroke:#40C4FF,stroke-width:2px,color:#FFFFFF,rx:10,ry:10,font-weight:600;
-    %% Light Green for Backend
     classDef backendNodeD fill:#1B5E20,stroke:#A5D6A7,stroke-width:2px,color:#FFFFFF,rx:10,ry:10,font-weight:600;
-    %% Bright Orange for Databases
     classDef dbNodeD fill:#FF6F00,stroke:#FFE082,stroke-width:2px,color:#FFFFFF,rx:10,ry:10,font-weight:600;
-    %% Bright Red for Third-Party Services
     classDef serviceNodeD fill:#B71C1C,stroke:#EF9A9A,stroke-width:2px,color:#FFFFFF,rx:10,ry:10,font-weight:600;
 
-    %% --- Logical Connections ---
     Browser_D -.->|REST / WebSocket| Backend_D
     Browser_D --> Razorpay_D
     Backend_D --> MongoDB_D
@@ -184,9 +178,9 @@ Spring Boot eliminates boilerplate configuration and provides production‑ready
 
 ### 2.3 Redis
 **Why Redis?**
-- **OTP storage** – OTPs are short‑lived; Redis TTL automatically expires them.
-- **Caching** – reduces database load for frequently read data (e.g., place lists).
-- **Rate limiting** – `Bucket4j` stores buckets in memory (no external Redis needed in current implementation, but Redis could be added for distributed rate limiting).
+- **Caching** – reduces database load for frequently read data (e.g., place lists). *(Currently used)*
+- **Rate limiting** – `Bucket4j` stores buckets in memory (no external Redis needed in current implementation, but Redis could be added for distributed rate limiting). *(Not used, but potential)*
+- **OTP storage** – OTPs are short‑lived; Redis TTL would be ideal. Currently OTPs are stored in MongoDB with a TTL index; Redis is used for caching only.
 
 **Configuration**
 - `RedisCacheConfig` sets up `RedisCacheManager` with JSON serialization for Java 8 dates and GeoJSON types.
@@ -197,7 +191,6 @@ Spring Boot eliminates boilerplate configuration and provides production‑ready
   Redis TTL is more efficient and ensures automatic cleanup without needing a scheduled job. It’s also faster for key‑value lookups.
 - *How does the caching work?*  
   Spring’s cache abstraction wraps Redis. Methods annotated with `@Cacheable` first check Redis; if data exists, it’s returned without hitting MongoDB. `@CacheEvict` invalidates entries after updates.
-
 ---
 
 ### 2.4 Spring Security & JWT
@@ -342,9 +335,6 @@ Custom annotations (`@AdminOnly`, `@ProviderOnly`) use `@PreAuthorize` to enforc
 ## 3. Backend Package Structure & Key Classes
 
 ### 3.1 Package Overview
-
-The backend follows a standard layered architecture:
-
 ```
 src/main/java/com/queueless/backend/
 ├── config/               – Spring configuration classes
@@ -393,15 +383,16 @@ Each DTO is used to transfer data between client and server, often with validati
 
 #### Model Package
 MongoDB documents (entities) annotated with `@Document`:
-- `User` – stores all user data (including `isActive`, `managedPlaceIds`, `fcmTokens`).
+- `User` – stores all user data (including `isActive`, `managedPlaceIds`, `fcmTokens`, `activeTokenId`, `lastQueueJoinTime`).
 - `Place` – geospatial field `location` as `GeoJsonPoint`.
 - `Service` – linked to a place.
-- `Queue` – contains a list of `QueueToken` (embedded).
+- `Queue` – contains a list of `QueueToken` (embedded) and `pendingEmergencyTokens`.
 - `Feedback` – linked to token, queue, user, provider, place.
 - `Payment`, `Token` – for paid tokens.
 - `AuditLog` – audit trail.
 - `NotificationPreference` – per‑queue user preferences.
 - `PasswordResetToken` – for admin‑initiated reset.
+- `AlertConfig` – admin alert thresholds.
 
 #### Repository Package
 Spring Data MongoDB repositories extend `MongoRepository<T, String>` and define custom query methods (e.g., `findByProviderId`, `findByPlaceIdIn`, `findByUserIdAndQueueId`). Also includes custom queries with `@Query` for geospatial search.
@@ -437,6 +428,7 @@ All business logic resides here. Key services:
 - `PasswordResetTokenService` – token‑based reset.
 - `QueueMetricsService` – exposes custom metrics (waiting tokens, in‑service tokens, total served) via Micrometer.
 - `QRCodeService` – generates QR codes for queue join links.
+- `AlertConfigService` – manages admin alert thresholds.
 
 #### Scheduler Package
 - `TokenNotificationScheduler.java` – runs every minute, checks for upcoming tokens, sends email/push notifications.
@@ -462,7 +454,7 @@ All business logic resides here. Key services:
 | **Observer**      | WebSocket broadcasts act as an observable pattern; clients observe queue state changes. |
 | **Aspect**        | `@PreAuthorize` is a form of AOP; custom aspects could be added (not used yet). |
 
-### 3.4 Diagram Prompts (for Mermaid/PlantUML)
+### 3.4 Diagram 
 
 **Backend Package Diagram (Mermaid)**
 ```mermaid
@@ -559,7 +551,7 @@ QueueLess uses JWT (JSON Web Tokens) for stateless authentication and Spring Sec
 1. **Frontend** sends `POST /api/auth/register` with user details (name, email, password, phone, role=USER).
 2. `AuthController.register()` calls `AuthService.register()`.
 3. `AuthService` checks if email already exists. If not, creates a `User` entity with `isVerified = false` and persists it.
-4. A 6‑digit OTP is generated and stored in Redis (using `OtpRepository`, which uses a collection with TTL).
+4. A 6‑digit OTP is generated and stored in MongoDB (collection `otp`) with a TTL of 5 minutes.
 5. An email is sent to the user containing the OTP (using `EmailService`).
 6. The user receives an email and enters the OTP on the frontend.
 
@@ -568,11 +560,12 @@ QueueLess uses JWT (JSON Web Tokens) for stateless authentication and Spring Sec
 - The token is stored in the `tokens` collection with a `tokenValue`, `role`, `expiryDate`, and `used=false`.
 - During registration, the user supplies the token in the request.
 - `AuthService` validates the token (checks existence, expiry, not used, role match, and email match).
-- If valid, the token is marked as used, the user is created with `isVerified = true` (since they purchased a token), and an OTP is still sent? Wait – in our implementation we set `isVerified = false` for all roles, but then we also call `sendVerificationOtp` for all roles. That means admins/providers also have to verify their email via OTP. That’s a security trade‑off (email ownership). In the code we saw, after registration, `sendVerificationOtp` is called for all roles. So they will get an OTP and must verify. That’s fine.
+- If valid, the token is marked as used, the user is created with `isVerified = false` (they still must verify email via OTP), and a verification OTP is sent.
+- After email verification, the account becomes fully active.
 
 **Email Verification**
 - Frontend sends `POST /api/auth/verify-email` with email and OTP.
-- `AuthService` checks OTP in Redis, marks user as verified, deletes OTP record.
+- `AuthService` checks OTP in the `otp` collection, marks user as verified, deletes OTP record.
 
 **Resend OTP**
 - `POST /api/auth/resend-verification?email=...` triggers a new OTP.
@@ -615,26 +608,7 @@ QueueLess uses JWT (JSON Web Tokens) for stateless authentication and Spring Sec
 
 ### 4.7 Code References
 
-**`AuthService.register()`** – core registration logic, includes token validation for admin/provider roles.
-
-```java
-public String register(RegisterRequest request) {
-    // ... validation and token handling ...
-    User user = User.builder()
-            .name(request.getName())
-            .email(request.getEmail())
-            .password(passwordEncoder.encode(request.getPassword()))
-            .phoneNumber(request.getPhoneNumber())
-            .role(request.getRole())
-            .isVerified(false)
-            .preferences(userPreferences)
-            .build();
-    userRepository.save(user);
-    sendVerificationOtp(request.getEmail());
-    auditLogService.logEvent("USER_REGISTERED", ...);
-    return "User registered successfully! Please verify your email.";
-}
-```
+**`AuthService.register()`** – core registration logic, includes token validation for admin/provider roles and sends verification OTP for all roles.
 
 **`AuthService.login()`** – includes `isActive` check.
 
@@ -746,10 +720,22 @@ sequenceDiagram
     alt email exists
         AuthService-->>Client: error
     else
-        AuthService->>UserRepository: save user (verified=false)
-        AuthService->>OtpRepository: save OTP with TTL
-        AuthService->>EmailService: send OTP email
-        AuthService-->>Client: success, need verification
+        alt role is ADMIN or PROVIDER
+            AuthService->>AuthService: validate token
+            alt token invalid
+                AuthService-->>Client: error
+            else
+                AuthService->>UserRepository: save user (verified=false)
+                AuthService->>OtpRepository: save OTP with TTL
+                AuthService->>EmailService: send OTP email
+                AuthService-->>Client: success, need verification
+            end
+        else role is USER
+            AuthService->>UserRepository: save user (verified=false)
+            AuthService->>OtpRepository: save OTP with TTL
+            AuthService->>EmailService: send OTP email
+            AuthService-->>Client: success, need verification
+        end
     end
     Client->>AuthController: POST /verify-email
     AuthController->>AuthService: verifyEmail()
@@ -773,9 +759,10 @@ Queue management is the heart of QueueLess. This section explains how queues are
 
 **`Queue` entity** (MongoDB document)
 - Contains embedded list of `QueueToken` objects.
-- Each `QueueToken` includes `tokenId`, `userId`, `userName`, `status`, `issuedAt`, `servedAt`, `completedAt`, `isEmergency`, `emergencyDetails`, `priority`, `isGroup`, `groupMembers`, etc.
+- Each `QueueToken` includes `tokenId`, `userId`, `userName`, `status`, `issuedAt`, `servedAt`, `completedAt`, `isEmergency`, `emergencyDetails`, `priority`, `isGroup`, `groupMembers`, `userDetails` (purpose, condition, notes, privacy flags), etc.
 - Queue statistics are stored in embedded `QueueStatistics` (average wait time, daily users served, etc.).
 - Supports `maxCapacity`, `isActive`, `supportsGroupToken`, `emergencySupport`, `emergencyPriorityWeight`, `requiresEmergencyApproval`, `autoApproveEmergency`.
+- Additionally, the queue maintains a `pendingEmergencyTokens` list for tokens awaiting provider approval.
 
 ### 5.2 Creating a Queue
 
@@ -816,7 +803,7 @@ public Queue createNewQueue(String providerId, String serviceName, String placeI
     - Max capacity not exceeded.
 - Generates a unique token ID (e.g., `queueId-T-001`).
 - Creates `QueueToken` with status `WAITING`, adds to queue's token list.
-- Updates user's `activeTokenId`.
+- Updates user's `activeTokenId` and `lastQueueJoinTime`.
 - Saves queue and user.
 - Broadcasts update via WebSocket.
 
@@ -827,7 +814,7 @@ public Queue createNewQueue(String providerId, String serviceName, String placeI
 
 **Emergency token**: `POST /api/queues/{queueId}/add-emergency-token`
 - Requires queue to support emergency tokens.
-- If `autoApproveEmergency` is true, token is immediately added as `WAITING` with high priority.
+- If `autoApproveEmergency` is true, token is immediately added as `WAITING` with high priority (`emergencyPriorityWeight`).
 - Otherwise, token is added to `pendingEmergencyTokens` list with status `PENDING`.
 - Provider later approves/rejects via `/api/queues/{queueId}/approve-emergency/{tokenId}`.
 
@@ -841,7 +828,7 @@ public Queue createNewQueue(String providerId, String serviceName, String placeI
 - **Service method**: `QueueService.serveNextToken()`
 - Steps:
     1. Find any existing `IN_SERVICE` token and mark it as `COMPLETED` (if present). Clear user's active token.
-    2. Find the next waiting token with highest priority (emergency tokens have higher priority) and earliest issue time.
+    2. Find the next waiting token with highest priority (`priority` field) and earliest issue time.
     3. Change its status to `IN_SERVICE`, set `servedAt`, and save.
     4. Broadcast update.
 
@@ -896,6 +883,9 @@ public Queue createNewQueue(String providerId, String serviceName, String placeI
 public QueueToken addNewToken(String queueId, String userId) {
     Queue queue = getQueueOrThrow(queueId);
     // ... validation ...
+    if (hasActiveQueueParticipation(userId)) {
+        throw new UserAlreadyInQueueException("You can only join one queue at a time.");
+    }
     int nextToken = queue.getTokenCounter() + 1;
     queue.setTokenCounter(nextToken);
     String tokenId = queueId + "-T-" + String.format("%03d", nextToken);
@@ -983,11 +973,13 @@ public Queue serveNextToken(String queueId) {
 
 12. **How do you implement queue reordering?**  
     The frontend allows drag‑and‑drop of waiting tokens. On drop, it sends the new order of tokens (a full list) to the backend. The backend replaces the tokens list, resets notification flags, saves, and broadcasts.
-
 13. **How do you handle the case where a provider serves a token and there is already an in‑service token?**  
     The `serveNextToken()` method first completes any existing in‑service token (marks as completed, clears user active token) before moving the next waiting token to in‑service. This ensures only one token is in‑service at a time.
-
-### 5.13 Diagram Prompts
+14. **How do you handle emergency tokens?**  
+    Emergency tokens are added either directly as `WAITING` with high priority if `autoApproveEmergency` is true, or placed in `pendingEmergencyTokens` for provider approval. Upon approval, they become `WAITING` with high priority; upon rejection, the user is notified via WebSocket.
+15. **What is the purpose of `lastQueueJoinTime`?**  
+    It is used to enforce cooldown periods (though currently not used) and for analytics (e.g., to show when a user last joined a queue). It is updated each time a user joins a queue.
+### 5.13 Diagram 
 
 **Queue Reset Flow (Mermaid)**
 ```mermaid
@@ -1487,7 +1479,7 @@ When registering as ADMIN or PROVIDER, the user must supply a token.
 ```java
 if (request.getRole() == Role.ADMIN || request.getRole() == Role.PROVIDER) {
     Token token = tokenRepository.findByTokenValue(request.getToken())
-            .orElseThrow(() -> new InvalidTokenException("Invalid token"));
+        .orElseThrow(() -> new InvalidTokenException("Invalid token"));
     if (token.isUsed()) throw new InvalidTokenException("Token already used");
     if (token.getExpiryDate().isBefore(LocalDateTime.now()))
         throw new InvalidTokenException("Token expired");
@@ -1554,7 +1546,7 @@ if (request.getRole() == Role.ADMIN || request.getRole() == Role.PROVIDER) {
 10. **How do you ensure that the email used for the token matches the registration email?**  
     The token is created for a specific email (`createdForEmail`). During registration, we check that the email in the request matches this field. This prevents a token from being used by a different person.
 
-### 7.10 Diagram Prompts
+### 7.10 Diagram
 
 **Payment Flow (Mermaid)**
 ```mermaid
@@ -1661,7 +1653,7 @@ Search results are paginated and can be sorted by name, rating, or wait time. Fi
 
 #### 8.2.1 `SearchController`
 
-The controller exposes three main endpoints:
+The controller exposes several endpoints, including `POST /api/search/comprehensive` which performs a full search across places, services, and queues with pagination and sorting.
 
 - `POST /api/search/comprehensive` – performs a full search across places, services, and queues with pagination and sorting.
 - `POST /api/search/nearby` – searches for places near a given location, with filters.
@@ -1692,7 +1684,7 @@ The controller exposes three main endpoints:
 
 #### 8.2.2 `SearchService` – Core Logic
 
-The service uses MongoDB’s aggregation framework and geospatial queries to fetch results. It returns a `SearchResultDTO` containing separate lists for places, services, and queues, along with pagination metadata.
+The service uses MongoDB’s query mechanisms and geospatial queries to fetch results. It returns a `SearchResultDTO` containing separate lists for places, services, and queues, along with pagination metadata.
 
 **Key Steps in Comprehensive Search**
 1. **Place Search** – Build a `Criteria` based on filters (name regex, type, minRating, isActive, location if provided). Execute a `Query` with pagination and sorting. Also perform a separate count query for total places.
@@ -1706,37 +1698,11 @@ The service uses MongoDB’s aggregation framework and geospatial queries to fet
 List<Place> findByLocationNear(Double longitude, Double latitude, Double maxDistance);
 ```
 
-**Search with Filters (Example)**
-```java
-Query query = new Query();
-List<Criteria> criteriaList = new ArrayList<>();
-if (request.getQuery() != null) {
-    criteriaList.add(Criteria.where("name").regex(request.getQuery(), "i"));
-}
-if (request.getPlaceType() != null) {
-    criteriaList.add(Criteria.where("type").is(request.getPlaceType()));
-}
-if (request.getMinRating() != null && request.getMinRating() > 0) {
-    criteriaList.add(Criteria.where("rating").gte(request.getMinRating()));
-}
-if (request.getIsActive() != null) {
-    criteriaList.add(Criteria.where("isActive").is(request.getIsActive()));
-}
-if (request.getLongitude() != null && request.getLatitude() != null) {
-    criteriaList.add(Criteria.where("location").nearSphere(
-        new Point(request.getLongitude(), request.getLatitude()))
-        .maxDistance(request.getRadius() * 1000)); // convert km to meters
-}
-if (!criteriaList.isEmpty()) {
-    query.addCriteria(new Criteria().andOperator(criteriaList.toArray(new Criteria[0])));
-}
-// Add pagination and sorting
-query.with(pageable);
-List<Place> places = mongoTemplate.find(query, Place.class);
-long total = mongoTemplate.count(query.skip(-1).limit(-1), Place.class); // count without pagination
-```
+**Service Search – Actual Implementation**
+In the current code, we fetch services using a simple `find` query and then enrich with place names using a separate call to `placeService.getPlacesByIds(...)`. This avoids a `$lookup` and keeps the query simple.
 
-**Service Search Using Aggregation (to join with places)**
+*(For completeness, an alternative using `$lookup` is shown below; it is not used in the production code but is a valid approach for a single‑query join.)*
+
 ```java
 Aggregation agg = Aggregation.newAggregation(
     Aggregation.match(Criteria.where("placeId").in(placeIds)),
@@ -1746,11 +1712,6 @@ Aggregation agg = Aggregation.newAggregation(
     Aggregation.project()
         .and("_id").as("id")
         .and("name").as("name")
-        .and("description").as("description")
-        .and("averageServiceTime").as("averageServiceTime")
-        .and("supportsGroupToken").as("supportsGroupToken")
-        .and("emergencySupport").as("emergencySupport")
-        .and("isActive").as("isActive")
         .and("place.name").as("placeName")
         .and("place.address").as("placeAddress")
         .and("place.rating").as("placeRating"),
@@ -1758,7 +1719,6 @@ Aggregation agg = Aggregation.newAggregation(
     Aggregation.skip(pageable.getOffset()),
     Aggregation.limit(pageable.getPageSize())
 );
-AggregationResults<ServiceSearchResult> results = mongoTemplate.aggregate(agg, "services", ServiceSearchResult.class);
 ```
 
 **Queue Search with Enrichment**
@@ -1797,7 +1757,7 @@ All search results are paginated using Spring’s `Pageable`. The frontend can l
 - **Indexes**: Critical indexes are in place (e.g., `placeId` on services, `placeId` on queues, `location` 2dsphere on places, `rating` on places).
 - **Caching**: Place lists and service lists are cached via Redis to reduce database load.
 - **Geospatial Queries**: Use 2dsphere indexes for efficient location‑based searches.
-- **Aggregation**: The service search uses `$lookup` to join with places, which can be expensive; we cache the result or limit the number of results.
+- **Aggregation**: The service search uses a `$lookup` (if aggregation is used) which can be expensive; we cache the result or limit the number of results.
 
 ### 8.6 Code Snippets
 
@@ -1841,6 +1801,7 @@ public SearchResultDTO comprehensiveSearch(SearchRequestDTO request, Pageable pa
 }
 ```
 
+
 ### 8.7 Interview Questions & Answers
 
 1. **How do you implement the “nearby” search?**  
@@ -1879,7 +1840,7 @@ public SearchResultDTO comprehensiveSearch(SearchRequestDTO request, Pageable pa
 12. **How do you test the search functionality?**  
     Unit tests for the service mock MongoDB templates and verify the generated queries. Integration tests with embedded MongoDB test actual queries.
 
-### 8.8 Diagram Prompts
+### 8.8 Diagram 
 
 **Comprehensive Search Flow (Mermaid)**
 ```mermaid
@@ -1935,7 +1896,7 @@ sequenceDiagram
 ---
 ## 9. Frontend Architecture & Key Components
 
-The QueueLess frontend is a single‑page application built with React, Vite, Redux Toolkit, and React Bootstrap. It communicates with the backend via REST API and WebSocket (STOMP). This section explains the frontend structure, state management, and key components.
+The QueueLess frontend is a single‑page application built with React, Vite, Redux Toolkit, and React Bootstrap. It communicates with the backend via REST API and WebSocket (STOMP). This section explains the frontend structure, state management, key components, and recent enhancements.
 
 ### 9.1 Project Structure
 
@@ -2036,9 +1997,9 @@ Routing is handled by React Router v6. Public routes are accessible without auth
 
 ### 9.3 State Management (Redux Toolkit)
 
-Redux is used for global state that is shared across many components. The main slices:
-
-- **auth** – stores token, role, user ID, name, phone, profile image, preferences, etc. Actions: `loginSuccess`, `logout`, `updateProfile`, `updatePreferences`, `toggleDarkMode`.
+Redux is used for global state that is shared across many components. 
+The main slices:
+- **auth** – stores token, role, user ID, name, phone, profile image, preferences, etc.
 - **queue** – holds the currently viewed queue (from WebSocket updates) and connection status.
 - **places** – list of places, current place, pagination state.
 - **services** – list of services, grouped by placeId.
@@ -2048,7 +2009,6 @@ Redux is used for global state that is shared across many components. The main s
 - **providerAnalytics** – analytics for providers.
 - **userAnalytics** – user token history chart data.
 - **userTokenHistory** – paginated list of user’s past tokens.
-
 **Example: `authSlice`**
 ```javascript
 const authSlice = createSlice({
@@ -2106,17 +2066,19 @@ The `WebSocketService` singleton (in `services/websocketService.js`) manages the
 
 **Navbar** – shows different buttons based on role, includes profile dropdown with image, logout, dark mode toggle. Uses `profileImageUrl` from Redux and constructs full URL for uploaded images.
 
-**CustomerQueue** – the main page for users to join a queue, see their status, position, estimated wait time. It uses WebSocket to receive real‑time updates. It also includes forms for regular/group/emergency tokens and the user details modal.
+**CustomerQueue** – the main page for users to join a queue, see their status, position, estimated wait time. It uses WebSocket to receive real‑time updates. It also includes forms for regular/group/emergency tokens and the user details modal. **New:** The component now includes a `UserQueueRestriction` check before allowing a user to join, displaying a warning if the user already has an active token elsewhere. It also shows the user’s current position in the queue (if waiting) using the `/queues/{queueId}/position/{userId}` endpoint.
 
-**ProviderDashboard** – displays the queue for a specific provider, with tabs for dashboard and analytics. It includes the `QueueList` component (with drag‑and‑drop reordering), completed tokens list, and emergency approval modal.
+**ProviderDashboard** – displays the queue for a specific provider, with tabs for dashboard and analytics. It includes the `QueueList` component (with drag‑and‑drop reordering), completed tokens list, and emergency approval modal. **New:** It now also includes an `ExportHistory` modal to download previously generated exports and a `QRCodeModal` to display the queue’s QR code.
 
-**AdminDashboard** – shows stats cards, tabs for queues, payments, providers, analytics, and a map. It fetches data from `/admin/stats`, `/admin/providers`, `/admin/queues/enhanced`, etc.
+**AdminDashboard** – shows stats cards, tabs for queues, payments, providers, analytics, and a map. It fetches data from `/admin/stats`, `/admin/providers`, `/admin/queues/enhanced`, etc. **New:** Added a tab for a geographic heat map (`PlaceMap`) and an alert configuration modal.
 
 **SearchResults** – displays search results (places, services, queues) with infinite scroll (load more). It uses the Redux search state and dispatches `performSearch` actions.
 
 **PlaceForm** – used for creating/editing places; includes fields for name, type, address, location (longitude/latitude), images, business hours, etc.
 
 **UserProfile** – allows users to update name, phone, change password, upload profile image, manage preferences. Includes a file input for image upload and a modal for selecting from premium avatars.
+
+**QRScannerModal** – uses `html5-qrcode` to scan a QR code from the camera or an uploaded image. When a valid QR code is detected, it either joins the queue directly (if logged in) or redirects to login with the queue data stored in location state.
 
 ### 9.6 API Calls
 
@@ -2169,8 +2131,15 @@ All API calls go through `axiosInstance` (in `utils/axiosInstance.js`), which au
 
 12. **How do you handle file uploads (profile images)?**  
     The `UserProfile` component contains a hidden file input. When the user selects a file, it is validated (type, size) and uploaded via `authService.uploadProfileImage`. The returned image URL is stored in Redux and displayed immediately.
+13. **How does the QR scanner work?**  
+    The `QRScannerModal` uses the `html5-qrcode` library to scan either from the camera or from an uploaded image. When a QR code is decoded, it attempts to parse the JSON (which contains `queueId` and optionally `tokenType`). If the user is logged in, it immediately joins the queue; if not, it stores the QR data and redirects to login.
+14. **How do you show the user’s current position in the queue?**  
+    The `CustomerQueue` component fetches the position using `/api/queues/{queueId}/position/{userId}`. This endpoint returns the 1‑based position (if the token is waiting) and estimated wait time. The position is displayed in the status card.
+15. **How do you implement dark mode?**  
+    The user preference is stored in Redux and `localStorage`. When toggled, we add/remove a `dark-mode` class on the `body`. CSS variables define light and dark colors; components use these variables for styling.
 
-### 9.10 Diagram Prompts
+
+### 9.10 Diagram 
 
 **Redux State Flow (Mermaid)**
 ```mermaid
@@ -2284,9 +2253,7 @@ void fullQueueFlow() throws Exception {
 
 ### 10.3 Frontend Tests
 
-**Current Status**: Not yet implemented, but planned.
-
-**Tools**: Jest, React Testing Library.
+**Current Status**: Frontend tests are not yet implemented, but the architecture is ready for them using Jest and React Testing Library.
 
 **Planned coverage**:
 - **Component tests**: Ensure components render correctly with mock data.
@@ -2498,6 +2465,9 @@ services:
       - queueless-net
 ```
 
+> *Note: The actual `docker-compose.yml` passes many more environment variables (like `JWT_EXPIRATION`, `RAZORPAY_KEY`, etc.) and includes volumes for certificates and logs. This snippet is simplified for illustration.*
+
+
 ### 11.3 Environment Variables
 
 All sensitive values (database URI, JWT secret, API keys) should be stored in a `.env` file (never committed). Example `.env`:
@@ -2683,76 +2653,11 @@ QueueLess is already a feature‑rich platform, but there are many directions in
 
 ---
 
-## 13. Conclusion
-
-QueueLess is a full‑stack queue management system that successfully addresses the needs of multiple stakeholders – users, providers, and administrators. Its architecture is built on modern, well‑supported technologies (Spring Boot, MongoDB, React) and includes essential features such as real‑time updates, role‑based access, payment integration, push notifications, and comprehensive search.
-
-The project demonstrates:
-
-- **Strong separation of concerns** with a layered backend architecture.
-- **Responsive, user‑friendly frontend** built with React and Redux.
-- **Robust authentication and authorisation** using JWT and method‑level security.
-- **Real‑time capabilities** via WebSocket (STOMP) for live queue updates.
-- **Scalability** through stateless design, caching (Redis), and containerisation.
-- **Observability** with Prometheus, Grafana, and Loki.
-- **Testing** with unit and integration tests covering critical flows.
-- **CI/CD** pipeline using GitHub Actions and container registry.
-
-The project is production‑ready and can be deployed using Docker Compose or scaled further with Kubernetes. The roadmap outlines exciting possibilities for future growth.
-
-### 13.1 Interview Preparation Summary
-
-When discussing QueueLess in an interview, you can highlight:
-
-- **Why you chose the tech stack** – explain trade‑offs (e.g., MongoDB for document flexibility, Spring Boot for productivity, React for component reusability).
-- **Key challenges** – handling real‑time updates, preventing double token joining, securing WebSocket connections, ensuring idempotent operations in payments.
-- **How you solved them** – using WebSocket with JWT, `activeTokenId` field, atomic MongoDB updates, Razorpay order notes.
-- **Design patterns** – Repository, DTO, Service layer, Observer (WebSocket), Builder (Lombok), etc.
-- **Testing strategy** – unit tests with mocks, integration tests with embedded MongoDB, how you test asynchronous code (schedulers) and external services (Razorpay).
-- **Scalability considerations** – stateless backend, Redis caching, indexes in MongoDB, potential for microservices.
-- **Future improvements** – mobile app, AI‑based wait time predictions, GraphQL.
-
-**Potential tricky questions**:
-- *How do you ensure a user doesn’t join two queues at once?* – `activeTokenId` field in `User`; check before adding.
-- *What if two users try to join the same queue at the same time?* – MongoDB document‑level atomic update; only one will succeed.
-- *How do you handle token expiry?* – JWT expires after 24 hours; refresh tokens not implemented, but could be added.
-- *How do you test WebSocket functionality?* – Unit tests with mocked messaging template; integration tests would require a test client.
-- *How do you keep the wait time calculation accurate?* – Updated every 30 seconds based on waiting tokens and average service time; can be improved with actual service durations.
-
-By studying this documentation thoroughly, you’ll be able to explain every line of code, justify design decisions, and confidently answer interview questions.
-
----
-
-## 14. Glossary
-
-| Term                | Description                                                                                                                                                              |
-|---------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **JWT**             | JSON Web Token – used for stateless authentication.                                                                                                                      |
-| **STOMP**           | Simple Text Oriented Messaging Protocol – used over WebSocket for messaging.                                                                                             |
-| **FCM**             | Firebase Cloud Messaging – push notification service.                                                                                                                    |
-| **Razorpay**        | Payment gateway used for purchasing admin/provider tokens.                                                                                                               |
-| **GeoJsonPoint**    | MongoDB’s representation of a geographic point (longitude, latitude).                                                                                                   |
-| **MongoDB Aggregation** | A pipeline for data processing, used for advanced search queries.                                                                                                     |
-| **SockJS**          | A library that provides a WebSocket‑like API and falls back to other transports when WebSocket is unavailable.                                                          |
-| **Audit Log**       | A record of important business actions (e.g., user login, queue creation) for traceability.                                                                             |
-| **Provider**        | A user who manages queues; can serve tokens, approve emergencies, etc.                                                                                                   |
-| **Admin**           | A user who manages places, services, and providers; has full system access.                                                                                              |
-| **Token**           | A unique identifier for a user’s spot in a queue; also used for payment (admin/provider tokens).                                                                         |
-| **Queue**           | A collection of tokens for a specific service.                                                                                                                           |
-| **Place**           | A physical location (e.g., hospital, shop) that offers services.                                                                                                         |
-| **Service**         | A specific offering at a place (e.g., cardiology, haircut) that has an average service time.                                                                            |
-| **WebSocket**       | A protocol for full‑duplex communication over a single TCP connection; used for real‑time updates.                                                                      |
-| **Prometheus**      | A metrics‑based monitoring system.                                                                                                                                       |
-| **Grafana**         | A visualisation tool for metrics.                                                                                                                                        |
-| **Loki**            | A log aggregation system.                                                                                                                                                |
-| **Promtail**        | A log collector that ships logs to Loki.                                                                                                                                 |
-
----
-## 14. Security Deep Dive
+## 13. Security Deep Dive
 
 QueueLess implements multiple layers of security to protect user data, prevent unauthorised access, and ensure system integrity. This section explores each security measure in detail.
 
-### 14.1 Authentication (JWT)
+### 13.1 Authentication (JWT)
 
 **How JWT is generated**  
 `JwtTokenProvider.generateToken(User user)` creates a JWT with the following claims:
@@ -2778,7 +2683,7 @@ If valid, it creates a `UsernamePasswordAuthenticationToken` with the user ID as
 **Why JWT over sessions?**  
 Stateless – no need for server‑side session storage, making horizontal scaling trivial. The token contains all necessary information, so we don’t need to query the database for each request (except for the `activeTokenId` check, which we do in service layer anyway). However, we still fetch user for some operations, but authentication itself is stateless.
 
-### 14.2 Role‑Based Access Control
+### 13.2 Role‑Based Access Control
 
 Spring Security’s `@PreAuthorize` is used at the method level. We’ve created custom annotations:
 
@@ -2794,28 +2699,28 @@ Similarly `@ProviderOnly`, `@UserOnly`, `@Authenticated`. These are applied to c
 **Why method‑level?**  
 It keeps security rules close to the business logic, making it easier to see which roles are allowed for each endpoint. URL‑based security in `SecurityConfig` is also used for public endpoints, but method‑level is more granular.
 
-### 14.3 Password Storage
+### 13.3 Password Storage
 
 Passwords are encoded with `BCryptPasswordEncoder` (Spring Security) with strength 10. BCrypt is adaptive, making brute‑force attacks slower. We never store plain text passwords.
 
-### 14.4 OTP Storage & Verification
 
-OTPs are stored in MongoDB (collection `otp`) with an expiry of 5 minutes. The document has a TTL index that automatically deletes expired OTPs.  
-Alternative: could use Redis, but MongoDB TTL is simpler and consistent with the rest of the data. The `OtpDocument` also has a unique index on `email` (ensuring only one OTP per email at a time).
+### 13.4 OTP Storage & Verification
 
-### 14.5 CORS Configuration
+OTPs are stored in MongoDB (collection `otp`) with a TTL index (5 minutes). This is simpler than Redis for now, but could be moved to Redis in the future for better performance.
+
+### 13.5 CORS Configuration
 
 `SecurityConfig.corsConfigurationSource()` sets allowed origins (e.g., `https://localhost:5173`), allowed methods (GET, POST, PUT, DELETE, OPTIONS, PATCH), and allowed headers. Credentials (cookies) are allowed, though we don’t use cookies. This is necessary because the frontend runs on a different origin (5173) while backend is on 8443.
 
-### 14.6 CSRF Protection
+### 13.6 CSRF Protection
 
 CSRF is disabled because we use JWT and stateless sessions, and the application is an API that doesn’t rely on cookies for authentication. The token is sent in the `Authorization` header, which is not automatically included by browsers, so CSRF attacks are not possible. However, if we ever add cookie‑based authentication, we would re‑enable CSRF protection.
 
-### 14.7 XSS & Security Headers
+### 13.7 XSS & Security Headers
 
 We rely on Spring Security’s default headers (X‑XSS‑Protection, X‑Content‑Type‑Options, etc.) and have customised Content‑Security‑Policy in `SecurityConfig` to restrict sources of scripts, styles, images, and fonts. This helps mitigate XSS and clickjacking.
 
-### 14.8 Rate Limiting
+### 13.8 Rate Limiting
 
 `RateLimitFilter` applies limits based on endpoint groups:
 
@@ -2825,7 +2730,7 @@ We rely on Spring Security’s default headers (X‑XSS‑Protection, X‑Conten
 
 The key is built from user ID (if authenticated) or IP address, combined with the URI. This prevents abuse, such as brute‑force login attempts or flooding token creation.
 
-### 14.9 WebSocket Security
+### 13.9 WebSocket Security
 
 `StompJwtChannelInterceptor` intercepts the STOMP CONNECT frame, validates the JWT, and sets the user in the `StompHeaderAccessor`. The `WebSocketSecurityConfig` further restricts subscriptions and message destinations:
 
@@ -2836,28 +2741,28 @@ The key is built from user ID (if authenticated) or IP address, combined with th
 
 User destinations (`/user/queue/*`) are automatically mapped to the authenticated user, ensuring that private messages are only sent to the intended user.
 
-### 14.10 Input Validation
+### 13.10 Input Validation
 
 All DTOs are annotated with `@NotNull`, `@NotBlank`, `@Size`, `@Pattern`, etc. Controllers use `@Valid` to trigger validation. The `GlobalExceptionHandler` catches `MethodArgumentNotValidException` and returns a structured error response with field‑specific messages.
 
-### 14.11 Audit Logging
+### 13.11 Audit Logging
 
 Important actions (login, registration, queue creation, token served, payment completed, etc.) are logged in the `audit_logs` collection. This provides traceability for security incidents.
 
-### 14.12 Database Security
+### 13.12 Database Security
 
 - MongoDB credentials are stored in environment variables, not hard‑coded.
 - The database is accessed only by the backend (firewall rules would restrict in production).
 - Data validation is performed at the application level to prevent injection (though MongoDB drivers are safe from SQL injection).
 
-### 14.13 File Upload Security
+### 13.13 File Upload Security
 
 - Only image files are allowed (content‑type validation).
 - File size limited to 2 MB.
 - Files are stored outside the web root (under a specific directory) and served via a resource handler.
 - The filename is generated by the server (UUID + user ID) to prevent directory traversal attacks.
 
-### 14.14 Interview Questions & Answers
+### 13.14 Interview Questions & Answers
 
 1. **How do you prevent a user from accessing another user’s data?**  
    Most endpoints that return data for a specific user (e.g., `/api/user/profile`) use the authenticated user ID from the security context. For endpoints that take a user ID as a path variable (e.g., `/api/user/favorites/{placeId}`), we check that the authenticated user matches the path variable. For admin endpoints, we check that the admin owns the resource (e.g., the place belongs to the admin).
@@ -2890,11 +2795,13 @@ Important actions (login, registration, queue creation, token served, payment co
     It limits the number of requests per user/IP per endpoint group. It uses Bucket4j to implement a token bucket algorithm. For each request, it consumes a token; if the bucket is empty, it returns 429 Too Many Requests. The limit is configured per group (e.g., token creation 10/min, search 50/min, default 100/min).
 
 ---
-## 15. Database Design & Indexes
+## 14. Database Design & Indexes
 
 QueueLess uses MongoDB as its primary database. This section explains the schema design for each collection, the relationships between documents, the indexing strategy, and the reasoning behind key decisions.
 
-### 15.1 Collection Overview
+### 14.1 Collection Overview
+
+*(Updated list includes `alert_configs`.)*
 
 | Collection               | Purpose                                                                 |
 |--------------------------|-------------------------------------------------------------------------|
@@ -2912,9 +2819,9 @@ QueueLess uses MongoDB as its primary database. This section explains the schema
 | `queue_hourly_stats`     | Hourly snapshots of waiting counts for analytics.                       |
 | `alert_configs`          | Admin alert thresholds.                                                 |
 
-### 15.2 Schema Details & Indexes
+### 14.2 Schema Details & Indexes
 
-#### 15.2.1 `users`
+#### 14.2.1 `users`
 
 ```json
 {
@@ -2948,7 +2855,7 @@ QueueLess uses MongoDB as its primary database. This section explains the schema
 **Why embedded preferences?**  
 Preferences are only ever accessed with the user document, so embedding avoids a separate collection and join.
 
-#### 15.2.2 `places`
+#### 14.2.2 `places`
 
 ```json
 {
@@ -2977,7 +2884,7 @@ Preferences are only ever accessed with the user document, so embedding avoids a
 **Why GeoJsonPoint?**  
 MongoDB’s geospatial support requires documents to store coordinates in GeoJSON format. We use `GeoJsonPoint` (Spring Data) which maps to the correct structure.
 
-#### 15.2.3 `services`
+#### 14.2.3 `services`
 
 ```json
 {
@@ -2996,7 +2903,7 @@ MongoDB’s geospatial support requires documents to store coordinates in GeoJSO
 - Index on `placeId` – to fetch all services of a place.
 - Index on `name` – for text search (not full‑text, but regex is used).
 
-#### 15.2.4 `queues`
+#### 14.2.4 `queues`
 
 ```json
 {
@@ -3033,7 +2940,7 @@ MongoDB’s geospatial support requires documents to store coordinates in GeoJSO
 **Why embed tokens?**  
 Tokens are always accessed in the context of their queue. Embedding avoids a separate collection and reduces the number of queries. The embedded array can grow large, but we limit each queue to a maximum capacity (e.g., 100) and have a cleanup job for old tokens.
 
-#### 15.2.5 `feedback`
+#### 14.2.5 `feedback`
 
 ```json
 {
@@ -3061,7 +2968,7 @@ Tokens are always accessed in the context of their queue. Embedding avoids a sep
 **Why separate collection?**  
 Feedback is not part of the queue document because it’s not needed when displaying a queue. It can grow large; separate collection allows pagination and independent indexing.
 
-#### 15.2.6 `tokens` (payment tokens)
+#### 14.2.6 `tokens` (payment tokens)
 
 ```json
 {
@@ -3083,7 +2990,7 @@ Feedback is not part of the queue document because it’s not needed when displa
 - Index on `createdForEmail` – used when checking if a token exists for a given email (during registration).
 - Index on `createdByAdminId` – for admin to see which provider tokens they purchased.
 
-#### 15.2.7 `payments`
+#### 14.2.7 `payments`
 
 ```json
 {
@@ -3104,7 +3011,7 @@ Feedback is not part of the queue document because it’s not needed when displa
 - Index on `createdForEmail` – for admin payment history.
 - Index on `createdByAdminId` – for admin to see payments they made for providers.
 
-#### 15.2.8 `otp`
+#### 14.2.8 `otp`
 
 ```json
 {
@@ -3116,10 +3023,10 @@ Feedback is not part of the queue document because it’s not needed when displa
 ```
 
 **Indexes**
-- Unique index on `email` – only one OTP per email at a time.
-- TTL index on `expiryTime` – automatically deletes documents after expiry (5 minutes).
+- Unique index on `email` – ensures only one OTP per email at a time.
+- TTL index on `expiryTime` – automatically deletes expired OTP documents.
 
-#### 15.2.9 `audit_logs`
+#### 14.2.9 `audit_logs`
 
 ```json
 {
@@ -3137,7 +3044,7 @@ Feedback is not part of the queue document because it’s not needed when displa
 - Index on `action` – to filter by event type.
 - Index on `timestamp` – for time‑based queries.
 
-#### 15.2.10 `notification_preferences`
+#### 14.2.10 `notification_preferences`
 
 ```json
 {
@@ -3159,7 +3066,7 @@ Feedback is not part of the queue document because it’s not needed when displa
 - Compound unique index on `userId` and `queueId` – ensures one preference per user per queue.
 - Index on `queueId` – used by the best‑time scheduler to find all users who have opted in.
 
-#### 15.2.11 `password_reset_tokens`
+#### 14.2.11 `password_reset_tokens`
 
 ```json
 {
@@ -3177,7 +3084,7 @@ Feedback is not part of the queue document because it’s not needed when displa
 - TTL index on `expiryDate` – auto‑deletes expired tokens.
 - Index on `userId` – to delete old tokens for a user before creating a new one.
 
-#### 15.2.12 `queue_hourly_stats`
+#### 14.2.12 `queue_hourly_stats`
 
 ```json
 {
@@ -3193,7 +3100,7 @@ Feedback is not part of the queue document because it’s not needed when displa
 - Compound index on `queueId` and `hour` – for fetching stats for a queue over a date range.
 - TTL index on `hour` – deletes records older than 60 days (implemented in scheduler, but could be TTL index).
 
-#### 15.2.13 `alert_configs`
+#### 14.2.13 `alert_configs`
 
 ```json
 {
@@ -3208,9 +3115,9 @@ Feedback is not part of the queue document because it’s not needed when displa
 ```
 
 **Indexes**
-- Index on `adminId` – to fetch config for an admin.
+**`alert_configs`** – index on `adminId` for fast retrieval.
 
-### 15.3 Relationships (NoSQL Style)
+### 14.3 Relationships (NoSQL Style)
 
 - **One‑to‑Many**: `place` → `services` – references (`placeId` in `services`).
 - **One‑to‑Many**: `service` → `queue` – references (`serviceId` in `queues`).
@@ -3221,7 +3128,7 @@ Feedback is not part of the queue document because it’s not needed when displa
 
 We use references (object IDs) instead of embedding for collections that are independent and can grow large, or where we need to query independently.
 
-### 15.4 Query Patterns & Index Usage
+### 14.4 Query Patterns & Index Usage
 
 - **Login**: `findOne({ email })` – uses unique index.
 - **Places nearby**: `find({ location: { $near: ... } })` – uses 2dsphere index.
@@ -3230,14 +3137,14 @@ We use references (object IDs) instead of embedding for collections that are ind
 - **Provider queues**: `find({ providerId })` – uses index on `providerId`.
 - **Provider analytics** (tokens over time): aggregates over `queues.tokens.completedAt` – requires a scan; we rely on indexing `completedAt` inside the array (cannot index nested fields unless we create a compound index, but for analytics we tolerate a full scan because it’s not real‑time).
 
-### 15.5 Performance Considerations
+### 14.5 Performance Considerations
 
 - **Token array growth**: Each queue has a max capacity, and tokens are removed after completion (or expired). The array size stays within bounds.
 - **Aggregation queries**: For search, we use aggregation with `$lookup` to join services with places. This can be heavy; we mitigate by caching place data and using in‑memory joining when possible.
 - **Index coverage**: We ensure that common queries are covered by indexes (e.g., `providerId` for provider dashboards).
 - **TTL indexes**: Used for OTP and password reset tokens to automatically clean up expired data.
 
-### 15.6 Interview Questions & Answers
+### 14.6 Interview Questions & Answers
 
 1. **Why did you choose MongoDB over a relational database?**  
    The data model is document‑oriented: tokens are naturally nested inside a queue, feedback references multiple entities, and services are linked to places. MongoDB’s flexible schema allowed us to iterate quickly and add fields like `isActive` later without migrations. Geospatial support for nearby search was also a key factor.
@@ -3277,22 +3184,22 @@ We use references (object IDs) instead of embedding for collections that are ind
 
 ---
 
-## 16. Caching Strategy
+## 15. Caching Strategy
 
 QueueLess uses Redis to cache frequently accessed data and store short‑lived values like OTPs. This reduces database load and improves response times.
 
-### 16.1 Redis Use Cases
+### 15.1 Redis Use Cases
 
-| Use Case               | Description                                                                               | Data Type   | TTL          |
-|------------------------|-------------------------------------------------------------------------------------------|-------------|--------------|
-| **OTP Storage**        | Temporary OTPs for email verification and password reset.                                 | String      | 5 minutes    |
-| **Place Caching**      | Caching place documents by ID to reduce repeated reads.                                   | String (JSON) | 10 minutes   |
-| **Places by Admin**    | Caching the list of places owned by an admin.                                             | String (JSON) | 10 minutes   |
-| **Services by Place**  | Caching services under a place to avoid DB lookups on place detail page.                 | String (JSON) | 10 minutes   |
-| **Queues by Place**    | Caching queues for a place (used in place detail).                                        | String (JSON) | 10 minutes   |
-| **Queue by ID**        | Caching individual queue documents to speed up real‑time page loads.                      | String (JSON) | 10 minutes   |
+| Use Case               | Description                                                                              | Data Type   | TTL        |
+|------------------------|------------------------------------------------------------------------------------------|-------------|------------|
+| **Caching**          | Place, service, and queue documents to reduce DB load.                                 | String      | 10 minutes |
+| **Place Caching**      | Caching place documents by ID to reduce repeated reads.                                  | String (JSON) | 10 minutes |
+| **Places by Admin**    | Caching the list of places owned by an admin.                                            | String (JSON) | 10 minutes |
+| **Services by Place**  | Caching services under a place to avoid DB lookups on place detail page.                | String (JSON) | 10 minutes |
+| **Queues by Place**    | Caching queues for a place (used in place detail).                                       | String (JSON) | 10 minutes |
+| **Queue by ID**        | Caching individual queue documents to speed up real‑time page loads.                     | String (JSON) | 10 minutes |
 
-### 16.2 Configuration
+### 15.2 Configuration
 
 `RedisCacheConfig` sets up a `RedisCacheManager` with:
 
@@ -3302,7 +3209,7 @@ QueueLess uses Redis to cache frequently accessed data and store short‑lived v
 
 We also disable caching of null values to avoid storing empty results.
 
-### 16.3 Cache Annotations
+### 15.3 Cache Annotations
 
 Spring’s cache abstraction is used in service methods:
 
@@ -3311,7 +3218,7 @@ Spring’s cache abstraction is used in service methods:
 - `@Cacheable(value = "queuesByPlace", key = "#placeId")` – on `QueueService.getQueuesByPlaceId`
 - `@Cacheable(value = "queues", key = "#queueId")` – on `QueueService.getQueueById`
 
-### 16.4 Cache Eviction
+### 15.4 Cache Eviction
 
 Whenever a document is updated or deleted, the relevant cache entries are evicted:
 
@@ -3320,23 +3227,23 @@ Whenever a document is updated or deleted, the relevant cache entries are evicte
 
 This ensures that stale data is not served.
 
-### 16.5 OTP Storage via MongoDB TTL (Alternative)
+### 15.5 OTP Storage via MongoDB TTL (Alternative)
 
-While we could have used Redis for OTPs, we opted for MongoDB with a TTL index because it’s simpler (no additional service) and consistent with the rest of the data. Redis is not yet used for OTPs in the current codebase, but it could be added later. The `OtpDocument` uses a TTL index on `expiryTime` to auto‑delete.
+    > (Currently we use MongoDB TTL, not Redis, for OTPs. It is in future scope.)
 
-### 16.6 Performance Considerations
+### 15.6 Performance Considerations
 
 - **Cache hit rate**: Places, services, and queues are read‑heavy, so caching improves performance significantly.
 - **Cache invalidation**: We evict all entries in a cache when any change occurs. For `placesByAdmin`, evicting all is fine because an admin typically doesn’t have many places (fewer than 100). For `places`, evicting all on any place update is also acceptable because the number of places is limited.
 - **Memory usage**: Redis is configured with a maxmemory policy (e.g., `volatile‑lru`) to avoid out‑of‑memory issues in production.
 
-### 16.7 Future Improvements
+### 15.7 Future Improvements
 
 - **Distributed caching**: In a clustered environment, we can use Redis as a central cache.
 - **Partial eviction**: Instead of evicting all entries, we could evict only the affected keys (e.g., `places` cache evict only the specific place ID). However, `@CacheEvict` doesn’t support that easily for multiple caches; we can use `CacheManager` programmatically.
 - **Caching of search results**: Could be added to reduce database load for common search queries.
 
-### 16.8 Interview Questions & Answers
+### 15.8 Interview Questions & Answers
 
 1. **Why do you need caching?**  
    To reduce database load and improve response times for frequently accessed data (e.g., place details when users browse the homepage).
@@ -3364,11 +3271,11 @@ While we could have used Redis for OTPs, we opted for MongoDB with a TTL index b
 
 ---
 
-## 17. Conclusion
+## 16. Conclusion
 
 QueueLess is a complete, production‑ready queue management system that demonstrates a wide range of modern software development practices. Throughout this documentation, we have explored the architecture, design decisions, and implementation details that make the system robust, scalable, and user‑friendly.
 
-### 17.1 Achievements
+### 16.1 Achievements
 
 - **Full‑featured application**: Supports three distinct user roles (USER, PROVIDER, ADMIN) with tailored dashboards and permissions.
 - **Real‑time experience**: WebSocket (STOMP) delivers live updates, making queue management feel instantaneous.
@@ -3379,8 +3286,9 @@ QueueLess is a complete, production‑ready queue management system that demonst
 - **Observability**: Prometheus, Grafana, and Loki provide metrics and logs for monitoring and troubleshooting.
 - **Comprehensive testing**: Unit and integration tests cover critical flows, ensuring reliability.
 - **DevOps readiness**: Docker and Docker Compose make deployment easy, and a CI/CD pipeline automates builds and tests.
+- **User‑friendly features**: QR code scanning, user position tracking, alert configuration, and per‑queue notification preferences enhance the user experience.
 
-### 17.2 Key Technical Decisions & Their Justifications
+### 16.2 Key Technical Decisions & Their Justifications
 
 | Decision                     | Justification                                                                 |
 |------------------------------|-------------------------------------------------------------------------------|
@@ -3393,7 +3301,7 @@ QueueLess is a complete, production‑ready queue management system that demonst
 | **React + Redux**            | Component‑based UI, predictable state management, and WebSocket integration.  |
 | **Docker & Compose**         | Ensures consistent development and production environments.                   |
 
-### 17.3 Lessons Learned
+### 16.3 Lessons Learned
 
 - **Embedding vs. referencing**: Embedding tokens inside the queue document simplifies reads but requires careful handling of array growth. The solution was to impose a `maxCapacity` and clean up old tokens.
 - **WebSocket security**: Securing the WebSocket connection required a custom `StompJwtChannelInterceptor` to validate tokens during CONNECT; standard HTTP security doesn’t apply.
@@ -3401,7 +3309,7 @@ QueueLess is a complete, production‑ready queue management system that demonst
 - **Testing external APIs**: Mocking Razorpay with `MockedConstruction` allowed us to test payment flows without real network calls.
 - **Caching invalidation**: Evicting all entries on update works for small datasets but will need refinement as data grows.
 
-### 17.4 Future Enhancements
+### 16.4 Future Enhancements
 
 - **Mobile apps**: Build native apps for Android and iOS to reach a wider audience.
 - **Advanced analytics**: Use machine learning to predict wait times and recommend optimal joining times.
@@ -3410,8 +3318,9 @@ QueueLess is a complete, production‑ready queue management system that demonst
 - **Scheduled reports**: Email reports to admins and providers on a daily or weekly basis.
 - **Kubernetes deployment**: Orchestrate the containers with Kubernetes for better scalability and self‑healing.
 - **GraphQL API**: Give clients more flexibility and reduce over‑fetching.
+- **Microservices**: Split the monolith for independent scaling of components.
 
-### 17.5 Interview Preparation & Confidence
+### 16.5 Interview Preparation & Confidence
 
 This documentation serves as a complete reference. By studying it, you can:
 
@@ -3430,7 +3339,7 @@ When presenting QueueLess in an interview:
 - **Show your testing approach** – unit tests, integration tests, and how you mock external services.
 - **Discuss future improvements** – mobile apps, AI wait‑time predictions, Kubernetes.
 
-### 17.6 Final Words
+### 16.6 Final Words
 
 QueueLess is a testament to modern software engineering: it combines robust backend architecture, responsive frontend design, and thoughtful user experience into a cohesive system. It demonstrates proficiency in Java, Spring Boot, MongoDB, React, and a host of supporting technologies. The project is not only functional but also well‑documented, tested, and ready for deployment.
 
@@ -3444,15 +3353,15 @@ We'll now start building the **Technology Learning Guide**. We'll deliver each s
 
 ---
 
-## 18. Technology Learning Guide
+## 17. Technology Learning Guide
 
 This section is designed for developers who want to understand the technologies used in QueueLess from scratch. Each sub‑section explains a core technology, its key concepts, and how it is applied in the project. You can read them in order or jump to the topics you need.
 
 ---
 
-### 18.1 Java & Spring Boot
+### 17.1 Java & Spring Boot
 
-#### 18.1.1 Java Basics for Spring Boot
+#### 17.1.1 Java Basics for Spring Boot
 
 **What is Java?**  
 Java is a statically‑typed, object‑oriented programming language that runs on the Java Virtual Machine (JVM). It is known for its “write once, run anywhere” capability, strong ecosystem, and excellent tooling.
@@ -3534,7 +3443,7 @@ Java is a statically‑typed, object‑oriented programming language that runs o
 
 ---
 
-## 18.1.2 Introduction to Spring Boot
+## 17.1.2 Introduction to Spring Boot
 
 **What is Spring Boot?**  
 Spring Boot is a framework built on top of the Spring Framework that simplifies the development of production‑ready applications. It provides:
@@ -3608,7 +3517,7 @@ Spring Boot is a framework built on top of the Spring Framework that simplifies 
 
 ---
 
-## 18.1.3 Dependency Injection and Annotations
+## 17.1.3 Dependency Injection and Annotations
 
 **What is Dependency Injection?**  
 Dependency Injection (DI) is a design pattern where objects receive their dependencies from an external source rather than creating them internally. In Spring, the IoC (Inversion of Control) container manages beans and injects them where needed.
@@ -3706,7 +3615,7 @@ This is less testable and makes the class harder to understand.
 
 ---
 
-## 18.1.4 Creating REST Controllers
+## 17.1.4 Creating REST Controllers
 
 **What is a REST Controller?**  
 In Spring Boot, a REST controller is a class that handles HTTP requests and returns data (usually JSON) directly to the client, without rendering a view. It is the entry point for the frontend to interact with the backend.
@@ -3830,7 +3739,7 @@ The `GlobalExceptionHandler` (`@RestControllerAdvice`) catches exceptions thrown
 
 ---
 
-## 18.1.5 Spring Data MongoDB
+## 17.1.5 Spring Data MongoDB
 
 **What is Spring Data MongoDB?**  
 Spring Data MongoDB is a module that simplifies working with MongoDB in a Spring application. It provides a high‑level abstraction over the MongoDB Java driver, allowing you to interact with the database using repository interfaces and POJOs (Plain Old Java Objects) mapped to collections.
@@ -3945,7 +3854,7 @@ Spring Data MongoDB is a module that simplifies working with MongoDB in a Spring
 
 ---
 
-## 18.1.6 Spring Security & JWT
+## 17.1.6 Spring Security & JWT
 
 **What is Spring Security?**  
 Spring Security is a powerful framework for authentication (who you are) and authorisation (what you can do) in Spring applications. It provides comprehensive protection against common attacks (CSRF, session fixation, etc.) and integrates seamlessly with Spring Boot.
@@ -4092,7 +4001,7 @@ void createPlace_Success() throws Exception {
 
 ---
 
-## 18.1.7 Spring WebSocket
+## 17.1.7 Spring WebSocket
 
 **What is WebSocket?**  
 WebSocket is a communication protocol that provides full‑duplex, persistent connections between a client and a server. Unlike HTTP (which is request‑response), WebSocket allows the server to push data to the client at any time, enabling real‑time updates.
@@ -4175,7 +4084,7 @@ For the current scale, an in‑memory broker is sufficient. It’s lightweight a
 
 ---
 
-## 18.1.8 Spring Scheduling & Caching
+## 17.1.8 Spring Scheduling & Caching
 
 **Scheduling**  
 Spring’s `@Scheduled` annotation allows you to run methods at fixed intervals or cron expressions. In QueueLess, several background tasks are scheduled to keep data fresh, send notifications, and maintain analytics.
@@ -4277,7 +4186,7 @@ public RedisCacheConfiguration cacheConfiguration() {
 
 ---
 
-## 18.1.9 Configuration & Profiles
+## 17.1.9 Configuration & Profiles
 
 **What is Spring Boot Configuration?**  
 Spring Boot externalises configuration using properties files, YAML, environment variables, or command‑line arguments. This allows you to run the same application in different environments (development, test, production) without changing code.
@@ -4366,9 +4275,9 @@ The values are read from the host’s environment (or a `.env` file) and injecte
 
 ---
 
-## 18.2 MongoDB
+## 17.2 MongoDB
 
-### 18.2.1 Document Model & Collections
+### 17.2.1 Document Model & Collections
 
 **What is MongoDB?**  
 MongoDB is a NoSQL document database that stores data in flexible, JSON‑like documents (BSON). Unlike relational databases, it does not require a fixed schema, and documents can contain nested structures.
@@ -4457,7 +4366,7 @@ A queue document might look like this:
 
 ---
 
-## 18.2.2 CRUD Operations with Spring Data
+## 17.2.2 CRUD Operations with Spring Data
 
 **Repository Abstraction**  
 Spring Data MongoDB provides a repository abstraction that greatly simplifies data access. You define an interface that extends `MongoRepository<T, ID>`, and Spring automatically provides implementations for common CRUD operations (save, findById, findAll, delete, etc.). You can also define custom query methods by following naming conventions.
@@ -4544,7 +4453,7 @@ MongoDB supports multi‑document transactions, but QueueLess does not use them 
 
 ---
 
-## 18.2.3 Indexing & Performance
+## 17.2.3 Indexing & Performance
 
 **Why Indexes?**  
 Indexes are data structures that improve the speed of read operations. Without indexes, MongoDB must perform a collection scan (examine every document) to find matches. With indexes, it can locate documents quickly, similar to using an index in a book.
@@ -4609,7 +4518,7 @@ Look for `"stage": "IXSCAN"` (index scan) vs. `"COLLSCAN"` (collection scan).
 
 ---
 
-## 18.2.4 Geospatial Queries
+## 17.2.4 Geospatial Queries
 
 **What Are Geospatial Queries?**  
 Geospatial queries in MongoDB allow you to search for documents based on geographic location. This is essential for features like “find places near me” or “show all clinics within 5 km”. MongoDB supports several geospatial operators, including `$near`, `$geoWithin`, and `$geoIntersects`.
@@ -4705,7 +4614,7 @@ In MongoDB Compass, you can run a query manually to verify the index is used. Th
 
 ---
 
-## 18.2.5 Aggregation Framework
+## 17.2.5 Aggregation Framework
 
 **What is MongoDB Aggregation?**  
 Aggregation is a way to process documents and return computed results. It’s like SQL’s `GROUP BY` but much more powerful. The aggregation pipeline consists of stages, each transforming the documents as they pass through.
@@ -4815,9 +4724,9 @@ db.queue_hourly_stats.aggregate([
 
 ---
 
-## 18.3 Redis
+## 17.3 Redis
 
-### 18.3.1 What is Redis?
+### 17.3.1 What is Redis?
 
 **Overview**  
 Redis (REmote DIctionary Server) is an open‑source, in‑memory key‑value store. It supports various data structures: strings, hashes, lists, sets, sorted sets, and more. It can also persist data to disk (RDB snapshots or append‑only logs) for durability, but its primary strength is speed – all data is held in RAM.
@@ -4832,7 +4741,7 @@ Redis (REmote DIctionary Server) is an open‑source, in‑memory key‑value st
 - **Rate limiting**: Not using Redis, but could be used to share bucket state across instances.
 - **OTP storage**: Currently stored in MongoDB with TTL index; could be moved to Redis for better performance.
 
-### 18.3.2 Using Redis with Spring Cache
+### 17.3.2 Using Redis with Spring Cache
 
 **Dependencies**  
 `spring-boot-starter-data-redis` brings in Lettuce (the Redis client) and auto‑configuration.
@@ -4900,7 +4809,7 @@ Spring Boot auto‑creates a `RedisCacheManager` using the `RedisConnectionFacto
 
 ---
 
-## 18.3.3 TTL and Expiration
+## 17.3.3 TTL and Expiration
 
 **What is TTL?**  
 TTL (Time‑to‑Live) is a mechanism that automatically removes a key from Redis after a specified duration. This is essential for temporary data like OTPs, session tokens, or cached items that should not stay forever.
@@ -4966,7 +4875,7 @@ If the key does not exist, it returns `-2`. If it exists but has no TTL, it retu
 
 ---
 
-## 18.3.4 OTP Storage (Alternative)
+## 17.3.4 OTP Storage (Alternative)
 
 **Why Use Redis for OTPs?**  
 OTPs are short‑lived and need to be accessible only for a few minutes. Redis is ideal because:
@@ -5011,9 +4920,9 @@ If you have Redis running, you can test this manually by using `redis-cli` to se
 
 ---
 
-## 18.4 JWT & Authentication
+## 17.4 JWT & Authentication
 
-### 18.4.1 JWT Structure & Claims
+### 17.4.1 JWT Structure & Claims
 
 **What is JWT?**  
 A JSON Web Token (JWT) is a compact, URL‑safe token format used to transmit information between parties. It consists of three parts: **header**, **payload**, and **signature**, each base64‑encoded and separated by dots.
@@ -5054,7 +4963,7 @@ Use [jwt.io](https://jwt.io) to decode a token generated by QueueLess and inspec
 
 ---
 
-## 18.4.2 Token Generation & Validation
+## 17.4.2 Token Generation & Validation
 
 **Generating a JWT**  
 The `JwtTokenProvider` class is responsible for creating and validating tokens. The `generateToken` method:
@@ -5155,7 +5064,7 @@ If the token is invalid or missing, the filter does not set the authentication. 
 
 ---
 
-## 18.4.3 Integrating with Spring Security
+## 17.4.3 Integrating with Spring Security
 
 **Spring Security Configuration**  
 The `SecurityConfig` class is the central place for security setup. It’s annotated with `@Configuration`, `@EnableWebSecurity`, and `@EnableMethodSecurity(prePostEnabled = true)`.
@@ -5236,9 +5145,9 @@ This ensures only users with `ROLE_ADMIN` can access the method. Spring Security
 
 ---
 
-## 18.5 WebSocket & STOMP
+## 17.5 WebSocket & STOMP
 
-### 18.5.1 WebSocket vs HTTP
+### 17.5.1 WebSocket vs HTTP
 
 **What is WebSocket?**  
 WebSocket is a communication protocol that provides full‑duplex, persistent connections between a client and a server. Unlike HTTP (which is request‑response), WebSocket allows the server to push data to the client at any time without the client needing to poll. This makes it ideal for real‑time applications like chat, gaming, and live queue updates.
@@ -5253,7 +5162,7 @@ Queue status changes frequently (tokens added, served, cancelled). Using WebSock
 
 ---
 
-### 18.5.2 STOMP Protocol
+### 17.5.2 STOMP Protocol
 
 **What is STOMP?**  
 STOMP (Simple Text Oriented Messaging Protocol) is a messaging protocol that works over WebSocket. It defines a simple frame‑based format (similar to HTTP) and includes concepts like **destinations** (topics/queues), **subscriptions**, and **messages**. Spring uses STOMP to build a message‑broker abstraction on top of WebSocket.
@@ -5296,7 +5205,7 @@ content-length:...
 
 ---
 
-### 18.5.3 Spring WebSocket Configuration
+### 17.5.3 Spring WebSocket Configuration
 
 **`WebSocketConfig.java`**
 ```java
@@ -5327,7 +5236,7 @@ SockJS simulates WebSocket when it’s not available, falling back to other tran
 
 ---
 
-### 18.5.4 Sending and Receiving Messages
+### 17.5.4 Sending and Receiving Messages
 
 **Message Handling Controller**  
 `QueueWebSocketController` is annotated with `@Controller` (not `@RestController`). It handles incoming STOMP messages.
@@ -5363,7 +5272,7 @@ client.subscribe('/topic/queues/' + queueId, (message) => {
 
 ---
 
-### 18.5.5 Securing WebSocket Endpoints
+### 17.5.5 Securing WebSocket Endpoints
 
 **JWT Authentication for WebSocket**  
 HTTP authentication doesn’t apply to WebSocket, so we need to intercept the CONNECT frame. `StompJwtChannelInterceptor` does this:
@@ -5413,7 +5322,7 @@ Spring Security’s HTTP filter chain does not apply to WebSocket frames. This c
 
 ---
 
-### 18.5.6 Practice with QueueLess
+### 17.5.6 Practice with QueueLess
 
 1. Open the browser’s Developer Tools (Network tab) and filter for WebSocket connections. Connect to the app and observe the CONNECT frame and subsequent messages.
 2. In `QueueWebSocketController`, add a log statement to see when messages are processed.
@@ -5422,9 +5331,9 @@ Spring Security’s HTTP filter chain does not apply to WebSocket frames. This c
 
 ---
 
-## 18.6 React & Redux
+## 17.6 React & Redux
 
-### 18.6.1 React Basics (Components, Props, State)
+### 17.6.1 React Basics (Components, Props, State)
 
 **What is React?**  
 React is a JavaScript library for building user interfaces. It uses a component‑based architecture, where each piece of the UI is a self‑contained component that manages its own state and renders based on that state. React updates the DOM efficiently using a virtual DOM.
@@ -5497,7 +5406,7 @@ return <div>{/* queue UI */}</div>;
 
 ---
 
-### 18.6.2 Hooks (useState, useEffect, useRef)
+### 17.6.2 Hooks (useState, useEffect, useRef)
 
 We already covered `useState` and `useEffect`. Let’s look at `useRef` and `useCallback`.
 
@@ -5535,7 +5444,7 @@ In `QueueList.jsx`, find where `onServeNext` is passed. Wrap it with `useCallbac
 
 ---
 
-### 18.6.3 Routing with React Router
+### 17.6.3 Routing with React Router
 
 **What is React Router?**  
 React Router is a library that enables navigation between different components (pages) in a React application. It keeps the UI in sync with the URL.
@@ -5588,7 +5497,7 @@ const { queueId } = useParams();
 
 ---
 
-### 18.6.4 Redux Toolkit (Slices, Thunks, Selectors)
+### 17.6.4 Redux Toolkit (Slices, Thunks, Selectors)
 
 **What is Redux?**  
 Redux is a state management library that centralises application state. It helps manage state that is shared across many components, avoiding prop drilling. **Redux Toolkit** is the modern, recommended way to write Redux logic.
@@ -5686,7 +5595,7 @@ const selectName = (state) => state.auth.name;
 
 ---
 
-### 18.6.5 Making API Calls with Axios
+### 17.6.5 Making API Calls with Axios
 
 **What is Axios?**  
 Axios is a promise‑based HTTP client for the browser and Node.js. It provides a simple API for making HTTP requests and automatically transforms JSON.
@@ -5739,7 +5648,7 @@ export const authService = {
 
 ---
 
-### 18.6.6 WebSocket Client with STOMP.js
+### 17.6.6 WebSocket Client with STOMP.js
 
 **STOMP.js Client**  
 The frontend uses `@stomp/stompjs` and `sockjs-client` to connect to the backend WebSocket.
@@ -5803,7 +5712,7 @@ useEffect(() => {
 
 ---
 
-### 18.6.7 Styling with React Bootstrap & CSS
+### 17.6.7 Styling with React Bootstrap & CSS
 
 **React Bootstrap**  
 React Bootstrap provides Bootstrap components as React components. It includes layout, forms, buttons, modals, etc. Example from `Navbar.jsx`:
@@ -5843,9 +5752,9 @@ We use Bootstrap Icons (`bi-*`) and React Icons (`FaSearch`, etc.).
 
 ---
 
-## 18.7 Docker & Docker Compose
+## 17.7 Docker & Docker Compose
 
-### 18.7.1 Docker Images & Containers
+### 17.7.1 Docker Images & Containers
 
 **What is Docker?**  
 Docker is a platform for developing, shipping, and running applications inside lightweight containers. A container packages an application with its dependencies, ensuring it runs consistently across environments.
@@ -5862,7 +5771,7 @@ We have two custom images:
 
 ---
 
-### 18.7.2 Multi‑stage Builds
+### 17.7.2 Multi‑stage Builds
 
 **Backend Dockerfile**
 ```dockerfile
@@ -5904,7 +5813,7 @@ EXPOSE 443
 
 ---
 
-### 18.7.3 Networking & Volumes
+### 17.7.3 Networking & Volumes
 
 **Docker Compose Network**  
 All services are connected to a custom bridge network `queueless-net`. This allows containers to communicate using service names (e.g., `backend` can reach `mongodb` via `mongodb:27017`).
@@ -5927,7 +5836,7 @@ volumes:
 
 ---
 
-### 18.7.4 Using Docker Compose for Orchestration
+### 17.7.4 Using Docker Compose for Orchestration
 
 **docker-compose.yml Highlights**  
 The file defines services with build contexts, ports, environment variables, networks, and volumes.
@@ -5955,9 +5864,9 @@ Sensitive values are passed via environment variables (e.g., `MONGODB_URI`, `JWT
 
 ---
 
-## 18.8 Monitoring Stack (Prometheus, Grafana, Loki)
+## 17.8 Monitoring Stack (Prometheus, Grafana, Loki)
 
-### 18.8.1 Prometheus Metrics & Scraping
+### 17.8.1 Prometheus Metrics & Scraping
 
 **What is Prometheus?**  
 Prometheus is an open‑source monitoring system that collects metrics from configured targets at regular intervals. It stores time‑series data and provides a powerful query language (PromQL).
@@ -5997,7 +5906,7 @@ These appear in the `/actuator/prometheus` output and can be queried in Promethe
 
 ---
 
-### 18.8.2 Custom Metrics with Micrometer
+### 17.8.2 Custom Metrics with Micrometer
 
 **Micrometer** provides a facade for metrics. Spring Boot auto‑configures it with Prometheus.
 
@@ -6014,7 +5923,7 @@ Standard metrics (CPU, memory, HTTP requests) are useful, but business metrics l
 
 ---
 
-### 18.8.3 Grafana Dashboards
+### 17.8.3 Grafana Dashboards
 
 **What is Grafana?**  
 Grafana is a visualisation tool that connects to data sources like Prometheus and allows you to create dashboards with graphs, tables, and alerts.
@@ -6037,7 +5946,7 @@ While not provided, you can export/import dashboards. A good starting point is t
 
 ---
 
-### 18.8.4 Loki Log Aggregation
+### 17.8.4 Loki Log Aggregation
 
 **What is Loki?**  
 Loki is a horizontally scalable, highly available log aggregation system inspired by Prometheus. It does not index log content; instead, it labels logs, making it cheap and efficient.
@@ -6062,9 +5971,9 @@ Loki is a horizontally scalable, highly available log aggregation system inspire
 
 ---
 
-## 18.9 Testing
+## 17.9 Testing
 
-### 18.9.1 Unit Testing with JUnit 5 & Mockito
+### 17.9.1 Unit Testing with JUnit 5 & Mockito
 
 **JUnit 5** is the standard testing framework for Java. **Mockito** is used to create mock objects, isolating the code under test.
 
@@ -6114,7 +6023,7 @@ class AuthControllerTest {
 
 ---
 
-### 18.9.2 Integration Testing with Embedded MongoDB
+### 17.9.2 Integration Testing with Embedded MongoDB
 
 **What is Embedded MongoDB?**  
 Flapdoodle’s embedded MongoDB library starts a real MongoDB process in memory for tests. This allows testing repository methods and complex queries without a separate database instance.
@@ -6153,7 +6062,7 @@ public abstract class BaseIntegrationTest {
 
 ---
 
-### 18.9.3 Controller Testing with MockMvc
+### 17.9.3 Controller Testing with MockMvc
 
 **What is MockMvc?**  
 `MockMvc` is a Spring Testing module that allows testing controllers without starting a full HTTP server. It simulates requests and verifies responses.
@@ -6179,7 +6088,7 @@ MockMvc is faster and doesn’t require the server to start. It also allows easy
 
 ---
 
-### 18.9.4 Testing WebSocket & Schedulers
+### 17.9.4 Testing WebSocket & Schedulers
 
 **WebSocket Testing**  
 We have unit tests for `QueueWebSocketController` that mock `SimpMessagingTemplate`. Integration tests for WebSocket would require a client, which we haven’t implemented yet.
@@ -6195,7 +6104,7 @@ Future plans include:
 
 ---
 
-### 18.9.5 Best Practices & Coverage
+### 17.9.5 Best Practices & Coverage
 
 - **Aim for high coverage** on critical services and controllers (e.g., >80%).
 - **Write tests for edge cases**: empty lists, null inputs, exceptions.
@@ -6221,13 +6130,13 @@ Now, armed with this knowledge, you can confidently discuss the architecture, ma
 **End of Technology Learning Guide**
 
 ---
-## 19. Interview Questions & Answers
+## 18. Interview Questions & Answers
 
 This section contains a curated list of interview questions that you may be asked about QueueLess, along with detailed answers that demonstrate your understanding of the system. Use these to prepare for technical interviews.
 
 ---
 
-### 19.1 General & Project Overview
+### 18.1 General & Project Overview
 
 **Q1: What problem does QueueLess solve?**  
 QueueLess addresses the inefficiency of physical waiting lines. It allows users to join queues remotely, track their position in real time, and receive notifications when it’s their turn. For businesses, it provides digital queue management, analytics, and a way to handle emergencies or group visits.
@@ -6252,7 +6161,7 @@ There are three main roles:
 
 ---
 
-### 19.2 Architecture & Technology Stack
+### 18.2 Architecture & Technology Stack
 
 **Q4: Why did you choose MongoDB over a relational database?**
 - **Document model**: Tokens are naturally nested inside a queue. Embedding avoids joins and reduces query complexity.
@@ -6277,7 +6186,7 @@ WebSocket maintains a persistent connection, allowing the server to push queue c
 
 ---
 
-### 19.3 Backend – Spring Boot & Data Access
+### 18.3 Backend – Spring Boot & Data Access
 
 **Q8: How do you handle authentication and authorisation?**  
 We use JWT (JSON Web Tokens). On login, the server validates credentials and returns a signed JWT containing the user ID, role, email, etc. Each request includes the token in the `Authorization` header. A custom `JwtAuthenticationFilter` validates the token and sets the `SecurityContext`. Method‑level security with `@PreAuthorize` (via custom annotations like `@AdminOnly`) enforces role‑based access.
@@ -6317,7 +6226,7 @@ In `AuthService.register`, if the role is ADMIN or PROVIDER, we look up the toke
 
 ---
 
-### 19.4 MongoDB Design & Indexing
+### 18.4 MongoDB Design & Indexing
 
 **Q20: Why did you embed tokens inside the queue document?**  
 Tokens are never accessed without their queue. Embedding allows atomic updates (e.g., adding a token) and avoids a separate collection. It also makes fetching a queue with its tokens a single query.
@@ -6341,7 +6250,7 @@ We store hourly snapshots of queue waiting counts in the `queue_hourly_stats` co
 
 ---
 
-### 19.5 Security
+### 18.5 Security
 
 **Q25: How do you secure WebSocket connections?**  
 We use a `StompJwtChannelInterceptor` that intercepts the CONNECT frame, extracts the JWT from the `Authorization` header, validates it, and sets the user in the `StompHeaderAccessor`. Then `WebSocketSecurityConfig` ensures that only authenticated users can subscribe to `/user/**` and `/topic/queues/*` topics.
@@ -6357,7 +6266,7 @@ We have a `RateLimitFilter` that uses Bucket4j. For each request, we build a key
 
 ---
 
-### 19.6 Frontend – React & Redux
+### 18.6 Frontend – React & Redux
 
 **Q29: How do you manage global state?**  
 We use Redux Toolkit. Slices for auth, places, services, search, user, etc. Each slice defines initial state, reducers, and async thunks. The store is configured in `store.js`. Components access state via `useSelector` and dispatch actions via `useDispatch`.
@@ -6379,7 +6288,7 @@ Currently, we have no frontend tests, but we plan to use Jest and React Testing 
 
 ---
 
-### 19.7 DevOps & Deployment
+### 18.7 DevOps & Deployment
 
 **Q35: How do you deploy the application?**  
 We use Docker and Docker Compose. The `docker-compose.yml` defines services for backend, frontend, MongoDB, Redis, Prometheus, Grafana, Loki, and Promtail. Environment variables are passed from a `.env` file. The backend image uses a multi‑stage build to keep the image small. The frontend is built and served by Nginx.
@@ -6395,7 +6304,7 @@ We have a GitHub Actions workflow that runs on push to `main` or `develop`. It f
 
 ---
 
-### 19.8 Advanced Topics & Troubleshooting
+### 18.8 Advanced Topics & Troubleshooting
 
 **Q39: How would you scale the system?**
 - **Backend**: Stateless (JWT) so we can add more instances behind a load balancer.
@@ -6429,13 +6338,13 @@ We could use JMeter or Gatling to simulate many users joining queues, serving to
 
 ---
 
-## 20. General Technical Interview Questions
+## 19. General Technical Interview Questions
 
 This section contains common interview questions that may be asked about Java, Spring, databases, design patterns, testing, and other technologies used in the project. Prepare these answers to demonstrate your overall technical expertise.
 
 ---
 
-### 20.1 Core Java
+### 19.1 Core Java
 
 **Q1: Explain the difference between `==` and `.equals()` in Java.**  
 `==` compares object references (memory addresses). `.equals()` compares the content of objects. For primitive types, `==` compares values. For custom objects, you should override `equals()` to define logical equality. In QueueLess, we use Lombok’s `@Data` which generates `equals()` and `hashCode()` based on fields.
@@ -6465,7 +6374,7 @@ It occurs when a collection is modified while iterating over it (except via the 
 
 ---
 
-### 20.2 Spring Framework
+### 19.2 Spring Framework
 
 **Q6: What is Dependency Injection? Why use it?**  
 Dependency Injection (DI) is a pattern where objects receive their dependencies from an external source rather than creating them internally. It promotes loose coupling, testability, and maintainability. Spring implements DI via constructor injection (preferred) or field injection.
@@ -6508,7 +6417,7 @@ Spring provides declarative transaction management via `@Transactional`. It uses
 
 ---
 
-### 20.3 Spring Boot
+### 19.3 Spring Boot
 
 **Q12: What is Spring Boot? How does it differ from Spring?**  
 Spring Boot simplifies Spring application development by providing:
@@ -6529,7 +6438,7 @@ Use `application.properties` or `application.yml`, environment variables, comman
 
 ---
 
-### 20.4 Databases & JPA / MongoDB
+### 19.4 Databases & JPA / MongoDB
 
 **Q16: What is the difference between SQL and NoSQL?**
 - SQL: relational, predefined schema, ACID transactions, joins.
@@ -6553,7 +6462,7 @@ A TTL index automatically deletes documents after a certain time. Used for OTPs 
 
 ---
 
-### 20.5 Security
+### 19.5 Security
 
 **Q21: What is JWT? How does it work?**  
 JSON Web Token (JWT) is a compact, URL‑safe token format consisting of three parts: header, payload, signature. The payload contains claims (user ID, role, expiration). The token is signed with a secret key, ensuring integrity. The client sends the token in the `Authorization` header. The server validates the signature and extracts claims without needing a session.
@@ -6569,7 +6478,7 @@ Cross‑Site Request Forgery (CSRF) tricks a user into executing unwanted action
 
 ---
 
-### 20.6 WebSocket & Messaging
+### 19.6 WebSocket & Messaging
 
 **Q25: What is WebSocket? How does it differ from HTTP?**  
 WebSocket provides full‑duplex, persistent communication over a single TCP connection. HTTP is request‑response; each request opens a new connection (or uses keep‑alive). WebSocket allows the server to push data to the client without polling, making it ideal for real‑time apps.
@@ -6582,7 +6491,7 @@ Spring translates `/user/queue/...` destinations to a user‑specific queue (e.g
 
 ---
 
-### 20.7 Microservices & Cloud (Optional)
+### 19.7 Microservices & Cloud (Optional)
 
 **Q28: What are microservices? How does QueueLess align with microservices?**  
 Microservices are an architectural style where an application is composed of small, independent services. QueueLess is a monolith but could be split into services (auth, queue, notification, payment). This would improve scalability and development independence.
@@ -6595,7 +6504,7 @@ Microservices are an architectural style where an application is composed of sma
 
 ---
 
-### 20.8 Design Patterns
+### 19.8 Design Patterns
 
 **Q30: What design patterns are used in QueueLess?**
 - **Repository pattern**: Spring Data repositories abstract data access.
@@ -6612,7 +6521,7 @@ An entity is a Java object that maps to a database table/collection. It may cont
 
 ---
 
-### 20.9 Testing
+### 19.9 Testing
 
 **Q32: What is the difference between unit tests and integration tests?**
 - **Unit tests**: test a single component (e.g., a service) in isolation, mocking its dependencies. Fast and focused.
@@ -6629,7 +6538,7 @@ You can write unit tests for the `@MessageMapping` methods using `MockMvc` (for 
 
 ---
 
-### 20.10 DevOps & CI/CD
+### 19.10 DevOps & CI/CD
 
 **Q36: What is Docker? Why do you use it?**  
 Docker is a containerisation platform that packages an application and its dependencies into a lightweight, portable image. It ensures consistency across environments. In QueueLess, we use Docker to run the backend, frontend, MongoDB, Redis, and monitoring tools together.
@@ -6645,7 +6554,7 @@ CI (Continuous Integration) automates building and testing on every push. CD (Co
 
 ---
 
-### 20.11 Soft Skills & Problem Solving
+### 19.11 Soft Skills & Problem Solving
 
 **Q40: Describe a challenging bug you encountered and how you solved it.**  
 *(Example)*: A problem where the estimated wait time was not updating correctly. I traced the issue to the scheduler that updates wait times; it was using an old value of average service time because the service object was cached. I fixed it by evicting the service cache after updates. This taught me to be careful with caching and to test cache invalidation.
@@ -6671,11 +6580,11 @@ CI (Continuous Integration) automates building and testing on every push. CD (Co
 
 ---
 
-## 21. Data Structures & Algorithms in QueueLess
+## 20. Data Structures & Algorithms in QueueLess
 
 This section explains the data structures used throughout the QueueLess codebase and why they were chosen, along with relevant algorithms. Understanding these choices demonstrates your ability to select appropriate data structures for real‑world problems.
 
-### 21.1 Embedded List for Tokens (`List<QueueToken>`)
+### 20.1 Embedded List for Tokens (`List<QueueToken>`)
 
 **Where it’s used:**  
 In the `Queue` entity, tokens are stored as a `List<QueueToken>` embedded directly inside the queue document.
@@ -6696,7 +6605,7 @@ In the `Queue` entity, tokens are stored as a `List<QueueToken>` embedded direct
 
 ---
 
-### 21.2 Map for Notification Preferences (`Map<String, NotificationPreference>`)
+### 20.2 Map for Notification Preferences (`Map<String, NotificationPreference>`)
 
 **Where it’s used:**  
 In `TokenNotificationScheduler`, we convert the list of preferences for a queue into a map keyed by `userId` for fast lookups.
@@ -6716,7 +6625,7 @@ MongoDB can index `queueId` to quickly fetch all preferences for a queue, but wi
 
 ---
 
-### 21.3 Priority Queue for Emergency Tokens
+### 20.3 Priority Queue for Emergency Tokens
 
 **Where it’s used:**  
 When serving the next token, we need to pick the waiting token with the highest priority. In `QueueService.serveNextToken()`, we sort the waiting tokens using a comparator:
@@ -6740,7 +6649,7 @@ Emergency tokens are still part of the main waiting list; they just have a highe
 
 ---
 
-### 21.4 Caching with Redis (Key‑Value Store)
+### 20.4 Caching with Redis (Key‑Value Store)
 
 **Where it’s used:**  
 Spring Cache with Redis caches places, services, and queues.
@@ -6756,7 +6665,7 @@ Spring Cache with Redis caches places, services, and queues.
 
 ---
 
-### 21.5 Unique Constraints Using Set Semantics
+### 20.5 Unique Constraints Using Set Semantics
 
 **Where it’s used:**
 - `users.email` – unique index.
@@ -6770,7 +6679,7 @@ Spring Cache with Redis caches places, services, and queues.
 
 ---
 
-### 21.6 Geospatial Queries (2dsphere Index)
+### 20.6 Geospatial Queries (2dsphere Index)
 
 **Where it’s used:**
 - Finding places near a given coordinate.
@@ -6784,7 +6693,7 @@ MongoDB uses a **2dsphere index** and a **geohash**‑based algorithm to quickly
 
 ---
 
-### 21.7 Sorting & Reordering
+### 20.7 Sorting & Reordering
 
 **Where it’s used:**
 - Reordering tokens in a queue: the frontend sends a new order of tokens (list of `QueueToken` objects). The backend replaces the entire `tokens` list with the new order.
@@ -6798,7 +6707,7 @@ The frontend uses drag‑and‑drop, producing a new array. The backend validate
 
 ---
 
-### 21.8 Aggregation Pipeline (Search)
+### 20.8 Aggregation Pipeline (Search)
 
 **Where it’s used:**
 - Searching across services and places (e.g., `$lookup` to join services with places).
@@ -6811,7 +6720,7 @@ The frontend uses drag‑and‑drop, producing a new array. The backend validate
 
 ---
 
-### 21.9 Algorithm for Best Time to Join
+### 20.9 Algorithm for Best Time to Join
 
 **Where it’s used:**
 - `/api/queues/{queueId}/best-time` returns the hours with the lowest average waiting count.
@@ -6827,7 +6736,7 @@ The frontend uses drag‑and‑drop, producing a new array. The backend validate
 
 ---
 
-### 21.10 Token Prioritisation (Emergency Tokens)
+### 20.10 Token Prioritisation (Emergency Tokens)
 
 **Algorithm:**
 - When serving the next token, we select the waiting token with the highest `priority` value, and among those, the earliest `issuedAt`. This is a **stable sort** by priority then time.
@@ -6837,7 +6746,7 @@ The frontend uses drag‑and‑drop, producing a new array. The backend validate
 
 ---
 
-### 21.11 Complexity Summary
+### 20.11 Complexity Summary
 
 | Operation                           | Data Structure        | Complexity   | Notes                                      |
 |-------------------------------------|-----------------------|--------------|--------------------------------------------|
@@ -6851,7 +6760,7 @@ The frontend uses drag‑and‑drop, producing a new array. The backend validate
 
 ---
 
-### 21.12 Interview Questions on Data Structures & Algorithms
+### 20.12 Interview Questions on Data Structures & Algorithms
 
 **Q1: Why did you choose a list to store tokens instead of a separate collection?**
 - Tokens are always accessed within the context of their queue. Embedding avoids a join and ensures atomic updates. The list order is preserved, which is crucial for the queue order.
@@ -6885,11 +6794,11 @@ The frontend uses drag‑and‑drop, producing a new array. The backend validate
 
 ---
 
-## 22. Data Structures Used in QueueLess
+## 21. Data Structures Used in QueueLess
 
 This section lists every data structure used in the codebase, explains where it appears, and justifies the choice. Understanding these choices demonstrates your ability to select appropriate structures for real‑world scenarios.
 
-### 22.1 Backend – Java Collections
+### 21.1 Backend – Java Collections
 
 | Data Structure         | Where Used                                                                 | Why                                                                                                                             |
 |------------------------|----------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------|
@@ -6902,7 +6811,7 @@ This section lists every data structure used in the codebase, explains where it 
 | **`ArrayList`**        | Default collection used by Spring Data for many repository results.       | Simple, fast for iteration.                                                                                                     |
 | **`Stack`** (indirect) | Not used directly; the call stack is managed by the JVM.                  |                                                                                                                                |
 
-### 22.2 Backend – MongoDB Data Structures (Embedded & Indexed)
+### 21.2 Backend – MongoDB Data Structures (Embedded & Indexed)
 
 | Structure               | Where Used                                        | Why                                                                                                                           |
 |-------------------------|---------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------|
@@ -6916,7 +6825,7 @@ This section lists every data structure used in the codebase, explains where it 
 | **Compound Index**      | `queues` (`tokens.userId`)                        | Supports queries like “find all queues a user is in”.                                                                         |
 | **2dsphere Index**      | `places.location`                                 | Enables efficient `$near` queries for nearby search.                                                                          |
 
-### 22.3 Backend – Redis Data Structures
+### 21.3 Backend – Redis Data Structures
 
 | Structure          | Where Used                                | Why                                                                                                      |
 |--------------------|-------------------------------------------|----------------------------------------------------------------------------------------------------------|
@@ -6925,7 +6834,7 @@ This section lists every data structure used in the codebase, explains where it 
 | **Sorted Set**     | Not used                                  | Could be used for priority queues (e.g., token ordering) but currently not needed.                      |
 | **List**           | Not used                                  | Could be used for log queues.                                                                            |
 
-### 22.4 Frontend – JavaScript Data Structures
+### 21.4 Frontend – JavaScript Data Structures
 
 | Structure               | Where Used                                                                                 | Why                                                                                                 |
 |-------------------------|--------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------|
@@ -6935,7 +6844,7 @@ This section lists every data structure used in the codebase, explains where it 
 | **WeakMap**             | Not used.                                                                                  | Could be used for caching DOM elements but not needed.                                              |
 | **Redux State (Object)**| Entire Redux store (normalised state).                                                     | Centralised state tree; Redux Toolkit uses Immer to treat state as immutable.                      |
 
-### 22.5 Algorithms & Complexity
+### 21.5 Algorithms & Complexity
 
 | Operation                     | Data Structure       | Time Complexity | Notes                                                                 |
 |-------------------------------|----------------------|-----------------|-----------------------------------------------------------------------|
@@ -6948,7 +6857,7 @@ This section lists every data structure used in the codebase, explains where it 
 | Reorder queue                 | `List` replace       | O(n)            | Replace entire list in database.                                      |
 | Validate token during reg     | Unique index         | O(1)            | Database index lookup.                                                |
 
-### 22.6 Why Not Other Data Structures?
+### 21.6 Why Not Other Data Structures?
 
 | Alternative                 | Why Not Used                                                                                     |
 |-----------------------------|--------------------------------------------------------------------------------------------------|
@@ -6960,7 +6869,7 @@ This section lists every data structure used in the codebase, explains where it 
 
 ---
 
-### 22.7 Interview Questions on Data Structures
+### 21.7 Interview Questions on Data Structures
 
 **Q1: Why did you use a `List` to store tokens instead of a `Queue` or `PriorityQueue`?**
 - We need to maintain the order of tokens as they are added and also allow reordering (drag‑and‑drop). A `Queue` would not support reordering. A `PriorityQueue` would reorder automatically, but the provider may want a custom order (e.g., drag emergency token to the front). A `List` gives us full control.
@@ -6994,9 +6903,9 @@ This section lists every data structure used in the codebase, explains where it 
 
 ---
 
-## 23. How to Present QueueLess in an Interview
+## 22. How to Present QueueLess in an Interview
 
-### 23.1 Structuring Your Introduction
+### 22.1 Structuring Your Introduction
 
 Start with a **30‑second elevator pitch**:
 
@@ -7010,7 +6919,7 @@ Then expand with a **2‑minute overview** covering:
 - **Key technologies**: Spring Boot, MongoDB, React, WebSocket, JWT, Razorpay, FCM.
 - **My role**: Full‑stack developer – designed the database, implemented authentication, built the queue logic, integrated payments, set up real‑time updates, and wrote tests.
 
-### 23.2 Highlighting Key Features & Decisions
+### 222 Highlighting Key Features & Decisions
 
 When asked about specific features, structure your answer with:
 
@@ -7024,7 +6933,7 @@ When asked about specific features, structure your answer with:
 **Example: Group tokens**
 > *“A group token allows multiple people to join together. The provider can set a flag on the queue to enable group tokens. When a user creates a group token, they provide a list of members. The token is stored as a single entry in the queue but has an embedded list of members. When served, all members are served together. We embedded the members inside the token because they are never accessed separately.”*
 
-### 23.3 Explaining the Architecture
+### 22.3 Explaining the Architecture
 
 Use a **diagram** if you can (whiteboard or on screen). Describe:
 
@@ -7041,7 +6950,7 @@ Use a **diagram** if you can (whiteboard or on screen). Describe:
 - Scheduled jobs for notifications and analytics.
 - Caching with Redis to reduce database load.
 
-### 23.4 Demonstrating Ownership & Depth
+### 22.4 Demonstrating Ownership & Depth
 
 **Know your code**: Be prepared to explain any class, method, or annotation. For example:
 
@@ -7056,7 +6965,7 @@ Use a **diagram** if you can (whiteboard or on screen). Describe:
 - *“I’d add refresh tokens to improve security and user experience.”*
 - *“I’d migrate to a message broker like RabbitMQ for WebSocket to support multiple backend instances.”*
 
-### 23.5 Handling Tricky Questions
+### 22.5 Handling Tricky Questions
 
 **Q: “What would you do differently if you started over?”**  
 *“I’d use a shared message broker for WebSocket from the start to prepare for horizontal scaling. I’d also add integration tests for WebSocket endpoints. The database design would stay largely the same.”*
@@ -7070,25 +6979,25 @@ Use a **diagram** if you can (whiteboard or on screen). Describe:
 **Q: “What if the system grows to millions of users?”**  
 *“We would scale horizontally: multiple backend instances behind a load balancer, MongoDB replica set + sharding, Redis cluster, and a message broker for WebSocket. The stateless design (JWT) already supports this.”*
 
-### 23.6 Showcasing Your Contributions
+### 22.6 Showcasing Your Contributions
 
 - **Quantify** where possible: *“I reduced database load by 40% by caching frequently accessed places.”* (if you have numbers)
 - **Mention challenges overcome**: *“I solved a race condition where two users could join a queue at the same time by using MongoDB’s atomic updates.”*
 - **Talk about collaboration**: If you worked in a team, explain your role. If solo, emphasise that you built it end‑to‑end.
 
-### 23.7 Presenting on a Whiteboard / Screen
+### 22.7 Presenting on a Whiteboard / Screen
 
 - **Draw a high‑level diagram** of the architecture.
 - **Walk through a user flow** (e.g., “A user searches for a place, joins a queue, receives a notification, and is served.”).
 - **Show code snippets** (if allowed) to explain a complex piece (e.g., the token serving algorithm).
 
-### 23.8 Preparing for Different Interview Formats
+### 22.8 Preparing for Different Interview Formats
 
 - **Technical interview**: Expect deep dives into Spring, MongoDB, WebSocket. Use the documentation to rehearse.
 - **System design interview**: Focus on scalability, database sharding, message brokers, caching.
 - **Coding interview**: Might ask to implement a simplified queue or a scheduler. Practice writing small versions of key algorithms.
 
-### 23.9 Final Tips
+### 22.9 Final Tips
 
 - **Be confident**: You built this project; you know it inside out.
 - **Stay honest**: If you don’t remember a detail, say “I’d need to check the code, but I believe it works like this…”
@@ -7096,7 +7005,7 @@ Use a **diagram** if you can (whiteboard or on screen). Describe:
 - **Show enthusiasm**: Talk about what excites you about the project (e.g., real‑time updates, solving a real problem).
 
 ---
-## Screenshots & Demo
+## 23 Screenshots & Demo
 
 ### Public Pages
 
@@ -7620,9 +7529,9 @@ Admin can Pause and Resume Any Queue using Action Button*
 *Drilldown - Grafana Logs Drilldown*
 ![grafana-4.png](screenshots/grafana-4.png)
 
-*Drilldown Metrics - All Metrics
+*Drilldown Metrics - All Metrics*
 ![grafana-5.png](screenshots/grafana-5.png)
 
 ---
 
-*All screenshots are from the running application. *
+*All screenshots are from the running application.*

@@ -22,9 +22,10 @@ QueueLess is a comprehensive, multi‑tenant queue management platform designed 
 8. [Testing](#testing)
 9. [Deployment](#deployment)
 10. [Troubleshooting](#troubleshooting)
-11. [Contributing](#contributing)
-12. [License](#license)
-13. [Code of Conduct](#code-of-conduct)
+11. [Future Roadmap](#future-roadmap)
+12. [Contributing](#contributing)
+13. [License](#license)
+14. [Code of Conduct](#code-of-conduct)
 
 ---
 
@@ -38,6 +39,7 @@ QueueLess is a comprehensive, multi‑tenant queue management platform designed 
 - **Feedback**: Rate your experience with detailed dimensions (staff, service, wait time).
 - **Favorites**: Save favourite places for quick access.
 - **Token History**: View past tokens and ratings.
+- **Per‑Queue Notification Preferences**: Customise when and how you are notified for each queue.
 
 ### For Providers
 - **Queue Management**: Create, pause, resume, and reset queues.
@@ -53,6 +55,7 @@ QueueLess is a comprehensive, multi‑tenant queue management platform designed 
 - **Dashboard**: Overview of all places, queues, providers, payment history, and analytics charts.
 - **Export**: Generate admin reports in PDF/Excel.
 - **Alert Configuration**: Set wait time thresholds to receive email alerts.
+- **Geographic Heat Map**: Visualise queue load across all places.
 
 ### General
 - **Authentication & Authorization**: JWT‑based with roles: `USER`, `PROVIDER`, `ADMIN`. Email verification via OTP.
@@ -103,6 +106,8 @@ QueueLess follows a **client‑server architecture** with a Spring Boot backend 
 ---
 
 ## Screenshots & Demo
+
+*(All screenshots are from the running application. Click on each collapsible section to view.)*
 
 ### 🏠 Public Pages
 
@@ -820,60 +825,9 @@ VITE_FIREBASE_VAPID_KEY=your_firebase_vapid_key
 VITE_RAZORPAY_KEY_ID=rzp_test_xxxxxxxxxx
 ```
 
-### Environment Variables – Detailed Reference
-
-QueueLess uses separate `.env` files for different environments:
-
-- **Backend** – placed in the `backend/` folder, read by Spring Boot.
-- **Frontend** – placed in the `frontend/` folder, read by Vite.
-- **Docker Compose** – placed in the **project root** (where `docker-compose.yml` lives), used to supply variables to containers.
-
----
-
-#### Backend `.env` (inside `backend/`)
-
-| Variable                     | Description                                                                 | Example                              |
-|------------------------------|-----------------------------------------------------------------------------|--------------------------------------|
-| `MONGODB_URI`                | MongoDB connection string                                                   | `mongodb://localhost:27017/queueless`|
-| `REDIS_HOST`                 | Redis host (used for caching and OTP store)                                 | `localhost`                          |
-| `JWT_SECRET`                 | Secret key for signing JWT tokens                                           | `your-256-bit-secret`                |
-| `JWT_EXPIRATION`             | Token validity in milliseconds                                              | `86400000` (24 hours)                |
-| `RAZORPAY_KEY`               | Razorpay API key                                                            | `rzp_test_xxxxxx`                    |
-| `RAZORPAY_SECRET`            | Razorpay API secret                                                         | `your_secret`                        |
-| `MAIL_USERNAME`              | SMTP username (e.g., Gmail address)                                         | `your@gmail.com`                     |
-| `MAIL_PASSWORD`              | SMTP password or app password                                               | `your_app_password`                  |
-| `SSL_KEY_STORE_PASSWORD`     | Password for the SSL keystore (default `changeit`)                          | `changeit`                           |
-| `APP_FRONTEND_URL`           | URL of the frontend (used for reset password links)                         | `https://localhost:5173`             |
-| `FILE_UPLOAD_DIR`            | Directory where uploaded profile images are stored                          | `uploads/`                           |
-| `RATE_LIMIT_CAPACITY`        | Default rate limit bucket capacity                                           | `100`                                |
-| `RATE_LIMIT_REFILL`          | Tokens refilled per duration                                                 | `100`                                |
-| `RATE_LIMIT_DURATION`        | Duration for rate limit refill (ISO‑8601)                                   | `PT1M` (1 minute)                    |
-
-> **Note**: This file is used when running the backend directly with `./mvnw spring-boot:run` or as a standalone JAR.
-
----
-
-#### Frontend `.env` (inside `frontend/`)
-
-| Variable                        | Description                                      | Example                              |
-|---------------------------------|--------------------------------------------------|--------------------------------------|
-| `VITE_API_BASE_URL`             | Base URL of the backend API                      | `https://localhost:8443/api`         |
-| `VITE_FIREBASE_API_KEY`         | Firebase API key                                  | `AIza...`                            |
-| `VITE_FIREBASE_AUTH_DOMAIN`     | Firebase auth domain                              | `your-project.firebaseapp.com`       |
-| `VITE_FIREBASE_PROJECT_ID`      | Firebase project ID                               | `your-project`                       |
-| `VITE_FIREBASE_STORAGE_BUCKET`  | Firebase storage bucket                           | `your-project.appspot.com`           |
-| `VITE_FIREBASE_MESSAGING_SENDER_ID` | Firebase sender ID                             | `1234567890`                         |
-| `VITE_FIREBASE_APP_ID`          | Firebase app ID                                   | `1:123:web:abc`                      |
-| `VITE_FIREBASE_VAPID_KEY`       | VAPID key for push notifications                  | `BEl...`                             |
-| `VITE_RAZORPAY_KEY_ID`          | Razorpay API key (same as backend key)            | `rzp_test_xxxxxx`                    |
-
-> **Note**: This file is used when running the frontend with `npm run dev` or building with `npm run build`. All variables must be prefixed with `VITE_`.
-
----
-
 #### Docker Compose Root `.env`
 
-When running the full stack with Docker Compose, a **third `.env` file** should be placed in the **project root** (the same directory as `docker-compose.yml`). This file supplies environment variables to the containers. It typically contains a superset of the variables needed by both backend and frontend, plus any additional configuration for the containers themselves.
+When running the full stack with Docker Compose, place a **third `.env` file** in the **project root** (the same directory as `docker-compose.yml`). This file supplies environment variables to the containers. It typically contains a superset of the variables needed by both backend and frontend, plus any additional configuration for the containers themselves.
 
 Example `docker-compose.env` (or simply `.env` at the root):
 
@@ -887,7 +841,20 @@ RAZORPAY_SECRET=your_razorpay_secret
 MAIL_USERNAME=your_email@gmail.com
 MAIL_PASSWORD=your_app_password
 SSL_KEY_STORE_PASSWORD=changeit
+APP_FRONTEND_URL=https://localhost:5173
+
+# Frontend
+VITE_API_BASE_URL=https://backend:8443/api
+VITE_FIREBASE_API_KEY=your_firebase_api_key
+VITE_FIREBASE_AUTH_DOMAIN=your_firebase_auth_domain
+VITE_FIREBASE_PROJECT_ID=your_firebase_project_id
+VITE_FIREBASE_STORAGE_BUCKET=your_firebase_storage_bucket
+VITE_FIREBASE_MESSAGING_SENDER_ID=your_firebase_messaging_sender_id
+VITE_FIREBASE_APP_ID=your_firebase_app_id
+VITE_FIREBASE_VAPID_KEY=your_firebase_vapid_key
+VITE_RAZORPAY_KEY_ID=rzp_test_xxxxxxxxxx
 ```
+
 ### Running Locally
 
 #### Backend
@@ -924,7 +891,7 @@ The application uses HTTPS (port 8443 for backend, 443 for frontend in Docker) w
    ```bash
    mkcert -install
    ```
-   
+
 
 
 2. **Generate certificates for localhost**:
@@ -1009,11 +976,11 @@ The project includes a `docker-compose.yml` that runs the entire stack (backend,
    ```
 
 2. **Access the application**
-   - Frontend: `https://localhost:5173`
-   - Backend API: `https://localhost:8443`
-   - Grafana: `http://localhost:3000` (admin/admin)
-   - Prometheus: `http://localhost:9090`
-   - Loki: `http://localhost:3100`
+    - Frontend: `https://localhost:5173`
+    - Backend API: `https://localhost:8443`
+    - Grafana: `http://localhost:3000` (admin/admin)
+    - Prometheus: `http://localhost:9090`
+    - Loki: `http://localhost:3100`
 
 > **Note**: SSL certificates are self‑signed for development; browsers will show a warning – proceed anyway.
 
@@ -1117,7 +1084,7 @@ The tests cover services, controllers, and some integration flows. A local Mongo
 
 ### Frontend Tests
 
-Frontend tests are not yet implemented but can be added using Jest and React Testing Library.
+Frontend tests are not yet implemented, but the architecture is ready for them using Jest and React Testing Library.
 
 ---
 
@@ -1194,6 +1161,21 @@ For a full stack deployment, use the provided `docker-compose.yml` on a server w
 - The JWT expiration is set to 24 hours by default. If your system clock is skewed, tokens may appear expired. Synchronize time via NTP.
 
 ---
+## Future Roadmap
+
+While QueueLess already provides a robust set of features, the following enhancements are planned for upcoming releases:
+
+- **Multiple Active Tokens per User**: Allow users to join queues in different places simultaneously.
+- **Per‑Service Multiple Queues**: Let users choose from multiple providers offering the same service (e.g., different doctors at the same hospital).
+- **Emergency Toggle for Providers**: Enable/disable emergency support for an existing queue.
+- **Export Cleanup**: Automatic removal of old export files from the cache.
+- **Admin Audit Log Viewer**: Interface for administrators to inspect audit logs.
+- **Internationalization (i18n)**: Support for multiple languages.
+- **Mobile App**: React Native or Flutter version for native push notifications and offline support.
+- **Advanced Analytics**: Predictive wait time models using historical data.
+
+---
+
 ## Contributing
 
 We welcome contributions! To ensure a smooth process, please follow these guidelines:
@@ -1202,8 +1184,8 @@ We welcome contributions! To ensure a smooth process, please follow these guidel
 2. **Write tests** for any new functionality. We aim for high test coverage.
 3. **Ensure all tests pass** by running `mvn test` in the backend and (if applicable) `npm test` in the frontend.
 4. **Follow coding conventions**:
-   - Backend: Use standard Java naming conventions, include Javadoc for public methods, and format code with your IDE's default settings.
-   - Frontend: Use ESLint and Prettier (configuration included).
+    - Backend: Use standard Java naming conventions, include Javadoc for public methods, and format code with your IDE's default settings.
+    - Frontend: Use ESLint and Prettier (configuration included).
 5. **Commit messages** should be clear and follow [Conventional Commits](https://www.conventionalcommits.org/) (e.g., `feat: add user profile image upload`).
 6. **Open a pull request** against the `main` branch. Describe your changes in detail and link any related issues.
 
@@ -1239,5 +1221,3 @@ Our full Code of Conduct is available in the [CODE_OF_CONDUCT.md](CODE_OF_CONDUC
 
 - Thanks to all contributors and open‑source libraries that made this project possible.
 - Special thanks to the Spring Boot and React communities for excellent documentation and tools.
-
-
